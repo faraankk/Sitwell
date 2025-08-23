@@ -1,0 +1,60 @@
+/* Reset */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f8f9fa;
+    color: #333;
+}
+
+/* Banner */
+.banner {
+    background: linear-gradient(135deg, #ff4e50, #fc913a);
+    color: #fff;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.banner h2 span {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.flash-sale {
+    margin: 6px 0;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+}
+
+.countdown {
+    font-size: 1.3rem;
+    font-family: monospace;
+}
+
+/* Action buttons */
+.actions {
+    display: flex;
+    justify-content: center;
+    gap: 1.2rem;
+    margin: 30px 0;
+}
+
+.btn {
+    background: #007bff;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 25px;
+    text-decoration: none;
+    transition: all .3s ease;
+}
+
+.btn:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+}
+
+/* Main welcome */
+main {
+    text-align: center;
+    padding: 50px 20px;
+}

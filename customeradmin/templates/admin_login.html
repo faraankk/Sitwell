@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    
+    {% load static %}
+    
+    
+    <link rel="stylesheet" href="{% static 'css/adminlogin.css' %}">
+    
+</head>
+<body>
+
+<div class="login-container">
+    
+    <h2>Admin Login</h2>
+
+    <!-- This block will display any error or success messages from your view -->
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
+    <!-- This form will send the data to your Django view -->
+    <form method="post" action="{% url 'admin_login' %}">
+        {% csrf_token %}
+        {{ form.username }}
+        {{ form.password }}
+        <a href="#" class="forgot-password">Forgot password?</a>
+        <button type="submit">Login</button>
+    </form>
+    
+    <div class="or">OR</div>
+    
+    <div class="google-login">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Google_%22G%22_Logo.svg" alt="Google Logo" width="20">
+        Continue with Google
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Link to your external stylesheet -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+</head>
+<body>
+
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <h2 class="logo">sit well</h2>
+            <ul class="menu">
+                <li class="active"><a href="#"><i class="fas fa-th-large icon"></i> Dashboard</a></li>
+                <li><a href="#"><i class="fas fa-box icon"></i> Products</a></li>
+                <li><a href="#"><i class="fas fa-folder icon"></i> Category</a></li>
+                <li><a href="#"><i class="fas fa-receipt icon"></i> Orders</a></li>
+                <li><a href="#"><i class="fas fa-tags icon"></i> Coupon</a></li>
+                <li><a href="#"><i class="fas fa-credit-card icon"></i> Transaction</a></li>
+                <li><a href="#"><i class="fas fa-users icon"></i> Customers</a></li>
+            </ul>
+            <div class="bottom-menu">
+                <div class="logout"><a href="#"><i class="fas fa-sign-out-alt icon"></i> Logout</a></div>
+                <div class="logout"><a href="#"><i class="fas fa-chart-line icon"></i> Sales Report</a></div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="main-header">
+                <div class="user-profile">
+                    <div class="avatar">F</div>
+                    <div class="user-info">
+                        <span class="name">Farhaan</span>
+                        <span class="role">Admin</span>
+                    </div>
+                    <i class="fas fa-chevron-down dropdown-icon"></i>
+                </div>
+            </header>
+
+            <!-- Dashboard Header -->
+            <section class="dashboard-header">
+                <h1>Dashboard</h1>
+                <div class="date-range">
+                    28 Sep, 2024 - 28 Sep, 2025
+                </div>
+            </section>
+
+            <!-- Stats Cards -->
+            <section class="stats-cards">
+                <div class="card">
+                    <div class="card-info">
+                        <span class="label">Todays Sales</span>
+                        <span class="value">₹100,999</span>
+                        <span class="label">We have sold 123 items</span>
+                    </div>
+                    <div class="card-chart blue">
+                        <div class="inner-circle"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-info">
+                        <span class="label">Todays Revenue</span>
+                        <span class="value">₹30,000</span>
+                        <span class="label">Profit made so today so far</span>
+                    </div>
+                    <div class="card-chart green">
+                        <div class="inner-circle"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-info">
+                        <span class="label">Users Count</span>
+                        <span class="value">20390</span>
+                        <span class="label">Total users signed up to ex.iphones.</span>
+                    </div>
+                    <div class="card-chart orange">
+                        <div class="inner-circle"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Latest Orders Table -->
+            <section class="latest-orders">
+                <h2>Latest Orders</h2>
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Product</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Total</th>
+                            <th>Payment</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>#302012</strong></td>
+                            <td>
+                                <div class="product-cell">
+                                    <img src="https://i.imgur.com/8QzP3tB.jpeg" alt="1 Seater Sofa">
+                                    <div class="product-info">
+                                        <div class="product-name">1 Seater Sofa</div>
+                                        <div class="product-meta">+3 Products</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>24 sep 2024</td>
+                            <td>Josh Wisley</td>
+                            <td><strong>₹16000</strong></td>
+                            <td>24 sep 2024</td>
+                            <td><span class="status-badge processing">Processing</span></td>
+                            <td class="action-icons">
+                                <i class="fas fa-pencil-alt"></i>
+                                <i class="fas fa-eye"></i>
+                                <i class="fas fa-trash"></i>
+                            </td>
+                        </tr>
+                        <tr>
+                           <td><strong>#302012</strong></td>
+                            <td>
+                                <div class="product-cell">
+                                    <img src="https://i.imgur.com/KSOe11B.jpeg" alt="Couch Series">
+                                    <div class="product-info">
+                                        <div class="product-name">Sekor Lifestyle Couch Series</div>
+                                        <div class="product-meta">Fabric Sofa Set For Living</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>24 sep 2024</td>
+                            <td>Josh Wisley</td>
+                            <td><strong>₹15000</strong></td>
+                            <td>24 sep 2024</td>
+                            <td><span class="status-badge processing">Processing</span></td>
+                            <td class="action-icons">
+                                <i class="fas fa-pencil-alt"></i>
+                                <i class="fas fa-eye"></i>
+                                <i class="fas fa-trash"></i>
+                            </td>
+                        </tr>
+                        <tr>
+                           <td><strong>#302012</strong></td>
+                            <td>
+                                <div class="product-cell">
+                                    <img src="https://i.imgur.com/vH3s1rI.jpeg" alt="Teak Wood Sofa">
+                                    <div class="product-info">
+                                        <div class="product-name">2 Seater Teak Wood</div>
+                                        <div class="product-meta">Boucle Sofa</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>24 sep 2024</td>
+                            <td>Josh Wisley</td>
+                            <td><strong>₹30000</strong></td>
+                            <td>24 sep 2024</td>
+                            <td><span class="status-badge processing">Processing</span></td>
+                            <td class="action-icons">
+                                <i class="fas fa-pencil-alt"></i>
+                                <i class="fas fa-eye"></i>
+                                <i class="fas fa-trash"></i>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+</body>
+</html>

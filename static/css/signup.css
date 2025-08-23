@@ -1,0 +1,141 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    text-align: center;
+    padding: 10px 0;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+nav a {
+    margin: 0 15px;
+    text-decoration: none;
+    color: black;
+}
+
+nav .sign-up {
+    background-color: #000;
+    color: #fff;
+    padding: 5px 15px;
+    border-radius: 5px;
+}
+
+.banner {
+    background-color: #000;
+    color: #fff;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 50px 20px;
+}
+
+.sofa-image {
+    max-width: 50%;
+    height: auto;
+}
+
+.form-section {
+    max-width: 400px;
+    padding: 20px;
+}
+
+.form-section h2 {
+    font-size: 24px;
+}
+
+.form-section input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.create-account {
+    background-color: #ff0000;
+    color: #fff;
+    padding: 10px;
+    border: none;
+    width: 100%;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.google-signup {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    padding: 10px;
+    width: 100%;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+.login-link {
+    text-align: center;
+    margin-top: 10px;
+}
+
+footer {
+    background-color: #000;
+    color: #fff;
+    padding: 20px 0;
+    margin-top: 50px;
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-around;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    flex-wrap: wrap;
+}
+
+.footer-section h3 {
+    font-size: 18px;
+}
+
+.footer-section p {
+    margin: 5px 0;
+}
+
+.email-input {
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.app-links img {
+    width: 100px;
+    margin: 10px 0;
+}
+
+.social-links a {
+    color: #fff;
+    margin: 0 10px;
+}
+
+.copyright {
+    text-align: center;
+    margin-top: 20px;
+}

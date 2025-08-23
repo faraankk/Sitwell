@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Management</title>
+    <link rel="stylesheet" href="{% static 'css/customer.css' %}">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">sit well</div>
+        <ul>
+            <li>Dashboard</li>
+            <li>Products</li>
+            <li>Category</li>
+            <li>Orders</li>
+            <li>Coupon</li>
+            <li>Banner</li>
+            <li class="active">Transaction</li>
+            <li>Customers</li>
+            <li>Logout</li>
+            <li>Sales Report</li>
+        </ul>
+    </div>
+    <div class="main-content">
+        <header>
+            <input type="text" placeholder="Search...">
+            <div class="profile">
+                <img src="user-icon.png" alt="Profile">
+                <span>Admin</span>
+            </div>
+        </header>
+        <div class="customer-list">
+            <h2>Customers</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone No</th>
+                        <th>Date of SignUp</th>
+                        <th>Status</th>
+                        <th>Added</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Akash P</td>
+                        <td>johndoe@gmail.com</td>
+                        <td>+917034983827</td>
+                        <td>24 Sep 2024</td>
+                        <td class="status active">Active</td>
+                        <td>24 Sep 2024</td>
+                        <td class="actions">
+                            <button>Edit</button>
+                            <button>Delete</button>
+                        </td>
+                    </tr>
+                    <!-- Add more rows as needed -->
+                <!-- </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html> -->
