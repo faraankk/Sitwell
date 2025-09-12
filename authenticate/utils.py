@@ -13,7 +13,7 @@ def send_otp_email(email, otp):
     message = f"Hi,\nYour OTP is {otp}. It is valid for 2 minutes.\n\nRegards,\nSit Well"
     send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
 
-    import random
+import random
 import string
 from django.core.mail import send_mail
 from django.conf import settings

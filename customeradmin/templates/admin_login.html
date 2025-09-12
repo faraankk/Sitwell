@@ -4,44 +4,294 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login</title>
-    
-    {% load static %}
-    
-    
-    <link rel="stylesheet" href="{% static 'css/adminlogin.css' %}">
-    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #6b7280;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        /* Style Django form inputs */
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #374151;
+            background-color: #fff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input[type="text"]:focus, input[type="password"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        input[type="text"]::placeholder, input[type="password"]::placeholder {
+            color: #9ca3af;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            color: #9ca3af;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .password-toggle:hover {
+            color: #6b7280;
+        }
+
+        .forgot-password {
+            display: block;
+            text-align: right;
+            color: #3b82f6;
+            text-decoration: none;
+            font-size: 14px;
+            margin-top: 8px;
+            margin-bottom: 24px;
+            transition: color 0.2s;
+        }
+
+        .forgot-password:hover {
+            color: #2563eb;
+        }
+
+        .login-button {
+            width: 100%;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .login-button:hover {
+            background-color: #2563eb;
+        }
+
+        .login-button:active {
+            background-color: #1d4ed8;
+        }
+
+        /* Django Messages Styling */
+        .messages {
+            margin-bottom: 20px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .alert-error {
+            background-color: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .alert-success {
+            background-color: #f0fdf4;
+            color: #16a34a;
+            border: 1px solid #bbf7d0;
+        }
+
+        /* Hide Django form error styling - we'll use our custom messages */
+        .errorlist {
+            display: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 40px 24px;
+                margin: 20px;
+                max-width: 100%;
+            }
+            .login-title {
+                font-size: 28px;
+                margin-bottom: 32px;
+            }
+            input[type="text"], input[type="password"] {
+                padding: 12px 14px 12px 40px;
+                font-size: 16px;
+            }
+            .input-icon { 
+                left: 12px; 
+                width: 16px;
+                height: 16px;
+            }
+            .password-toggle { 
+                right: 12px; 
+                width: 16px;
+                height: 16px;
+            }
+            .login-button { 
+                padding: 14px; 
+                font-size: 15px; 
+            }
+        }
+
+        @media (max-width: 360px) {
+            .login-container { 
+                padding: 32px 16px; 
+            }
+            .login-title { 
+                font-size: 24px; 
+                margin-bottom: 24px; 
+            }
+            .form-group { 
+                margin-bottom: 18px; 
+            }
+            .form-label { 
+                font-size: 13px; 
+            }
+            .forgot-password { 
+                margin: 12px 0 24px 0; 
+            }
+        }
+    </style>
 </head>
 <body>
+    <div class="login-container">
+        <h1 class="login-title">Admin Login</h1>
+        
+        <!-- Django Messages Display -->
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
 
-<div class="login-container">
-    
-    <h2>Admin Login</h2>
+        <!-- Use Django Form Rendering -->
+        <form class="login-form" action="{% url 'login_to_account' %}" method="POST">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}" class="form-label">Email</label>
+                <div class="input-wrapper">
+                    <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
 
-    <!-- This block will display any error or success messages from your view -->
-    {% if messages %}
-        <div class="messages">
-            {% for message in messages %}
-                <div class="message {{ message.tags }}">{{ message }}</div>
-            {% endfor %}
-        </div>
-    {% endif %}
-    
-    <!-- This form will send the data to your Django view -->
-    <form method="post" action="{% url 'admin_login' %}">
-        {% csrf_token %}
-        {{ form.username }}
-        {{ form.password }}
-        <a href="#" class="forgot-password">Forgot password?</a>
-        <button type="submit">Login</button>
-    </form>
-    
-    <div class="or">OR</div>
-    
-    <div class="google-login">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Google_%22G%22_Logo.svg" alt="Google Logo" width="20">
-        Continue with Google
+                    {{ form.username }}
+                </div>
+            </div>
+
+
+            <div class="form-group">
+                <label for="{{ form.password.id_for_label }}" class="form-label">Password</label>
+                <div class="input-wrapper">
+                    <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                    {{ form.password }}
+                    <svg class="password-toggle" fill="none" stroke="currentColor" viewBox="0 0 24 24" onclick="togglePassword()">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <a href="#" class="forgot-password" onclick="handleForgotPassword(event)">Forgot password?</a>
+
+            <button type="submit" class="login-button">Login</button>
+        </form>
     </div>
-</div>
 
+    <script>
+        function togglePassword() {
+            const passwordInput = document.querySelector('input[type="password"], input[type="text"][name="password"]');
+            const passwordToggle = document.querySelector('.password-toggle');
+            
+            if (!passwordInput || !passwordToggle) return;
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordToggle.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"></path>
+                `;
+            } else {
+                passwordInput.type = 'password';
+                passwordToggle.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                `;
+            }
+        }
+
+        function handleForgotPassword(e) {
+            e.preventDefault();
+            alert('Forgot password functionality would be implemented here');
+        }
+    </script>
 </body>
 </html>

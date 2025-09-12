@@ -1,0 +1,125 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deleted Products - Admin Dashboard</title>
+    <link rel="stylesheet" href="{% static 'css/product.css' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>sit well</h2>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="{% url 'admin_dashboard' %}"><i class="fas fa-th-large"></i> Dashboard</a></li>
+                    <li><a href="{% url 'product-list' %}"><i class="fas fa-box"></i> Products</a></li>
+                    <li><a href="#"><i class="fas fa-tags"></i> Category</a></li>
+                    <li><a href="#"><i class="fas fa-shopping-cart"></i> Orders</a></li>
+                    <li><a href="#"><i class="fas fa-ticket-alt"></i> Coupon</a></li>
+                    <li><a href="#"><i class="fas fa-image"></i> Banner</a></li>
+                    <li><a href="#"><i class="fas fa-exchange-alt"></i> Transaction</a></li>
+                    <li><a href="{% url 'customer-list' %}"><i class="fas fa-users"></i> Customers</a></li>
+                    <li><a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="search-container">
+                    <h2 style="color: #dc2626;">Deleted Products</h2>
+                </div>
+                <div class="header-actions">
+                    <div class="notification">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">2</span>
+                    </div>
+                    <div class="user-profile">
+                        <span class="user-name">Farhaan</span>
+                        <span class="user-role">Admin</span>
+                        <div class="user-avatar"></div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="page-content">
+                <div class="page-header">
+                    <div class="breadcrumb">
+                        <h1>Deleted Products</h1>
+                        <nav class="breadcrumb-nav">
+                            <a href="{% url 'admin_dashboard' %}">Dashboard</a> > 
+                            <a href="{% url 'product-list' %}">Products</a> > 
+                            <span>Deleted Products</span>
+                        </nav>
+                    </div>
+                    <div class="page-actions">
+                        <a href="{% url 'product-list' %}" class="btn-add-product">
+                            <i class="fas fa-arrow-left"></i> Back to Products
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Product Table -->
+                <div class="table-container">
+                    <table class="product-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>SKU</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Deleted At</th>
+                                <th>Deleted By</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for product in products %}
+                        <tr style="background-color: #fef2f2;">
+                            <td class="product-cell">
+                                {% if product.image %}
+                                    <img src="{{ product.image.url }}" alt="{{ product.name }}" 
+                                         style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; opacity: 0.6;">
+                                {% else %}
+                                    <img src="https://via.placeholder.com/40x40?text=No+Image" alt="{{ product.name }}" 
+                                         style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; opacity: 0.6;">
+                                {% endif %}
+                                <span style="opacity: 0.7;">{{ product.name }}</span>
+                            </td>
+                            <td style="opacity: 0.7;">{{ product.sku }}</td>
+                            <td style="opacity: 0.7;">{{ product.category }}</td>
+                            <td style="opacity: 0.7;">₹{{ product.price }}</td>
+                            <td style="opacity: 0.7;">{{ product.deleted_at|date:"d M Y H:i" }}</td>
+                            <td style="opacity: 0.7;">{{ product.deleted_by|default:"Unknown" }}</td>
+                            <td class="action-cell">
+                                <a href="{% url 'restore-product' product_id=product.id %}" 
+                                   class="action-btn" style="background-color: #16a34a; color: white;"
+                                   onclick="return confirm('Are you sure you want to restore {{ product.name }}?')">
+                                    <i class="fas fa-undo"></i> Restore
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-8 text-gray-500">
+                                No deleted products found. <a href="{% url 'product-list' %}" class="text-blue-600">Back to Products</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

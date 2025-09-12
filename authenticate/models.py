@@ -28,16 +28,21 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=50)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=15, unique=True)
-    is_active = models.BooleanField(default=False)  # User is inactive until OTP is verified
+    is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    otp = models.CharField(max_length=6, blank=True, null=True)  # OTP for verification
-    otp_created_at = models.DateTimeField(null=True, blank=True)  # Timestamp for OTP
+    otp = models.CharField(max_length=6, blank=True, null=True)
+    otp_created_at = models.DateTimeField(null=True, blank=True)
+    
+    # ADD THESE NEW BLOCK/UNBLOCK FIELDS
+    is_blocked = models.BooleanField(default=False)
+    blocked_at = models.DateTimeField(null=True, blank=True)
+    blocked_by = models.CharField(max_length=100, null=True, blank=True)
 
     objects = CustomUserManager()
 
-    USERNAME_FIELD = 'email'  # Use email as the unique identifier for login
-    REQUIRED_FIELDS = ['first_name', 'last_name', 'phone_number']  # Fields required for createsuperuser
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['first_name', 'last_name', 'phone_number']
 
     def __str__(self):
         return self.email
@@ -45,3 +50,19 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
+    
+    # ADD THESE NEW METHODS
+    def block_user(self, blocked_by=None):
+        """Block the user"""
+        from django.utils import timezone
+        self.is_blocked = True
+        self.blocked_at = timezone.now()
+        self.blocked_by = blocked_by or 'Admin'
+        self.save()
+    
+    def unblock_user(self):
+        """Unblock the user"""
+        self.is_blocked = False
+        self.blocked_at = None
+        self.blocked_by = None
+        self.save()

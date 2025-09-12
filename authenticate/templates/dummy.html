@@ -3,24 +3,407 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dummy – Sit Well</title>
-    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* tiny extra style so the logout button looks like a nav link */
+        /* General Body and Container Styling */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            line-height: 1.6;
+            background-color: #fff;
+        }
+
+        /* Header Styling */
+        header {
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #db4444;
+            text-transform: capitalize;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        nav a {
+            text-decoration: none;
+            font-weight: 500;
+            color: #333;
+            transition: color 0.3s ease;
+            padding: 8px 12px;
+        }
+
+        nav a:hover {
+            color: #db4444;
+        }
+
+        /* Logout Button Styling */
         .logout-btn {
             background: none;
             border: none;
-            color: black;
+            color: #333;
             font: inherit;
+            font-weight: 500;
             cursor: pointer;
-            padding: 0 15px;
-            text-decoration: underline;
+            padding: 8px 12px;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .logout-btn:hover {
+            color: #db4444;
+        }
+
+        nav form {
+            display: inline;
+            margin: 0;
+        }
+
+        /* Banner Section */
+        .banner {
+            margin: 25px 20px;
+            min-height: 200px;
+            background: linear-gradient(135deg, #000 0%, #333 100%);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .banner img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 10px;
+        }
+
+        .banner p {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        /* Main Content */
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Section Headers */
+        section h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #333;
+            position: relative;
+            padding-left: 35px;
+        }
+
+        section h2::before {
+            content: '';
+            width: 20px;
+            height: 40px;
+            background: #db4444;
+            border-radius: 4px;
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        section h2 span {
+            font-weight: 500;
+            font-size: 16px;
+            color: #db4444;
+            margin-left: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sale-time {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .sale-time span {
+            background: #db4444;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 50%;
+            min-width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        /* Welcome Message */
+        .welcome-message {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #555;
+            text-align: center;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid #db4444;
+        }
+
+        /* Footer Styling */
+        footer {
+            background-color: #000;
+            color: #ccc;
+            padding: 50px 0 20px 0;
+            margin-top: 80px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .footer-section {
+            text-align: left;
+        }
+
+        .footer-section h3 {
+            color: #db4444;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .footer-section p, .footer-section a {
+            color: #ccc;
+            font-size: 14px;
+            margin: 10px 0;
+            text-decoration: none;
+            line-height: 1.6;
+        }
+
+        .footer-section a:hover {
+            color: #db4444;
+            transition: color 0.3s ease;
+        }
+
+        .email-input {
+            width: 100%;
+            padding: 10px 15px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            background-color: #222;
+            color: white;
+            box-sizing: border-box;
+            margin-top: 15px;
+        }
+
+        .app-links {
+            margin: 20px 0;
+        }
+
+        .app-links img {
+            height: 40px;
+            margin-right: 10px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-links a {
+            width: 35px;
+            height: 35px;
+            background: #333;
+            color: #ccc;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .social-links a:hover {
+            background-color: #db4444;
+            color: white;
+        }
+
+        .copyright {
+            border-top: 1px solid #333;
+            margin-top: 40px;
+            padding-top: 20px;
+            text-align: center;
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* Responsive Media Queries */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                padding: 15px;
+            }
+
+            nav {
+                flex-wrap: wrap;
+                gap: 10px;
+                width: 100%;
+            }
+
+            .logo {
+                font-size: 24px;
+            }
+
+            .banner {
+                margin: 15px;
+                min-height: 150px;
+                padding: 20px;
+            }
+
+            .banner p {
+                font-size: 18px;
+            }
+
+            main {
+                padding: 0 15px;
+            }
+
+            section h2 {
+                font-size: 24px;
+                padding-left: 25px;
+            }
+
+            section h2::before {
+                left: 0;
+                width: 15px;
+                height: 30px;
+            }
+
+            .sale-time {
+                font-size: 18px;
+                gap: 10px;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .sale-time span {
+                min-width: 35px;
+                height: 35px;
+                font-size: 16px;
+            }
+
+            .welcome-message {
+                font-size: 16px;
+                padding: 15px;
+            }
+
+            .footer-content {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 30px;
+                padding: 0 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-content {
+                padding: 10px;
+            }
+
+            nav {
+                flex-direction: column;
+                width: 100%;
+                align-items: flex-start;
+            }
+
+            nav a, .logout-btn {
+                padding: 5px 0;
+                width: 100%;
+                text-align: left;
+            }
+
+            .banner {
+                margin: 10px;
+                min-height: 120px;
+                padding: 15px;
+            }
+
+            .banner p {
+                font-size: 16px;
+            }
+
+            .sale-time {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .welcome-message {
+                font-size: 14px;
+                padding: 12px;
+            }
+
+            footer {
+                padding: 30px 0 15px 0;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 25px;
+                padding: 0 10px;
+            }
         }
     </style>
 </head>
 <body>
-
-    <!-- Header (same as home) -->
+    <!-- Header -->
     <header>
         <div class="header-content">
             <div class="logo">sit well</div>
@@ -28,13 +411,13 @@
                 <a href="{% url 'home' %}">Home</a>
                 <a href="#">Contact</a>
                 <a href="#">About</a>
-
+                
                 <!-- POST logout that redirects to home -->
                 <form action="{% url 'logout' %}" method="post" style="display:inline;">
                     {% csrf_token %}
                     <button type="submit" class="logout-btn">Logout</button>
                 </form>
-
+                
                 <a href="#">Cart</a>
             </nav>
         </div>
@@ -47,15 +430,23 @@
     <main>
         <section class="flash-sales">
             <h2>Welcome <span>Back</span></h2>
-            <div class="sale-time">03 : 23 : 19 <span>56</span></div>
-            <p style="margin-top:20px;font-size:18px;">You’ve reached the dummy page!</p>
+            <div class="sale-time">
+                <span>03</span> : 
+                <span>23</span> : 
+                <span>19</span> : 
+                <span>56</span>
+            </div>
+            <div class="welcome-message">
+                <p>🎉 You've successfully reached the dummy page!</p>
+                <p>This is a placeholder page to demonstrate the authenticated user experience.</p>
+            </div>
         </section>
     </main>
 
     <footer>
         <div class="footer-content">
             <div class="footer-section">
-                <h3>Exclusive</h3>
+                <h3>Sit Well</h3>
                 <p>Subscribe</p>
                 <p>Get 10% off your first order</p>
                 <input type="email" placeholder="Enter your email" class="email-input">
@@ -91,12 +482,12 @@
                 </div>
                 <div class="social-links">
                     <a href="#">f</a>
-                    <a href="#">v</a>
+                    <a href="#">t</a>
                     <a href="#">in</a>
                 </div>
             </div>
         </div>
-        <p class="copyright">© Copyright Rimek 2022. All right reserved</p>
+        <p class="copyright">© Copyright Sit Well 2025. All rights reserved</p>
     </footer>
 </body>
 </html>

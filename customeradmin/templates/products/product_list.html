@@ -1,0 +1,221 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Management Dashboard</title>
+    <link rel="stylesheet" href="{% static 'css/product.css' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>sit well</h2>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="{% url 'admin_dashboard' %}"><i class="fas fa-th-large"></i> Dashboard</a></li>
+                    <li class="active"><a href="{% url 'product-list' %}"><i class="fas fa-box"></i> Products</a></li>
+                    <li><a href="{% url 'category-list' %}"><i class="fas fa-tags"></i> Category</a></li>
+                     <li><a href="{% url 'user-management' %}"><i class="fas fa-users-cog"></i> User Management</a></li>
+                    <li><a href="#"><i class="fas fa-ticket-alt"></i> Coupon</a></li>
+                    <li><a href="#"><i class="fas fa-image"></i> Banner</a></li>
+                    <li><a href="#"><i class="fas fa-exchange-alt"></i> Transaction</a></li>
+                    <li><a href="{% url 'customer-list' %}"><i class="fas fa-users"></i> Customers</a></li>
+                    <li><a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                    <li><a href="#"><i class="fas fa-chart-bar"></i> Sales Report</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="search-container">
+                    <form method="GET" class="search-form" style="display: flex; align-items: center;">
+                        <input type="text" name="search" value="{{ search_query|default:'' }}" 
+                            placeholder="Search products..." class="search-input">
+                        <button type="submit" class="search-icon" style="background: none; border: none; cursor: pointer;">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        {% if search_query %}
+                            <a href="{% url 'product-list' %}" class="clear-search" style="margin-left: 8px; color: #666;">Clear</a>
+                        {% endif %}
+                    </form>
+                </div>
+                <div class="header-actions">
+                    <div class="notification">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">2</span>
+                    </div>
+                    <div class="user-profile">
+                        <span class="user-name">Farhaan</span>
+                        <span class="user-role">Admin</span>
+                        <div class="user-avatar"></div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="page-content">
+                <div class="page-header">
+                    <div class="breadcrumb">
+                        <h1>Product</h1>
+                        <nav class="breadcrumb-nav">
+                            <a href="{% url 'admin_dashboard' %}">Dashboard</a> > <span>Product List</span>
+                        </nav>
+                    </div>
+                    <div class="page-actions">
+                        <button class="btn-export">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                        <a href="{% url 'deleted-products' %}" class="btn-export" style="background-color: #dc2626; margin-right: 10px;">
+                            <i class="fas fa-trash-restore"></i> View Deleted
+                        </a>
+                        <a href="{% url 'add-product' %}" class="btn-add-product">
+                            <i class="fas fa-plus"></i> Add Product
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Filter Tabs -->
+                <div class="filter-tabs">
+                    <a href="?status=all{% if search_query %}&search={{ search_query }}{% endif %}" 
+                        class="tab {% if current_status == 'all' %}active{% endif %}">All Products</a>
+                    <a href="?status=published{% if search_query %}&search={{ search_query }}{% endif %}" 
+                        class="tab {% if current_status == 'published' %}active{% endif %}">Published</a>
+                    <a href="?status=low-stock{% if search_query %}&search={{ search_query }}{% endif %}" 
+                        class="tab {% if current_status == 'low-stock' %}active{% endif %}">Low Stock</a>
+                    <a href="?status=draft{% if search_query %}&search={{ search_query }}{% endif %}" 
+                        class="tab {% if current_status == 'draft' %}active{% endif %}">Draft</a>
+                    <a href="?status=out-of-stock{% if search_query %}&search={{ search_query }}{% endif %}" 
+                        class="tab {% if current_status == 'out-of-stock' %}active{% endif %}">Out of Stock</a>
+                    <div class="tab-actions">
+                        <button class="btn-select-date">
+                            <i class="fas fa-calendar"></i> Select Date
+                        </button>
+                        <button class="btn-filters">
+                            <i class="fas fa-filter"></i> Filters
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product Table -->
+                <div class="table-container">
+                    <table class="product-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox"></th>
+                                <th>Product <i class="fas fa-sort"></i></th>
+                                <th>SKU</th>
+                                <th>Category</th>
+                                <th>Stock <i class="fas fa-sort"></i></th>
+                                <th>Price <i class="fas fa-sort"></i></th>
+                                <th>Status <i class="fas fa-sort"></i></th>
+                                <th>Added <i class="fas fa-sort"></i></th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                                <tr>
+                                    <td><input type="checkbox"></td>
+                                    <td class="product-cell">
+                                        {% with main_image=product.get_main_image_url %}
+                                            {% if main_image %}
+                                                <img src="{{ main_image }}" alt="{{ product.name }}" 
+                                                    style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;"
+                                                    onerror="this.src='https://via.placeholder.com/40x40?text=No+Image'; this.onerror=null;">
+                                            {% else %}
+                                                <img src="https://via.placeholder.com/40x40?text=No+Image" alt="{{ product.name }}" 
+                                                    style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                            {% endif %}
+                                        {% endwith %}
+                                        <span>{{ product.name }}</span>
+                                    </td> 
+                                    <td><a href="#" class="sku-link">{{ product.sku }}</a></td>
+                                    <td>{{ product.category }}</td>
+                                    <td>{{ product.stock_quantity }}</td>
+                                    <td>₹{{ product.price }}</td>
+                                    <td><span class="status {{ product.status }}">{{ product.get_status_display }}</span></td>
+                                    <td>{{ product.created_at|date:"d M Y" }}</td>
+                                    <td class="action-cell">
+                                        <a href="{% url 'edit-product' product_id=product.id %}" class="action-btn">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button class="action-btn"><i class="fas fa-eye"></i></button>
+                                        <button class="action-btn delete-btn" data-product-id="{{ product.id }}" data-product-name="{{ product.name }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="9" class="text-center py-8 text-gray-500">
+                                        No products found. <a href="{% url 'add-product' %}" class="text-blue-600">Add your first product</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const csrftoken = getCookie('csrftoken');
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const deleteButtons = document.querySelectorAll('.delete-btn');
+            
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const productId = this.getAttribute('data-product-id');
+                    const productName = this.getAttribute('data-product-name');
+                    
+                    if (confirm(`Are you sure you want to delete "${productName}"? This can be undone later.`)) {
+                        fetch(`/staff/products/soft-delete/${productId}/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': csrftoken,
+                                'Content-Type': 'application/json',
+                            },
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                window.location.reload();
+                            } else {
+                                alert('Error: ' + data.error);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('An error occurred while deleting the product.');
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
