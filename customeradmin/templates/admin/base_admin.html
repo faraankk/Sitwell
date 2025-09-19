@@ -1,0 +1,105 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{% block title %}Admin{% endblock %}</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+  <script>
+    tailwind.config = { theme: { extend: { colors: { primary: '#2563eb', accent: '#22c55e' } } } }
+  </script>
+  <style>
+    .progress-ring { transform: rotate(-90deg); }
+    .progress-ring-circle { transition: stroke-dasharray 0.35s; transform-origin: 50% 50%; }
+    body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif; }
+  </style>
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div class="flex h-screen overflow-hidden">
+    <!-- Sidebar (from admin_dashboard) -->
+    <aside class="w-64 bg-white shadow-lg border-r border-gray-200 flex-shrink-0">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex items-center">
+          <div class="w-8 h-8 border-2 border-gray-800 rounded mr-3"></div>
+          <span class="text-lg font-semibold text-gray-800">sit well</span>
+        </div>
+      </div>
+
+      <nav class="mt-6 px-4">
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 px-3">MENU</div>
+
+        {% with url_name=request.resolver_match.url_name %}
+        <div class="space-y-2">
+          <a href="{% url 'admin_dashboard' %}"
+             class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg {% if url_name == 'admin_dashboard' %}text-white bg-blue-600{% else %}text-gray-600 hover:bg-gray-100 transition-colors{% endif %}">
+            <i class="fas fa-home w-5 text-center mr-3"></i>
+            Dashboard
+          </a>
+          <a href="{% url 'product-list' %}"
+             class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg {% if url_name == 'product-list' %}text-white bg-blue-600{% else %}text-gray-600 hover:bg-gray-100 transition-colors{% endif %}">
+            <i class="fas fa-box w-5 text-center mr-3"></i>
+            Products
+          </a>
+          <a href="{% url 'category-list' %}"
+             class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg {% if url_name == 'category-list' %}text-white bg-blue-600{% else %}text-gray-600 hover:bg-gray-100 transition-colors{% endif %}">
+            <i class="fas fa-tags w-5 text-center mr-3"></i>
+            Category
+          </a>
+          <a href="{% url 'user-management' %}"
+             class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg {% if url_name == 'user-management' %}text-white bg-blue-600{% else %}text-gray-600 hover:bg-gray-100 transition-colors{% endif %}">
+            <i class="fas fa-users-cog w-5 text-center mr-3"></i>
+            User Management
+          </a>
+          <a href="#"
+             class="flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <i class="fas fa-ticket-alt w-5 text-center mr-3"></i>
+            Coupon
+          </a>
+          <a href="#"
+             class="flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <i class="fas fa-image w-5 text-center mr-3"></i>
+            Banner
+          </a>
+          <a href="#"
+             class="flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <i class="fas fa-credit-card w-5 text-center mr-3"></i>
+            Transaction
+          </a>
+          <a href="{% url 'customer-list' %}"
+             class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg {% if url_name == 'customer-list' %}text-white bg-blue-600{% else %}text-gray-600 hover:bg-gray-100 transition-colors{% endif %}">
+            <i class="fas fa-users w-5 text-center mr-3"></i>
+            Customers
+          </a>
+          <a href="#"
+             class="flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <i class="fas fa-chart-bar w-5 text-center mr-3"></i>
+            Sales Report
+          </a>
+
+          <form action="{% url 'admin_logout' %}" method="post" style="display:inline; width: 100%;">
+            {% csrf_token %}
+            <button type="submit"
+                    class="flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors w-full text-left border-none bg-transparent cursor-pointer">
+              <i class="fas fa-sign-out-alt w-5 text-center mr-3"></i>
+              Logout
+            </button>
+          </form>
+        </div>
+        {% endwith %}
+      </nav>
+    </aside>
+
+    <!-- Right side -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      {% block body %}{% endblock %}
+    </div>
+  </div>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

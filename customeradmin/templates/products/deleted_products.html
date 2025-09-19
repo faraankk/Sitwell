@@ -7,6 +7,9 @@
     <title>Deleted Products - Admin Dashboard</title>
     <link rel="stylesheet" href="{% static 'css/product.css' %}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <!-- ✅ Toastify CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
 <body>
     <div class="dashboard-container">
@@ -101,11 +104,12 @@
                             <td style="opacity: 0.7;">{{ product.deleted_at|date:"d M Y H:i" }}</td>
                             <td style="opacity: 0.7;">{{ product.deleted_by|default:"Unknown" }}</td>
                             <td class="action-cell">
-                                <a href="{% url 'restore-product' product_id=product.id %}" 
-                                   class="action-btn" style="background-color: #16a34a; color: white;"
-                                   onclick="return confirm('Are you sure you want to restore {{ product.name }}?')">
+                                <button class="action-btn restore-btn" 
+                                        data-product-id="{{ product.id }}" 
+                                        data-product-name="{{ product.name }}"
+                                        style="background-color: #16a34a; color: white;">
                                     <i class="fas fa-undo"></i> Restore
-                                </a>
+                                </button>
                             </td>
                         </tr>
                         {% empty %}
@@ -121,5 +125,82 @@
             </div>
         </main>
     </div>
+
+    <!-- ✅ Toastify JS -->
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const restoreButtons = document.querySelectorAll('.restore-btn');
+
+            restoreButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const productId = this.getAttribute('data-product-id');
+                    const productName = this.getAttribute('data-product-name');
+
+                    // First toast for confirmation
+                    Toastify({
+                        text: `Click here to confirm restoring "${productName}"`,
+                        duration: 3000,
+                        close: true,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#fbbf24", // yellow
+                        onClick: () => {
+                            fetch(`/staff/products/restore/${productId}/`, {
+                                method: 'POST',
+                                headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' },
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    Toastify({
+                                        text: `"${productName}" restored successfully!`,
+                                        duration: 3000,
+                                        gravity: "top",
+                                        position: "right",
+                                        backgroundColor: "#22c55e" // green
+                                    }).showToast();
+                                    setTimeout(() => window.location.reload(), 1500);
+                                } else {
+                                    Toastify({
+                                        text: `Error: ${data.error}`,
+                                        duration: 3000,
+                                        gravity: "top",
+                                        position: "right",
+                                        backgroundColor: "#ef4444" // red
+                                    }).showToast();
+                                }
+                            })
+                            .catch(() => {
+                                Toastify({
+                                    text: "An error occurred while restoring.",
+                                    duration: 3000,
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: "#ef4444"
+                                }).showToast();
+                            });
+                        }
+                    }).showToast();
+                });
+            });
+        });
+    </script>
 </body>
 </html>

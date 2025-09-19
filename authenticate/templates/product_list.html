@@ -1,0 +1,420 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products - Sit Well Furniture</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .product-card {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        .product-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            opacity: 0;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .product-card:hover .product-overlay {
+            opacity: 1;
+        }
+        .product-image {
+            height: 280px;
+            object-fit: cover;
+            width: 100%;
+            transition: transform 0.3s ease;
+        }
+        .product-card:hover .product-image {
+            transform: scale(1.05);
+        }
+        .discount-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+        }
+        .sold-out-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+            z-index: 10;
+        }
+        .sold-out-overlay {
+            background: rgba(220, 53, 69, 0.1);
+        }
+        .filter-sidebar {
+            transition: transform 0.3s ease;
+        }
+        .mobile-filter-toggle {
+            display: none;
+        }
+        @media (max-width: 1024px) {
+            .filter-sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                z-index: 50;
+                transform: translateX(-100%);
+                width: 300px;
+                background: white;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            .filter-sidebar.active {
+                transform: translateX(0);
+            }
+            .filter-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 40;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+            }
+            .filter-overlay.active {
+                opacity: 1;
+                visibility: visible;
+            }
+            .mobile-filter-toggle {
+                display: block;
+            }
+        }
+        .pagination-button {
+            transition: all 0.3s ease;
+        }
+        .pagination-button:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+
+<!-- Header -->
+<header class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <!-- Logo -->
+            <div class="flex items-center">
+                <div class="border border-gray-300 px-3 py-2 rounded">
+                    <span class="text-sm font-medium text-gray-700">sit well</span>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="hidden md:flex space-x-8">
+                <a href="{% url 'dummy_home' %}" class="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium">Home</a>
+                <a href="{% url 'product_list' %}" class="text-blue-600 px-3 py-2 text-sm font-medium border-b-2 border-blue-600">Products</a>
+                <a href="#" class="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium">Contact</a>
+                <a href="#" class="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium">About</a>
+            </nav>
+
+            <!-- Right side -->
+            <div class="flex items-center space-x-4">
+                <div class="hidden md:flex items-center space-x-4">
+                    <i class="fas fa-heart text-gray-400 hover:text-red-500 cursor-pointer"></i>
+                    <i class="fas fa-shopping-cart text-gray-400 hover:text-blue-500 cursor-pointer"></i>
+                    <i class="fas fa-user text-gray-400 hover:text-gray-600 cursor-pointer"></i>
+                </div>
+                <!-- Mobile menu button -->
+                <button class="md:hidden p-2 text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Breadcrumb -->
+<div class="bg-gray-50 border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        <nav class="text-sm text-gray-500">
+            <a href="{% url 'home' %}" class="hover:text-gray-700">Home</a>
+            <span class="mx-2">></span>
+            <span class="text-gray-900">Products</span>
+        </nav>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+        
+        <!-- Mobile Filter Toggle -->
+        <div class="mobile-filter-toggle">
+            <button id="filter-toggle" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50">
+                <span class="flex items-center">
+                    <i class="fas fa-filter mr-2 text-gray-500"></i>
+                    Filters & Sort
+                </span>
+                <i class="fas fa-chevron-down text-gray-400"></i>
+            </button>
+        </div>
+
+        <!-- Filter Overlay -->
+        <div id="filter-overlay" class="filter-overlay"></div>
+
+        <!-- Filter Sidebar -->
+        <div id="filter-sidebar" class="filter-sidebar lg:w-80 bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-fit lg:sticky lg:top-8">
+            <form method="GET" class="space-y-6">
+                <!-- Search -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                    <input type="text" name="search" value="{{ search_query|default:'' }}" placeholder="Search products..." class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <!-- Category -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <select name="category" class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">All Categories</option>
+                        {% for category_key, category_name in category_choices %}
+                        <option value="{{ category_key }}" {% if current_category == category_key %}selected{% endif %}>{{ category_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Brand -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Brand</label>
+                    <select name="brand" class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">All Brands</option>
+                        {% for brand in available_brands %}
+                        <option value="{{ brand }}" {% if current_brand == brand %}selected{% endif %}>{{ brand }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Price Range -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="number" name="min_price" value="{{ min_price }}" placeholder="Min" class="px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <input type="number" name="max_price" value="{{ max_price }}" placeholder="Max" class="px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+
+                <!-- Sort -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                    <select name="sort" class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest First</option>
+                        <option value="price_low" {% if current_sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                        <option value="price_high" {% if current_sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                        <option value="name_az" {% if current_sort == 'name_az' %}selected{% endif %}>Name: A-Z</option>
+                        <option value="name_za" {% if current_sort == 'name_za' %}selected{% endif %}>Name: Z-A</option>
+                        <option value="popularity" {% if current_sort == 'popularity' %}selected{% endif %}>Most Popular</option>
+                        <option value="featured" {% if current_sort == 'featured' %}selected{% endif %}>Featured</option>
+                    </select>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="space-y-3 pt-4 border-t border-gray-200">
+                    <button type="submit" class="btn-primary w-full px-4 py-3 text-white rounded-lg font-medium">
+                        <i class="fas fa-search mr-2"></i>Apply Filters
+                    </button>
+                    <a href="{% url 'product_list' %}" class="block w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-center">
+                        <i class="fa-solid fa-rotate-right mr-2"></i>Clear All
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Products Section -->
+        <div class="flex-1">
+            <!-- Results Header -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                <div>
+                    <h1 class="text-2xl lg:text-3xl font-bold text-gray-900">Furniture Collection</h1>
+                    <p class="text-gray-600 mt-1">Discover our premium furniture selection</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">{{ total_products }} products found</span>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                {% for product in page_obj %}
+                <div class="product-card bg-white rounded-xl shadow-sm border border-gray-200 {% if product.stock_quantity == 0 %}opacity-75{% endif %}">
+                    <div class="relative">
+                        {% if product.get_main_image_url %}
+                            <img src="{{ product.get_main_image_url }}" alt="{{ product.name }}" class="product-image rounded-t-xl">
+                        {% else %}
+                            <div class="product-image rounded-t-xl bg-gray-200 flex items-center justify-center">
+                                <i class="fas fa-image fa-3x text-gray-400"></i>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Stock Status & Discount Badge -->
+                        {% if product.stock_quantity == 0 %}
+                            <div class="sold-out-badge">
+                                SOLD OUT
+                            </div>
+                        {% elif product.discount_type != 'none' and product.discount_value > 0 %}
+                            <div class="discount-badge">
+                                {% if product.discount_type == 'percentage' %}
+                                    -{{ product.discount_value|floatformat:0 }}%
+                                {% else %}
+                                    -₹{{ product.discount_value }}
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="product-overlay rounded-t-xl {% if product.stock_quantity == 0 %}sold-out-overlay{% endif %}">
+                            {% if product.stock_quantity > 0 %}
+                                <button class="bg-white text-gray-900 px-6 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors">
+                                    <i class="fas fa-shopping-cart mr-2"></i>Add to Cart
+                                </button>
+                            {% else %}
+                                <button class="bg-gray-400 text-white px-6 py-2 rounded-lg font-medium cursor-not-allowed" disabled>
+                                    <i class="fas fa-ban mr-2"></i>Sold Out
+                                </button>
+                            {% endif %}
+                            <a href="{% url 'product_detail' product.pk %}" class="bg-transparent border-2 border-white text-white px-6 py-2 rounded-lg font-medium hover:bg-white hover:text-gray-900 transition-colors">
+                                <i class="fas fa-eye mr-2"></i>View Details
+                            </a>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ product.name|truncatechars:40 }}</h3>
+                        
+                        <div class="flex items-center mb-2">
+                            <div class="rating-stars text-sm mr-2">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="far fa-star"></i>
+                            </div>
+                            <!-- Updated Stock Display -->
+                            {% if product.stock_quantity == 0 %}
+                                <span class="text-red-500 text-sm font-medium">Sold Out</span>
+                            {% else %}
+                                <span class="text-gray-500 text-sm">({{ product.stock_quantity }} in stock)</span>
+                            {% endif %}
+                        </div>
+                        
+                        {% if product.short_description %}
+                            <p class="text-gray-600 text-sm mb-4">{{ product.short_description|truncatewords:20 }}</p>
+                        {% endif %}
+                        
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                {% if product.discount_type != 'none' and product.discount_value > 0 %}
+                                    <span class="text-red-600 font-bold text-lg">₹{{ product.get_discounted_price }}</span>
+                                    <span class="text-gray-400 line-through text-sm">₹{{ product.price }}</span>
+                                {% else %}
+                                    <span class="text-gray-900 font-bold text-lg">₹{{ product.price }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-sm text-gray-500">
+                                {{ product.get_category_display }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-span-3 text-center py-12">
+                    <i class="fas fa-search fa-3x text-gray-300 mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No products found</h3>
+                    <p class="text-gray-500">Try adjusting your search or filter criteria</p>
+                    <a href="{% url 'product_list' %}" class="mt-4 inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        View All Products
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="text-sm text-gray-600">
+                    Showing {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ total_products }} products
+                </div>
+                <nav class="flex items-center space-x-2">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}&sort={{ current_sort }}" class="px-3 py-2 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    {% else %}
+                        <span class="px-3 py-2 text-gray-400">
+                            <i class="fas fa-chevron-left"></i>
+                        </span>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <span class="px-3 py-2 bg-blue-600 text-white rounded-lg">{{ num }}</span>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}&sort={{ current_sort }}" class="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg pagination-button">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}&sort={{ current_sort }}" class="px-3 py-2 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    {% else %}
+                        <span class="px-3 py-2 text-gray-400">
+                            <i class="fas fa-chevron-right"></i>
+                        </span>
+                    {% endif %}
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Mobile filter toggle
+const filterToggle = document.getElementById('filter-toggle');
+const filterSidebar = document.getElementById('filter-sidebar');
+const filterOverlay = document.getElementById('filter-overlay');
+
+filterToggle.addEventListener('click', () => {
+    filterSidebar.classList.add('active');
+    filterOverlay.classList.add('active');
+});
+
+filterOverlay.addEventListener('click', () => {
+    filterSidebar.classList.remove('active');
+    filterOverlay.classList.remove('active');
+});
+</script>
+
+</body>
+</html>

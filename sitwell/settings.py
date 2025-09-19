@@ -30,7 +30,9 @@ DEBUG = True
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 
-# Application definition
+
+
+# settings.py
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -39,8 +41,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'authenticate.apps.AuthenticateConfig',
+    
+    # Your apps
+    'authenticate',
     'customeradmin',
+    
+    # AllAuth - Following video tutorial order
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
 
 MIDDLEWARE = [
@@ -51,15 +62,72 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
+    # Your existing custom middleware
     'customeradmin.middleware.BlockedUserMiddleware',
+    'authenticate.middleware.OTPRateLimitMiddleware',
+    
+    # AllAuth middleware
+    'allauth.account.middleware.AccountMiddleware',
 ]
+
+# Site framework - CRITICAL as shown in video
+SITE_ID = 1
+
+# Authentication backends - From video
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# AllAuth settings - Following video approach
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+SOCIALACCOUNT_AUTO_SIGNUP = True 
+
+# Social account settings - Following video
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'APP': {
+            'client_id': config("GOOGLE_CLIENT_ID"), 
+            'secret': config("GOOGLE_CLIENT_SECRET"),     # Will be filled from Google Console
+            'key': ''
+        },
+        "AUTH_PARAMS": {"prompt": "select_account"},
+        "VERIFIED_EMAIL": True,  
+    }
+}
+
+# Redirect URLs - Following video pattern
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = '/dummy-home/'  # After login redirect
+LOGOUT_REDIRECT_URL = 'login'        # After logout redirect
+
+# Keep your existing custom user model
+AUTH_USER_MODEL = 'authenticate.CustomUser'
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_UNIQUE_EMAIL = True
+
+# 
+ACCOUNT_PRESERVE_USERNAME_CASING = False
+SOCIALACCOUNT_QUERY_EMAIL = True
+SOCIALACCOUNT_EMAIL_REQUIRED = True
+SOCIALACCOUNT_STORE_TOKENS = True
 
 ROOT_URLCONF = 'sitwell.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  
+        'DIRS': [
+            BASE_DIR / 'templates',  # Global templates
+            BASE_DIR / 'authenticate',  # Add your app folder directly
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -73,9 +141,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'sitwell.wsgi.application'
-
-AUTH_USER_MODEL = 'authenticate.CustomUser'
-
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -129,7 +194,6 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR,'static')]
 STATIC_ROOT = os.path.join(BASE_DIR,'assets')
-
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -137,8 +201,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
@@ -147,3 +209,32 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 
 LOGOUT_REDIRECT_URL = 'home'
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+]
+
+
+# Also ensure cookies work properly
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+# Add these to your existing CSRF settings
+CSRF_COOKIE_SECURE = False  # Set to True only in production with HTTPS
+CSRF_USE_SESSIONS = False
+CSRF_COOKIE_AGE = 31449600  # 1 year
+
+# Session settings
+SESSION_COOKIE_AGE = 1209600  # 2 weeks
+SESSION_SAVE_EVERY_REQUEST = True
+
+# Session Security
+SESSION_COOKIE_AGE = 3600  # 1 hour
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_SECURE = True  # Enable in production
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SECURE = True  # Enable in production
+
+# OTP Security
+OTP_EXPIRY_MINUTES = 2
+MAX_OTP_ATTEMPTS = 5

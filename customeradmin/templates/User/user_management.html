@@ -1,253 +1,350 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Management - Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .sidebar-item {
-            transition: all 0.2s ease;
-        }
-        .sidebar-item:hover {
-            background-color: #f8fafc;
-            border-radius: 8px;
-        }
-        .sidebar-item.active {
-            background-color: #3b82f6;
-            color: white;
-            border-radius: 8px;
-        }
-        .blocked-user {
-            background-color: #fee2e2;
-            border-left: 4px solid #ef4444;
-        }
-        .action-btn {
-            transition: all 0.2s ease;
-        }
-        .action-btn:hover {
-            transform: scale(1.05);
-        }
-        .table-header {
-            background-color: #f8fafc;
-        }
-    </style>
-</head>
-<body class="bg-gray-50 font-sans">
-    <div class="flex min-h-screen flex-col md:flex-row">
-        <!-- Sidebar -->
-        <div class="w-full md:w-64 bg-white shadow-sm border-r border-gray-200 md:min-h-screen">
-            <!-- Logo -->
-            <div class="p-6 border-b border-gray-200">
-                <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
-                        <span class="text-white font-bold text-sm">SW</span>
-                    </div>
-                    <span class="font-semibold text-gray-900">sit well</span>
+{% extends "admin/base_admin.html" %}
+{% block title %}User Management - Dashboard{% endblock %}
+
+{% block body %}
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200 px-6 py-4">
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between">
+      <div class="mb-4 md:mb-0">
+        <h1 class="text-2xl font-semibold text-gray-900">User Management</h1>
+        <nav class="flex items-center space-x-2 text-sm text-gray-500 mt-1">
+          <a href="{% url 'admin_dashboard' %}" class="text-blue-600 hover:text-blue-800">Dashboard</a>
+          <i class="fas fa-chevron-right text-xs"></i>
+          <span>User Management</span>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Content -->
+  <main class="flex-1 p-6">
+    <!-- Search Form -->
+    <form method="get" class="mb-6">
+      <div class="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-3">
+        <input type="text" name="search" value="{{ search_query }}"
+               placeholder="Search by username, email, or name..."
+               class="w-full md:w-80 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 w-full md:w-auto">
+          <i class="fas fa-search mr-2"></i>Search
+        </button>
+        {% if search_query %}
+          <a href="{% url 'user-management' %}" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 w-full md:w-auto">
+            <i class="fas fa-times mr-2"></i>Clear
+          </a>
+        {% endif %}
+      </div>
+    </form>
+
+    <!-- Users Table -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
+      <table class="w-full">
+        <thead class="table-header">
+          <tr>
+            <th class="px-6 py-4 text-left text-sm font-medium text-gray-700">S.NO</th>
+            <th class="px-6 py-4 text-left text-sm font-medium text-gray-700"></th>
+            <th class="px-6 py-4 text-left text-sm font-medium text-gray-700">EMAIL</th>
+            <th class="px-6 py-4 text-left text-sm font-medium text-gray-700">NAME</th>
+            <th class="px-6 py-4 text-left text-sm font-medium text-gray-700"></th>
+            <th class="px-6 py-4 text-left text-sm font-medium text-gray-700">STATUS</th>
+            <th class="px-6 py-4 text-left text-sm font-medium text-gray-700">ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+            <tr class="{% if user.is_blocked %}blocked-user{% endif %}">
+              <td class="px-6 py-4 text-sm">{{ forloop.counter }}</td>
+              <td class="px-6 py-4 text-sm font-medium">{{ user.username }}</td>
+              <td class="px-6 py-4 text-sm">{{ user.email }}</td>
+              <td class="px-6 py-4 text-sm">{{ user.first_name }} {{ user.last_name }}</td>
+              <td class="px-6 py-4 text-sm">{{ user.date_joined|date:"d M Y" }}</td>
+              <td class="px-6 py-4">
+                {% if user.is_blocked %}
+                  <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
+                    <i class="fas fa-ban mr-1"></i>Blocked
+                  </span>
+                {% else %}
+                  <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                    <i class="fas fa-check mr-1"></i>Active
+                  </span>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4">
+                {% if user.is_blocked %}
+                  <button onclick="confirmUnblock({{ user.id }}, '{{ user.username }}')"
+                          class="action-btn px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">
+                    <i class="fas fa-unlock mr-1"></i>Unblock
+                  </button>
+                {% else %}
+                  <button onclick="confirmBlock({{ user.id }}, '{{ user.username }}')"
+                          class="action-btn px-3 py-1 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700">
+                    <i class="fas fa-ban mr-1"></i>Block
+                  </button>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" class="px-6 py-12 text-center">
+                <div class="flex flex-col items-center space-y-3">
+                  <i class="fas fa-users text-gray-300 text-4xl"></i>
+                  <p class="text-gray-500 text-sm">No users found</p>
+                  {% if search_query %}
+                    <p class="text-gray-400 text-xs">Try adjusting your search criteria</p>
+                  {% endif %}
                 </div>
-            </div>
-
-            <!-- Menu -->
-            <div class="p-4">
-                <p class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">MENU</p>
-                <nav class="space-y-2">
-                    <a href="{% url 'admin_dashboard' %}" class="sidebar-item flex items-center space-x-3 px-3 py-2 text-gray-600">
-                        <i class="fas fa-th-large w-4"></i>
-                        <span class="text-sm">Dashboard</span>
-                    </a>
-                    <a href="{% url 'product-list' %}" class="sidebar-item flex items-center space-x-3 px-3 py-2 text-gray-600">
-                        <i class="fas fa-box w-4"></i>
-                        <span class="text-sm">Products</span>
-                    </a>
-                    <a href="{% url 'category-list' %}" class="sidebar-item flex items-center space-x-3 px-3 py-2 text-gray-600">
-                        <i class="fas fa-tags w-4"></i>
-                        <span class="text-sm">Category</span>
-                    </a>
-                    <a href="{% url 'user-management' %}" class="sidebar-item active flex items-center space-x-3 px-3 py-2">
-                        <i class="fas fa-users w-4"></i>
-                        <span class="text-sm">User Management</span>
-                    </a>
-                    <a href="{% url 'customer-list' %}" class="sidebar-item flex items-center space-x-3 px-3 py-2 text-gray-600">
-                        <i class="fas fa-users w-4"></i>
-                        <span class="text-sm">Customers</span>
-                    </a>
-                    <a href="{% url 'logout' %}" class="sidebar-item flex items-center space-x-3 px-3 py-2 text-gray-600">
-                        <i class="fas fa-sign-out-alt w-4"></i>
-                        <span class="text-sm">Logout</span>
-                    </a>
-                </nav>
-            </div>
-        </div>
-
-        <!-- Main Content -->
-        <div class="flex-1 flex flex-col">
-            <!-- Header -->
-            <header class="bg-white border-b border-gray-200 px-6 py-4">
-                <div class="flex flex-col md:flex-row items-start md:items-center justify-between">
-                    <div class="mb-4 md:mb-0">
-                        <h1 class="text-2xl font-semibold text-gray-900">User Management</h1>
-                        <nav class="flex items-center space-x-2 text-sm text-gray-500 mt-1">
-                            <a href="{% url 'admin_dashboard' %}" class="text-blue-600 hover:text-blue-800">Dashboard</a>
-                            <i class="fas fa-chevron-right text-xs"></i>
-                            <span>User Management</span>
-                        </nav>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Page Content -->
-            <main class="flex-1 p-6">
-                <!-- Search Form (Backend Implementation) -->
-                <form method="get" class="mb-6">
-                    <div class="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-3">
-                        <input type="text" name="search" value="{{ search_query }}" 
-                               placeholder="Search by username, email, or name..." 
-                               class="w-full md:w-80 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 w-full md:w-auto">
-                            <i class="fas fa-search mr-2"></i>Search
-                        </button>
-                        {% if search_query %}
-                            <a href="{% url 'user-management' %}" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 w-full md:w-auto">
-                                <i class="fas fa-times mr-2"></i>Clear
-                            </a>
-                        {% endif %}
-                    </div>
-                </form>
-
-                <!-- Users Table (Sorted in Descending Order) -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="table-header">
-                            <tr>
-                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-700">S.NO</th>
-                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-700">USERNAME</th>
-                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-700">EMAIL</th>
-                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-700">NAME</th>
-                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-700">JOIN DATE</th>
-                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-700">STATUS</th>
-                                <th class="px-6 py-4 text-left text-sm font-medium text-gray-700">ACTIONS</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for user in users %}
-                                <tr class="{% if user.is_blocked %}blocked-user{% endif %}">
-                                    <td class="px-6 py-4 text-sm">{{ forloop.counter }}</td>
-                                    <td class="px-6 py-4 text-sm font-medium">{{ user.username }}</td>
-                                    <td class="px-6 py-4 text-sm">{{ user.email }}</td>
-                                    <td class="px-6 py-4 text-sm">{{ user.first_name }} {{ user.last_name }}</td>
-                                    <td class="px-6 py-4 text-sm">{{ user.date_joined|date:"d M Y" }}</td>
-                                    <td class="px-6 py-4">
-                                        {% if user.is_blocked %}
-                                            <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
-                                                <i class="fas fa-ban mr-1"></i>Blocked
-                                            </span>
-                                        {% else %}
-                                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                                                <i class="fas fa-check mr-1"></i>Active
-                                            </span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        {% if user.is_blocked %}
-                                            <button onclick="confirmUnblock({{ user.id }}, '{{ user.username }}')" 
-                                                    class="action-btn px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">
-                                                <i class="fas fa-unlock mr-1"></i>Unblock
-                                            </button>
-                                        {% else %}
-                                            <button onclick="confirmBlock({{ user.id }}, '{{ user.username }}')" 
-                                                    class="action-btn px-3 py-1 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700">
-                                                <i class="fas fa-ban mr-1"></i>Block
-                                            </button>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                            {% empty %}
-                                <tr>
-                                    <td colspan="7" class="px-6 py-12 text-center">
-                                        <div class="flex flex-col items-center space-y-3">
-                                            <i class="fas fa-users text-gray-300 text-4xl"></i>
-                                            <p class="text-gray-500 text-sm">No users found</p>
-                                            {% if search_query %}
-                                                <p class="text-gray-400 text-xs">Try adjusting your search criteria</p>
-                                            {% endif %}
-                                        </div>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Pagination (Backend Implementation) -->
-                <div class="mt-6 flex justify-center items-center space-x-2">
-                    {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" 
-                           class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100">
-                           <i class="fas fa-chevron-left mr-1"></i>Previous
-                        </a>
-                    {% endif %}
-                    
-                    <span class="px-4 py-2 text-sm text-gray-700">
-                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-                    </span>
-                    
-                    {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" 
-                           class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100">
-                           Next<i class="fas fa-chevron-right ml-1"></i>
-                        </a>
-                    {% endif %}
-                </div>
-            </main>
-        </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
 
-    <!-- JavaScript with Confirmation Dialogs -->
-    <script>
-        function confirmBlock(userId, username) {
-            if (confirm(`⚠️ BLOCK USER CONFIRMATION\n\nAre you sure you want to BLOCK user "${username}"?\n\nThis action will:\n• Prevent the user from accessing the system\n• Block all user activities\n\nClick OK to confirm or Cancel to abort.`)) {
-                fetch(`/staff/block-user/${userId}/`, {
-                    method: 'POST',
-                    headers: {'X-CSRFToken': '{{ csrf_token }}'}
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('✅ ' + data.message);
-                        location.reload();
-                    } else {
-                        alert('❌ Error: ' + data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('❌ Network error occurred');
-                });
-            }
-        }
+    <!-- Pagination -->
+    <div class="mt-6 flex justify-center items-center space-x-2">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
+           class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100">
+           <i class="fas fa-chevron-left mr-1"></i>Previous
+        </a>
+      {% endif %}
 
-        function confirmUnblock(userId, username) {
-            if (confirm(`✅ UNBLOCK USER CONFIRMATION\n\nAre you sure you want to UNBLOCK user "${username}"?\n\nThis action will:\n• Restore user access to the system\n• Allow user to login and use all features\n\nClick OK to confirm or Cancel to abort.`)) {
-                fetch(`/staff/unblock-user/${userId}/`, {
-                    method: 'POST',
-                    headers: {'X-CSRFToken': '{{ csrf_token }}'}
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('✅ ' + data.message);
-                        location.reload();
-                    } else {
-                        alert('❌ Error: ' + data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('❌ Network error occurred');
-                });
-            }
-        }
-    </script>
-</body>
-</html>
+      <span class="px-4 py-2 text-sm text-gray-700">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+      </span>
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
+           class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100">
+           Next<i class="fas fa-chevron-right ml-1"></i>
+        </a>
+      {% endif %}
+    </div>
+  </main>
+
+  <!-- Toast container (auto-created if missing by JS, but added here for consistency) -->
+  <div id="toast-container" style="position:fixed; top:16px; right:16px; z-index:9999; display:flex; flex-direction:column; gap:8px;"></div>
+
+  <!-- Confirm dialog overlay -->
+  <div id="confirm-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.35); display:none; align-items:center; justify-content:center; z-index:9998;">
+    <div style="background:#fff; width:360px; max-width:92vw; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.15); overflow:hidden;">
+      <div style="padding:16px 20px; border-bottom:1px solid #e5e7eb;">
+        <h3 style="margin:0; font-size:16px; font-weight:700; color:#1a202c;">Confirm action</h3>
+      </div>
+      <div id="confirm-message" style="padding:16px 20px; color:#374151; font-size:14px;">
+        Are you sure?
+      </div>
+      <div style="display:flex; gap:8px; justify-content:flex-end; padding:12px 16px; background:#fafbfc; border-top:1px solid #e5e7eb;">
+        <button id="confirm-cancel" type="button" class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">Cancel</button>
+        <button id="confirm-ok" type="button" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">Yes</button>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+// Toast helper
+function showToast(message, type='info', timeout=3000) {
+  const id = 'toast-container';
+  let container = document.getElementById(id);
+  if (!container) {
+    container = document.createElement('div');
+    container.id = id;
+    container.style.position = 'fixed';
+    container.style.top = '16px';
+    container.style.right = '16px';
+    container.style.zIndex = '9999';
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.gap = '8px';
+    document.body.appendChild(container);
+  }
+
+  const el = document.createElement('div');
+  el.style.padding = '10px 12px';
+  el.style.borderRadius = '8px';
+  el.style.fontSize = '13px';
+  el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.12)';
+  el.style.border = '1px solid';
+  el.style.display = 'flex';
+  el.style.alignItems = 'center';
+  el.style.gap = '8px';
+  el.style.transition = 'transform .2s ease, opacity .2s ease';
+  el.style.transform = 'translateY(-6px)';
+  el.style.opacity = '0';
+
+  const types = {
+    success: { b:'#bbf7d0', bg:'#dcfce7', c:'#166534', icon:'fa-check-circle' },
+    error:   { b:'#fecaca', bg:'#fef2f2', c:'#b91c1c', icon:'fa-times-circle' },
+    info:    { b:'#dbeafe', bg:'#eff6ff', c:'#1d4ed8', icon:'fa-info-circle' },
+    warning: { b:'#fed7aa', bg:'#fef3c7', c:'#92400e', icon:'fa-exclamation-triangle' },
+  };
+  const t = types[type] || types.info;
+  el.style.borderColor = t.b;
+  el.style.background = t.bg;
+  el.style.color = t.c;
+
+  const icon = document.createElement('i');
+  icon.className = `fas ${t.icon}`;
+  icon.style.minWidth = '16px';
+
+  const text = document.createElement('div');
+  text.textContent = message;
+
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.innerHTML = '<i class="fas fa-times"></i>';
+  close.style.border = 'none';
+  close.style.background = 'transparent';
+  close.style.cursor = 'pointer';
+  close.style.color = t.c;
+
+  close.onclick = () => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(-6px)';
+    setTimeout(() => el.remove(), 200);
+  };
+
+  el.appendChild(icon);
+  el.appendChild(text);
+  el.appendChild(close);
+  container.appendChild(el);
+
+  requestAnimationFrame(() => {
+    el.style.opacity = '1';
+    el.style.transform = 'translateY(0)';
+  });
+
+  if (timeout) setTimeout(() => close.onclick(), timeout);
+}
+
+// Confirm dialog helper
+function confirmDialog(message) {
+  let overlay = document.getElementById('confirm-overlay');
+  if (!overlay) {
+    // If overlay is not in DOM (should be from body), build it dynamically
+    overlay = document.createElement('div');
+    overlay.id = 'confirm-overlay';
+    overlay.style.position = 'fixed';
+    overlay.style.inset = '0';
+    overlay.style.background = 'rgba(0,0,0,0.35)';
+    overlay.style.display = 'none';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.zIndex = '9998';
+
+    const box = document.createElement('div');
+    box.style.background = '#fff';
+    box.style.width = '360px';
+    box.style.maxWidth = '92vw';
+    box.style.border = '1px solid #e5e7eb';
+    box.style.borderRadius = '12px';
+    box.style.boxShadow = '0 10px 30px rgba(0,0,0,0.15)';
+    box.style.overflow = 'hidden';
+
+    const head = document.createElement('div');
+    head.style.padding = '16px 20px';
+    head.style.borderBottom = '1px solid #e5e7eb';
+    head.innerHTML = '<h3 style="margin:0; font-size:16px; font-weight:700; color:#1a202c;">Confirm action</h3>';
+
+    const body = document.createElement('div');
+    body.id = 'confirm-message';
+    body.style.padding = '16px 20px';
+    body.style.color = '#374151';
+    body.style.fontSize = '14px';
+
+    const foot = document.createElement('div');
+    foot.style.display = 'flex';
+    foot.style.gap = '8px';
+    foot.style.justifyContent = 'flex-end';
+    foot.style.padding = '12px 16px';
+    foot.style.background = '#fafbfc';
+    foot.style.borderTop = '1px solid #e5e7eb';
+
+    const cancel = document.createElement('button');
+    cancel.id = 'confirm-cancel';
+    cancel.type = 'button';
+    cancel.className = 'px-3 py-1 border border-gray-300 rounded hover:bg-gray-50';
+    cancel.textContent = 'Cancel';
+
+    const ok = document.createElement('button');
+    ok.id = 'confirm-ok';
+    ok.type = 'button';
+    ok.className = 'px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700';
+    ok.textContent = 'Yes';
+
+    foot.appendChild(cancel);
+    foot.appendChild(ok);
+    box.appendChild(head);
+    box.appendChild(body);
+    box.appendChild(foot);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  }
+
+  return new Promise((resolve) => {
+    const msg = document.getElementById('confirm-message');
+    const ok = document.getElementById('confirm-ok');
+    const cancel = document.getElementById('confirm-cancel');
+
+    msg.textContent = message;
+    overlay.style.display = 'flex';
+
+    const cleanup = () => {
+      overlay.style.display = 'none';
+      ok.onclick = null;
+      cancel.onclick = null;
+      overlay.onclick = null;
+    };
+
+    ok.onclick = () => { cleanup(); resolve(true); };
+    cancel.onclick = () => { cleanup(); resolve(false); };
+    overlay.onclick = (e) => {
+      if (e.target === overlay) { cleanup(); resolve(false); }
+    };
+  });
+}
+
+// Replace only confirm/alert in existing handlers
+async function confirmBlock(userId, username) {
+  const confirmed = await confirmDialog(
+    `⚠️ BLOCK USER CONFIRMATION\n\nAre you sure you want to BLOCK user "${username}"?\n\nThis action will:\n• Prevent the user from accessing the system\n• Block all user activities\n\nClick Yes to confirm or Cancel to abort.`
+  );
+  if (!confirmed) return;
+
+  showToast(`Blocking ${username}...`, 'info', 1500);
+  fetch(`/staff/block-user/${userId}/`, { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' } })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        showToast('✅ ' + (data.message || 'User blocked successfully'), 'success');
+        setTimeout(() => location.reload(), 700);
+      } else {
+        showToast('❌ Error: ' + (data.error || 'Block failed'), 'error');
+      }
+    })
+    .catch(() => showToast('❌ Network error occurred', 'error'));
+}
+
+async function confirmUnblock(userId, username) {
+  const confirmed = await confirmDialog(
+    `✅ UNBLOCK USER CONFIRMATION\n\nAre you sure you want to UNBLOCK user "${username}"?\n\nThis action will:\n• Restore user access to the system\n• Allow user to login and use all features\n\nClick Yes to confirm or Cancel to abort.`
+  );
+  if (!confirmed) return;
+
+  showToast(`Unblocking ${username}...`, 'info', 1500);
+  fetch(`/staff/unblock-user/${userId}/`, { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' } })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        showToast('✅ ' + (data.message || 'User unblocked successfully'), 'success');
+        setTimeout(() => location.reload(), 700);
+      } else {
+        showToast('❌ Error: ' + (data.error || 'Unblock failed'), 'error');
+      }
+    })
+    .catch(() => showToast('❌ Network error occurred', 'error'));
+}
+</script>
+{% endblock %}

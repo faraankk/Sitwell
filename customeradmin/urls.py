@@ -13,7 +13,7 @@ urlpatterns = [
     path('products/restore/<int:product_id>/', views.restore_product, name='restore-product'),
     path('products/deleted/', views.deleted_products_view, name='deleted-products'),
     path('customers/', views.customer_view, name='customer-list'),
-    path('logout/', views.custom_logout, name='logout'),
+    path('logout/', views.custom_logout, name='admin_logout'),
     path('categories/', views.category_view, name='category-list'),
     path('categories/add/', views.add_category, name='add-category'),
     path('categories/edit/<int:category_id>/', views.edit_category, name='edit-category'),
@@ -26,4 +26,6 @@ urlpatterns = [
     path('user-management/', views.user_management_view, name='user-management'),
     path('block-user/<int:user_id>/', views.block_user, name='block-user'),
     path('unblock-user/<int:user_id>/', views.unblock_user, name='unblock-user'),
+
+    
 ]

@@ -153,12 +153,12 @@
                                 </div>
                             </div>
 
-                            <!-- Multiple Images Upload -->
+                            <!-- FIXED: Multiple Images Upload Section -->
                             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
                                 <h2 class="text-lg font-semibold text-gray-900 mb-4">Product Images</h2>
                                 <p class="text-sm text-gray-600 mb-4">Upload 3-6 high-quality images (JPG, PNG, GIF, WebP - Max 5MB each)</p>
                                 
-                                <!-- File Upload Area -->
+                                <!-- Simplified File Upload Area -->
                                 <div class="file-upload-area rounded-lg p-8 text-center cursor-pointer mb-4" id="upload-area">
                                     <div class="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-4">
                                         <i class="fas fa-cloud-upload-alt text-2xl"></i>
@@ -168,7 +168,8 @@
                                     <button type="button" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" onclick="document.getElementById('images-input').click()">
                                         Select Images
                                     </button>
-                                    <input type="file" id="images-input" name="images" accept="image/*" multiple class="hidden" required>
+                                    <!-- FIXED: Removed class="hidden" and made it visible for better debugging -->
+                                    <input type="file" id="images-input" name="images" accept="image/*" multiple style="position: absolute; left: -9999px; opacity: 0;">
                                 </div>
                                 
                                 <!-- Image Preview Area -->
@@ -259,10 +260,11 @@
         </div>
     </div>
 
+    <!-- FIXED: Completely Rewritten JavaScript -->
     <script>
-        let selectedFiles = [];
-        const maxFiles = 6;
         const minFiles = 3;
+        const maxFiles = 6;
+        let selectedFiles = [];
 
         const imagesInput = document.getElementById('images-input');
         const uploadArea = document.getElementById('upload-area');
@@ -274,35 +276,51 @@
 
         // File input change handler
         imagesInput.addEventListener('change', function(e) {
+            console.log('File input changed, files count:', e.target.files.length);
             handleFiles(e.target.files);
         });
 
         // Drag and drop handlers
-        uploadArea.addEventListener('click', () => imagesInput.click());
+        uploadArea.addEventListener('click', () => {
+            console.log('Upload area clicked');
+            imagesInput.click();
+        });
+
         uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             uploadArea.classList.add('dragover');
         });
+
         uploadArea.addEventListener('dragleave', () => {
             uploadArea.classList.remove('dragover');
         });
+
         uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadArea.classList.remove('dragover');
+            console.log('Files dropped:', e.dataTransfer.files.length);
             handleFiles(e.dataTransfer.files);
         });
 
         function handleFiles(files) {
             const fileArray = Array.from(files);
+            console.log('Handling files:', fileArray.length);
+            
+            // Reset previous state
+            selectedFiles = [];
             
             // Validate file count
             if (fileArray.length < minFiles) {
                 showValidationMessage(`Please select at least ${minFiles} images.`, 'error');
+                updateSubmitButton(false);
+                hidePreview();
                 return;
             }
             
             if (fileArray.length > maxFiles) {
                 showValidationMessage(`Maximum ${maxFiles} images allowed.`, 'error');
+                updateSubmitButton(false);
+                hidePreview();
                 return;
             }
 
@@ -313,25 +331,41 @@
             for (let file of fileArray) {
                 if (!validTypes.includes(file.type)) {
                     showValidationMessage(`Invalid file type: ${file.name}. Please use JPG, PNG, GIF, or WebP.`, 'error');
+                    updateSubmitButton(false);
+                    hidePreview();
                     return;
                 }
                 if (file.size > maxSize) {
                     showValidationMessage(`File too large: ${file.name}. Maximum size is 5MB.`, 'error');
+                    updateSubmitButton(false);
+                    hidePreview();
                     return;
                 }
             }
 
+            // All validations passed
             selectedFiles = fileArray;
             updateFileInput();
             displayPreviews();
-            validateForm();
+            updateSubmitButton(true);
             showValidationMessage(`${fileArray.length} images selected successfully!`, 'success');
         }
 
         function updateFileInput() {
+            // Create new DataTransfer object
             const dt = new DataTransfer();
-            selectedFiles.forEach(file => dt.items.add(file));
+            
+            // Add each file to DataTransfer
+            selectedFiles.forEach(file => {
+                dt.items.add(file);
+            });
+            
+            // Update the input's files
             imagesInput.files = dt.files;
+            
+            // Debug logging
+            console.log('Updated input files count:', imagesInput.files.length);
+            console.log('Selected files array count:', selectedFiles.length);
         }
 
         function displayPreviews() {
@@ -344,7 +378,7 @@
                     const div = document.createElement('div');
                     div.className = 'relative group bg-gray-100 rounded-lg overflow-hidden';
                     div.innerHTML = `
-                        <img src="${e.target.result}" class="w-full h-32 object-cover">
+                        <img src="${e.target.result}" class="w-full h-32 object-cover" alt="Preview ${index + 1}">
                         <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <button type="button" onclick="removeImage(${index})" class="bg-red-600 text-white p-2 rounded-full hover:bg-red-700">
                                 <i class="fas fa-trash text-sm"></i>
@@ -365,25 +399,37 @@
             imageCount.textContent = selectedFiles.length;
         }
 
+        function hidePreview() {
+            previewContainer.classList.add('hidden');
+            previewGrid.innerHTML = '';
+            imageCount.textContent = '0';
+        }
+
         function removeImage(index) {
+            console.log('Removing image at index:', index);
             selectedFiles.splice(index, 1);
             updateFileInput();
             
             if (selectedFiles.length === 0) {
-                previewContainer.classList.add('hidden');
-                imagesInput.value = '';
+                hidePreview();
+                updateSubmitButton(false);
             } else {
                 displayPreviews();
+                updateSubmitButton(selectedFiles.length >= minFiles && selectedFiles.length <= maxFiles);
             }
             
-            validateForm();
+            // Update validation message
+            if (selectedFiles.length < minFiles && selectedFiles.length > 0) {
+                showValidationMessage(`Please select at least ${minFiles} images. You have ${selectedFiles.length}.`, 'error');
+            } else if (selectedFiles.length === 0) {
+                showValidationMessage('No images selected.', 'error');
+            }
         }
 
-        function validateForm() {
-            const isValid = selectedFiles.length >= minFiles && selectedFiles.length <= maxFiles;
-            submitBtn.disabled = !isValid;
+        function updateSubmitButton(enable) {
+            submitBtn.disabled = !enable;
             
-            if (isValid) {
+            if (enable) {
                 submitBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
                 submitBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
             } else {
@@ -404,14 +450,31 @@
             }
         }
 
-        // Form submission validation
+        // Enhanced form submission validation
         document.getElementById('product-form').addEventListener('submit', function(e) {
-            if (selectedFiles.length < minFiles) {
+            console.log('=== FORM SUBMISSION ===');
+            console.log('Selected files array:', selectedFiles.length);
+            console.log('Input files:', imagesInput.files.length);
+            
+            // Check both arrays for safety
+            if (selectedFiles.length < minFiles || imagesInput.files.length < minFiles) {
                 e.preventDefault();
                 showValidationMessage(`Please upload at least ${minFiles} images before submitting.`, 'error');
+                console.log('Form submission prevented - insufficient images');
                 return false;
             }
+            
+            // Log files being submitted for debugging
+            console.log('Submitting form with files:');
+            for (let i = 0; i < imagesInput.files.length; i++) {
+                console.log(`- ${imagesInput.files[i].name} (${imagesInput.files[i].size} bytes)`);
+            }
+            
+            console.log('Form submission allowed');
         });
+
+        // Initialize submit button state
+        updateSubmitButton(false);
     </script>
 </body>
 </html>

@@ -6,22 +6,36 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 import sys
 from django.contrib.auth.models import AbstractUser
 
+
 class SoftDeleteManager(models.Manager):
     """Manager that excludes soft-deleted objects by default"""
     def get_queryset(self):
         return super().get_queryset().filter(is_deleted=False)
+
 
 class AllObjectsManager(models.Manager):
     """Manager that includes all objects, even soft-deleted ones"""
     def get_queryset(self):
         return super().get_queryset()
 
+
+class CustomerVisibleManager(SoftDeleteManager):
+    """Manager for customer-visible products only"""
+    def get_queryset(self):
+        return super().get_queryset().filter(
+            is_blocked=False,
+            status='published'
+        )
+
+
 class Product(models.Model):
+    # UPDATED STATUS CHOICES - Added 'blocked'
     STATUS_CHOICES = [
         ('published', 'Published'),
         ('draft', 'Draft'),
         ('out-of-stock', 'Out of Stock'),
         ('low-stock', 'Low Stock'),
+        ('blocked', 'Blocked'),  # NEW: Added blocked status
     ]
     
     CATEGORY_CHOICES = [
@@ -72,18 +86,24 @@ class Product(models.Model):
     # Media
     image = models.ImageField(upload_to='products/', blank=True, null=True)
     
-    # Soft Delete Fields - NEW FIELDS
+    # Soft Delete Fields
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
     deleted_by = models.CharField(max_length=100, null=True, blank=True)
+    
+    # NEW: Product Blocking Fields
+    is_blocked = models.BooleanField(default=False, help_text="Block the product from customer view")
+    blocked_at = models.DateTimeField(null=True, blank=True, help_text="When was product blocked")
+    blocked_by = models.CharField(max_length=100, blank=True, null=True, help_text="Who blocked the product")
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    # Custom Managers - NEW MANAGERS
+    # UPDATED Custom Managers - Added customer visible manager
     objects = SoftDeleteManager()  # Default manager excludes deleted items
     all_objects = AllObjectsManager()  # Manager that includes deleted items
+    customer_visible = CustomerVisibleManager()  # NEW: Manager for customer-visible products only
     
     class Meta:
         indexes = [
@@ -91,14 +111,16 @@ class Product(models.Model):
             models.Index(fields=['created_at']),
             models.Index(fields=['sku']),
             models.Index(fields=['name']),
-            models.Index(fields=['is_deleted']),  # NEW INDEX
+            models.Index(fields=['is_deleted']),
+            models.Index(fields=['is_blocked']),  # NEW: Index for blocking queries
+            models.Index(fields=['is_blocked', 'status']),  # NEW: Composite index for customer queries
         ]
         ordering = ['-created_at']
     
     def __str__(self):
         return self.name
     
-    # NEW SOFT DELETE METHODS
+    # EXISTING Soft Delete Methods
     def soft_delete(self, deleted_by=None):
         """Soft delete the product"""
         from django.utils import timezone
@@ -117,8 +139,60 @@ class Product(models.Model):
     def hard_delete(self):
         """Permanently delete the product"""
         super().delete()
-
-    # EXISTING METHODS (keep these as they are)
+    
+    # NEW: Product Blocking Methods
+    def block_product(self, blocked_by=None):
+        """Block the product from customer view"""
+        from django.utils import timezone
+        self.is_blocked = True
+        self.blocked_at = timezone.now()
+        self.blocked_by = blocked_by or 'Admin'
+        # Update status to blocked
+        self.status = 'blocked'
+        self.save(update_fields=['is_blocked', 'blocked_at', 'blocked_by', 'status'])
+    
+    def unblock_product(self):
+        """Unblock the product and restore appropriate status"""
+        self.is_blocked = False
+        self.blocked_at = None
+        self.blocked_by = None
+        
+        # Restore appropriate status based on stock
+        if self.status == 'blocked':
+            if self.stock_quantity <= 0:
+                self.status = 'out-of-stock'
+            elif self.is_low_stock():
+                self.status = 'low-stock'
+            else:
+                self.status = 'published'
+        
+        self.save(update_fields=['is_blocked', 'blocked_at', 'blocked_by', 'status'])
+    
+    def is_visible_to_customers(self):
+        """Check if product should be visible to customers"""
+        return (
+            not self.is_deleted and 
+            not self.is_blocked and 
+            self.status in ['published', 'out-of-stock', 'low-stock']
+        )
+    
+    def is_available_for_purchase(self):
+        """Check if product is available for customer purchase"""
+        return (
+            not self.is_deleted and 
+            not self.is_blocked and 
+            self.status == 'published' and 
+            self.stock_quantity > 0
+        )
+    
+    def get_status_display_admin(self):
+        """Get status display for admin with blocking indicator"""
+        status_display = self.get_status_display()
+        if self.is_blocked:
+            return f"🚫 {status_display}"
+        return status_display
+    
+    # EXISTING Methods (unchanged)
     def get_main_image(self):
         """Get the primary image or first available image"""
         primary_images = self.images.filter(is_primary=True)
@@ -127,7 +201,7 @@ class Product(models.Model):
         elif self.images.exists():
             return self.images.first()
         return None
-
+    
     def get_main_image_url(self):
         """Get the URL of the main image"""
         main_image = self.get_main_image()
@@ -159,6 +233,29 @@ class Product(models.Model):
     def is_low_stock(self):
         """Check if product is low on stock"""
         return self.stock_quantity <= self.low_stock_threshold
+    
+    # NEW: Override save method for auto status updates
+    def save(self, *args, **kwargs):
+        """Override save to auto-update status based on stock quantity and other conditions"""
+        
+        # First, handle stock-based status changes
+        if hasattr(self, 'stock_quantity') and self.stock_quantity is not None:
+            # Don't change status if product is blocked or soft-deleted
+            if not self.is_blocked and not self.is_deleted:
+                if self.stock_quantity == 0:
+                    # Set to out-of-stock when quantity is 0
+                    self.status = 'out-of-stock'
+                elif self.stock_quantity <= self.low_stock_threshold:
+                    # Set to low-stock when below threshold (but not zero)
+                    if self.status == 'out-of-stock':  # Only change if coming from out-of-stock
+                        self.status = 'low-stock'
+                elif self.status in ['out-of-stock', 'low-stock'] and self.stock_quantity > self.low_stock_threshold:
+                    # Restore to published when stock is replenished above threshold
+                    self.status = 'published'
+        
+        # Call the parent save method
+        super().save(*args, **kwargs)
+
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
@@ -166,16 +263,16 @@ class ProductImage(models.Model):
     is_primary = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    
     class Meta:
         ordering = ['order', 'created_at']
-
+    
     def save(self, *args, **kwargs):
         """Resize image before saving"""
         if self.image:
             self.image = self.resize_image(self.image, 800, 600)
         super().save(*args, **kwargs)
-
+    
     def resize_image(self, image_file, max_width, max_height):
         """Resize image to specified dimensions"""
         img = PILImage.open(image_file)
@@ -198,16 +295,17 @@ class ProductImage(models.Model):
             'image/jpeg',
             sys.getsizeof(output), None
         )
-
+    
     def __str__(self):
         return f"{self.product.name} - Image {self.order + 1}"
-    
+
 
 class Category(models.Model):
     name = models.CharField(max_length=200, unique=True)
     description = models.TextField(blank=True)
     thumbnail = models.ImageField(upload_to='categories/', blank=True, null=True)
     is_listed = models.BooleanField(default=True)
+    
     # Soft Delete Fields
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
@@ -228,6 +326,7 @@ class Category(models.Model):
             models.Index(fields=['is_deleted']),
         ]
         ordering = ['-created_at']  # Default descending by created_at
+        verbose_name_plural = "Categories"
     
     def __str__(self):
         return self.name
@@ -246,4 +345,3 @@ class Category(models.Model):
         self.deleted_at = None
         self.deleted_by = None
         self.save()
-

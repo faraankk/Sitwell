@@ -1,422 +1,462 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Categories - Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .sidebar-item {
-            transition: all 0.2s ease;
-        }
-        .sidebar-item:hover {
-            background-color: #f8fafc;
-            border-radius: 8px;
-        }
-        .sidebar-item.active {
-            background-color: #3b82f6;
-            color: white;
-            border-radius: 8px;
-        }
-        .table-header {
-            background-color: #f8fafc;
-        }
-        .action-btn {
-            transition: all 0.2s ease;
-        }
-        .action-btn:hover {
-            transform: scale(1.1);
-        }
-        /* Modal toggle switch styles */
-        .toggle-switch {
-            position: relative;
-            width: 50px;
-            height: 24px;
-            background-color: #d1d5db;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-        .toggle-switch.active {
-            background-color: #10b981;
-        }
-        .toggle-slider {
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            width: 20px;
-            height: 20px;
-            background-color: white;
-            border-radius: 50%;
-            transition: transform 0.2s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .toggle-switch.active .toggle-slider {
-            transform: translateX(26px);
-        }
-    </style>
-</head>
-<body class="bg-gray-50 font-sans">
-    <div class="flex min-h-screen flex-col md:flex-row">
-        <!-- Sidebar -->
-        <div class="w-full md:w-64 bg-white shadow-sm border-r border-gray-200 md:min-h-screen">
-            <!-- Logo -->
-            <div class="p-6 border-b border-gray-200">
-                <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
-                        <span class="text-white font-bold text-sm">SW</span>
-                    </div>
-                    <span class="font-semibold text-gray-900">sit well</span>
+{% extends "admin/base_admin.html" %}
+{% block title %}Categories - Dashboard{% endblock %}
+
+{% block body %}
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200 px-6 py-4">
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between">
+      <div class="mb-4 md:mb-0">
+        <h1 class="text-2xl font-semibold text-gray-900">Categories</h1>
+        <nav class="flex items-center space-x-2 text-sm text-gray-500 mt-1">
+          <a href="{% url 'admin_dashboard' %}" class="text-blue-600 hover:text-blue-800">Dashboard</a>
+          <i class="fas fa-chevron-right text-xs"></i>
+          <span>Categories</span>
+        </nav>
+      </div>
+      <div class="flex items-center space-x-3 w-full md:w-auto">
+        <button class="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors w-full md:w-auto justify-center">
+          <i class="fas fa-download"></i>
+          <span>Export</span>
+        </button>
+        <a href="{% url 'deleted-categories' %}" class="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors w-full md:w-auto justify-center">
+          <i class="fas fa-trash-alt"></i>
+          <span>View Deleted</span>
+        </a>
+        <button onclick="openCreateModal()" class="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-full md:w-auto justify-center">
+          <i class="fas fa-plus"></i>
+          <span>Create Category</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Content -->
+  <main class="flex-1 p-6">
+    <!-- Search Form -->
+    <form method="get" class="mb-6">
+      <div class="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-3">
+        <input type="text" name="search" value="{{ search_query }}" placeholder="Search by name or description..."
+               class="w-full md:w-80 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 w-full md:w-auto">Search</button>
+        {% if search_query %}
+          <a href="{% url 'category-list' %}?clear=1" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 w-full md:w-auto">Clear</a>
+        {% endif %}
+      </div>
+    </form>
+
+    <!-- Categories Table -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
+      <table class="w-full">
+        <thead class="table-header">
+          <tr>
+            <th class="px-6 py-4 text-left">S.NO</th>
+            <th class="px-6 py-4 text-left">CATEGORY NAME</th>
+            <th class="px-6 py-4 text-left">CREATED DATE</th>
+            <th class="px-6 py-4 text-left"></th>
+            <th class="px-6 py-4 text-left">ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for category in categories %}
+            <tr>
+              <td class="px-6 py-4">{{ forloop.counter }}</td>
+              <td class="px-6 py-4">{{ category.name }}</td>
+              <td class="px-6 py-4">{{ category.created_at|date:"d M Y" }}</td>
+              <td class="px-6 py-4">
+                <button class="toggle-switch {% if category.is_listed %}active{% endif %}" onclick="toggleListed({{ category.id }}, this)">
+                  <span class="toggle-slider"></span>
+                </button>
+              </td>
+              <td class="px-6 py-4">
+                <button onclick="openEditModal({{ category.id }}, '{{ category.name }}', {{ category.is_listed|yesno:'true,false' }})" class="action-btn text-blue-600 hover:text-blue-800 mr-2">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button onclick="softDeleteCategory({{ category.id }})" class="action-btn text-red-600 hover:text-red-800">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" class="px-6 py-12 text-center">
+                <div class="flex flex-col items-center space-y-3">
+                  <i class="fas fa-tags text-gray-300 text-4xl"></i>
+                  <p class="text-gray-500 text-sm">No categories found</p>
+                  <p class="text-gray-400 text-xs">Create your first category to get started</p>
                 </div>
-            </div>
-
-            <!-- Menu -->
-            <div class="p-4">
-                <p class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">MENU</p>
-                <nav class="space-y-2">
-                    <a href="{% url 'admin_dashboard' %}" class="sidebar-item flex items-center space-x-3 px-3 py-2 text-gray-600">
-                        <i class="fas fa-th-large w-4"></i>
-                        <span class="text-sm">Dashboard</span>
-                    </a>
-                    <a href="{% url 'product-list' %}" class="sidebar-item flex items-center space-x-3 px-3 py-2 text-gray-600">
-                        <i class="fas fa-box w-4"></i>
-                        <span class="text-sm">Products</span>
-                    </a>
-                    <a href="{% url 'category-list' %}" class="sidebar-item active flex items-center space-x-3 px-3 py-2">
-                        <i class="fas fa-tags w-4"></i>
-                        <span class="text-sm">Category</span>
-                    </a>
-                    <a href="{% url 'user-management' %}" class="sidebar-item flex items-center space-x-3 px-3 py-2 text-gray-600">
-                        <i class="fas fa-users-cog w-4"></i>
-                        <span class="text-sm">User Management</span>
-                    </a>
-                    <a href="#" class="sidebar-item flex items-center space-x-3 px-3 py-2 text-gray-600">
-                        <i class="fas fa-ticket-alt w-4"></i>
-                        <span class="text-sm">Coupon</span>
-                    </a>
-                    <a href="#" class="sidebar-item flex items-center space-x-3 px-3 py-2 text-gray-600">
-                        <i class="fas fa-flag w-4"></i>
-                        <span class="text-sm">Banner</span>
-                    </a>
-                    <a href="#" class="sidebar-item flex items-center space-x-3 px-3 py-2 text-gray-600">
-                        <i class="fas fa-credit-card w-4"></i>
-                        <span class="text-sm">Transaction</span>
-                    </a>
-                    <a href="{% url 'customer-list' %}" class="sidebar-item flex items-center space-x-3 px-3 py-2 text-gray-600">
-                        <i class="fas fa-users w-4"></i>
-                        <span class="text-sm">Customers</span>
-                    </a>
-                    <a href="{% url 'logout' %}" class="sidebar-item flex items-center space-x-3 px-3 py-2 text-gray-600">
-                        <i class="fas fa-sign-out-alt w-4"></i>
-                        <span class="text-sm">Logout</span>
-                    </a>
-                    <a href="#" class="sidebar-item flex items-center space-x-3 px-3 py-2 text-gray-600">
-                        <i class="fas fa-chart-bar w-4"></i>
-                        <span class="text-sm">Sales Report</span>
-                    </a>
-                </nav>
-            </div>
-        </div>
-
-        <!-- Main Content -->
-        <div class="flex-1 flex flex-col">
-            <!-- Header -->
-            <!-- Header -->
-            <header class="bg-white border-b border-gray-200 px-6 py-4">
-                <div class="flex flex-col md:flex-row items-start md:items-center justify-between">
-                    <div class="mb-4 md:mb-0">
-                        <h1 class="text-2xl font-semibold text-gray-900">Categories</h1>
-                        <nav class="flex items-center space-x-2 text-sm text-gray-500 mt-1">
-                            <a href="{% url 'admin_dashboard' %}" class="text-blue-600 hover:text-blue-800">Dashboard</a>
-                            <i class="fas fa-chevron-right text-xs"></i>
-                            <span>Categories</span>
-                        </nav>
-                    </div>
-                    <div class="flex items-center space-x-3 w-full md:w-auto">
-                        <button class="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors w-full md:w-auto justify-center">
-                            <i class="fas fa-download"></i>
-                            <span>Export</span>
-                        </button>
-                        <!-- VIEW DELETED BUTTON -->
-                        <a href="{% url 'deleted-categories' %}" class="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors w-full md:w-auto justify-center">
-                            <i class="fas fa-trash-alt"></i>
-                            <span>View Deleted</span>
-                        </a>
-                        <button onclick="openCreateModal()" class="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-full md:w-auto justify-center">
-                            <i class="fas fa-plus"></i>
-                            <span>Create Category</span>
-                        </button>
-                    </div>
-                </div>
-            </header>
-
-
-            <!-- Page Content -->
-            <main class="flex-1 p-6">
-                <!-- Search Form -->
-                <form method="get" class="mb-6">
-                    <div class="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-3">
-                        <input type="text" name="search" value="{{ search_query }}" placeholder="Search by name or description..." class="w-full md:w-80 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 w-full md:w-auto">Search</button>
-                        {% if search_query %}
-                            <a href="{% url 'category-list' %}?clear=1" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 w-full md:w-auto">Clear</a>
-                        {% endif %}
-                    </div>
-                </form>
-
-                <!-- Categories Table -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="table-header">
-                            <tr>
-                                <th class="px-6 py-4 text-left">S.NO</th>
-                                <th class="px-6 py-4 text-left">CATEGORY NAME</th>
-                                <th class="px-6 py-4 text-left">CREATED DATE</th>
-                                <th class="px-6 py-4 text-left">LIST / UNLIST</th>
-                                <th class="px-6 py-4 text-left">ACTIONS</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for category in categories %}
-                                <tr>
-                                    <td class="px-6 py-4">{{ forloop.counter }}</td>
-                                    <td class="px-6 py-4">{{ category.name }}</td>
-                                    <td class="px-6 py-4">{{ category.created_at|date:"d M Y" }}</td>
-                                    <td class="px-6 py-4">
-                                        <button class="toggle-switch {% if category.is_listed %}active{% endif %}"
-                                                onclick="toggleListed({{ category.id }}, this)">
-                                            <span class="toggle-slider"></span>
-                                        </button>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <button onclick="openEditModal({{ category.id }}, '{{ category.name }}', {{ category.is_listed|yesno:'true,false' }})" class="action-btn text-blue-600 hover:text-blue-800 mr-2">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button onclick="softDeleteCategory({{ category.id }})" class="action-btn text-red-600 hover:text-red-800">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            {% empty %}
-                                <tr>
-                                    <td colspan="5" class="px-6 py-12 text-center">
-                                        <div class="flex flex-col items-center space-y-3">
-                                            <i class="fas fa-tags text-gray-300 text-4xl"></i>
-                                            <p class="text-gray-500 text-sm">No categories found</p>
-                                            <p class="text-gray-400 text-xs">Create your first category to get started</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Pagination -->
-                
-                <div class="mt-6 flex justify-center items-center space-x-2">
-                    {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100">Previous</a>
-                    {% endif %}
-                    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-                    {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100">Next</a>
-                    {% endif %}
-                </div>
-
-            </main>
-        </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
 
-    <!-- Create/Edit Category Modal -->
-    <div class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" id="categoryModal">
-        <div class="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl m-4">
-            <div class="p-6 flex justify-between items-center">
-                <h2 class="text-xl font-semibold text-gray-900" id="modalTitle">Add New Category</h2>
-                <button class="text-gray-500 hover:text-gray-700 text-2xl" onclick="closeModal()">&times;</button>
-            </div>
-            <div class="p-6">
-                <form id="categoryForm">
-                    {% csrf_token %}
-                    <div class="mb-5">
-                        <label class="block mb-2 font-medium text-gray-700 text-sm" for="categoryName">Name:</label>
-                        <input type="text" id="categoryName" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter category name">
-                    </div>
-                    <div class="mb-5 flex justify-between items-center">
-                        <label class="font-medium text-gray-700 text-sm">List / Unlist:</label>
-                        <div class="toggle-switch active" id="listToggle" onclick="toggleSwitch()">
-                            <div class="toggle-slider"></div>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="p-6 flex justify-end space-x-3">
-                <button class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600" onclick="closeModal()">Cancel</button>
-                <button class="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600" id="saveBtn" onclick="saveCategory()">Save</button>
-            </div>
-        </div>
+    <!-- Pagination -->
+    <div class="mt-6 flex justify-center items-center space-x-2">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
+           class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100">Previous</a>
+      {% endif %}
+      <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
+           class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100">Next</a>
+      {% endif %}
     </div>
+  </main>
 
-    <script>
-        let isEditMode = false;
-        let editingCategoryId = null;
+  <!-- Create/Edit Category Modal -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" id="categoryModal">
+    <div class="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-xl m-4">
+      <div class="p-6 flex justify-between items-center">
+        <h2 class="text-xl font-semibold text-gray-900" id="modalTitle">Add New Category</h2>
+        <button class="text-gray-500 hover:text-gray-700 text-2xl" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="p-6">
+        <form id="categoryForm">
+          {% csrf_token %}
+          <div class="mb-5">
+            <label class="block mb-2 font-medium text-gray-700 text-sm" for="categoryName">Name:</label>
+            <input type="text" id="categoryName" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter category name">
+          </div>
+          <div class="mb-5 flex justify-between items-center">
+            <label class="font-medium text-gray-700 text-sm">List / Unlist:</label>
+            <div class="toggle-switch active" id="listToggle" onclick="toggleSwitch()">
+              <div class="toggle-slider"></div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="p-6 flex justify-end space-x-3">
+        <button class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600" onclick="closeModal()">Cancel</button>
+        <button class="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600" id="saveBtn" onclick="saveCategory()">Save</button>
+      </div>
+    </div>
+  </div>
 
-        function toggleListed(id, btn) {
-            fetch(`/staff/categories/toggle-listed/${id}/`, {  // ADD /staff/ prefix
-                method: 'POST',
-                headers: {'X-CSRFToken': '{{ csrf_token }}'}
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.is_listed)
-                    btn.classList.add('active');
-                else
-                    btn.classList.remove('active');
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        }
+  <!-- Toast container -->
+  <div id="toast-container" style="position:fixed; top:16px; right:16px; z-index:9999; display:flex; flex-direction:column; gap:8px;"></div>
 
+  <!-- Confirm dialog overlay -->
+  <div id="confirm-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.35); display:none; align-items:center; justify-content:center; z-index:9998;">
+    <div style="background:#fff; width:360px; max-width:92vw; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.15); overflow:hidden;">
+      <div style="padding:16px 20px; border-bottom:1px solid #e5e7eb;">
+        <h3 style="margin:0; font-size:16px; font-weight:700; color:#1a202c;">Confirm action</h3>
+      </div>
+      <div id="confirm-message" style="padding:16px 20px; color:#374151; font-size:14px;">
+        Are you sure?
+      </div>
+      <div style="display:flex; gap:8px; justify-content:flex-end; padding:12px 16px; background:#fafbfc; border-top:1px solid #e5e7eb;">
+        <button id="confirm-cancel" type="button" class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">Cancel</button>
+        <button id="confirm-ok" type="button" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">Yes</button>
+      </div>
+    </div>
+  </div>
+{% endblock %}
 
-        function openCreateModal() {
-            isEditMode = false;
-            document.getElementById('modalTitle').textContent = 'Add New Category';
-            document.getElementById('saveBtn').textContent = 'Save';
-            document.getElementById('categoryName').value = '';
-            document.getElementById('listToggle').classList.add('active');
-            document.getElementById('categoryModal').classList.remove('hidden');
-            document.getElementById('categoryModal').classList.add('flex');
-        }
+{% block scripts %}
+<script>
+  let isEditMode = false;
+  let editingCategoryId = null;
 
-        function openEditModal(categoryId, categoryName, isListed) {
-            isEditMode = true;
-            editingCategoryId = categoryId;
-            document.getElementById('modalTitle').textContent = 'Edit Category';
-            document.getElementById('saveBtn').textContent = 'Update';
-            document.getElementById('categoryName').value = categoryName;
-            const toggle = document.getElementById('listToggle');
-            if (isListed) {
-                toggle.classList.add('active');
-            } else {
-                toggle.classList.remove('active');
-            }
-            document.getElementById('categoryModal').classList.remove('hidden');
-            document.getElementById('categoryModal').classList.add('flex');
-        }
+  function toggleListed(id, btn) {
+    fetch(`/staff/categories/toggle-listed/${id}/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.is_listed) {
+        btn.classList.add('active');
+        showToast('Category listed', 'success', 1500);
+      } else {
+        btn.classList.remove('active');
+        showToast('Category unlisted', 'info', 1500);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      showToast('Network error', 'error');
+    });
+  }
 
-        function closeModal() {
-            document.getElementById('categoryModal').classList.add('hidden');
-            document.getElementById('categoryModal').classList.remove('flex');
-            isEditMode = false;
-            editingCategoryId = null;
-        }
+  function openCreateModal() {
+    isEditMode = false;
+    document.getElementById('modalTitle').textContent = 'Add New Category';
+    document.getElementById('saveBtn').textContent = 'Save';
+    document.getElementById('categoryName').value = '';
+    document.getElementById('listToggle').classList.add('active');
+    document.getElementById('categoryModal').classList.remove('hidden');
+    document.getElementById('categoryModal').classList.add('flex');
+  }
 
-        function toggleSwitch() {
-            const toggle = document.getElementById('listToggle');
-            toggle.classList.toggle('active');
-        }
+  function openEditModal(categoryId, categoryName, isListed) {
+    isEditMode = true;
+    editingCategoryId = categoryId;
+    document.getElementById('modalTitle').textContent = 'Edit Category';
+    document.getElementById('saveBtn').textContent = 'Update';
+    document.getElementById('categoryName').value = categoryName;
+    const toggle = document.getElementById('listToggle');
+    if (isListed) {
+      toggle.classList.add('active');
+    } else {
+      toggle.classList.remove('active');
+    }
+    document.getElementById('categoryModal').classList.remove('hidden');
+    document.getElementById('categoryModal').classList.add('flex');
+  }
 
-        function saveCategory() {
+  function closeModal() {
+    document.getElementById('categoryModal').classList.add('hidden');
+    document.getElementById('categoryModal').classList.remove('flex');
+    isEditMode = false;
+    editingCategoryId = null;
+  }
+
+  function toggleSwitch() {
+    const toggle = document.getElementById('listToggle');
+    toggle.classList.toggle('active');
+  }
+
+  // Toasts
+  function showToast(message, type='info', timeout=3000) {
+    const id = 'toast-container';
+    let container = document.getElementById(id);
+    if (!container) {
+      container = document.createElement('div');
+      container.id = id;
+      container.style.position = 'fixed';
+      container.style.top = '16px';
+      container.style.right = '16px';
+      container.style.zIndex = '9999';
+      container.style.display = 'flex';
+      container.style.flexDirection = 'column';
+      container.style.gap = '8px';
+      document.body.appendChild(container);
+    }
+
+    const el = document.createElement('div');
+    el.style.padding = '10px 12px';
+    el.style.borderRadius = '8px';
+    el.style.fontSize = '13px';
+    el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.12)';
+    el.style.border = '1px solid';
+    el.style.display = 'flex';
+    el.style.alignItems = 'center';
+    el.style.gap = '8px';
+    el.style.transition = 'transform .2s ease, opacity .2s ease';
+    el.style.transform = 'translateY(-6px)';
+    el.style.opacity = '0';
+
+    const types = {
+      success: { b:'#bbf7d0', bg:'#dcfce7', c:'#166534', icon:'fa-check-circle' },
+      error:   { b:'#fecaca', bg:'#fef2f2', c:'#b91c1c', icon:'fa-times-circle' },
+      info:    { b:'#dbeafe', bg:'#eff6ff', c:'#1d4ed8', icon:'fa-info-circle' },
+      warning: { b:'#fed7aa', bg:'#fef3c7', c:'#92400e', icon:'fa-exclamation-triangle' },
+    };
+    const t = types[type] || types.info;
+    el.style.borderColor = t.b;
+    el.style.background = t.bg;
+    el.style.color = t.c;
+
+    const icon = document.createElement('i');
+    icon.className = `fas ${t.icon}`;
+    icon.style.minWidth = '16px';
+
+    const text = document.createElement('div');
+    text.textContent = message;
+
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.innerHTML = '<i class="fas fa-times"></i>';
+    close.style.border = 'none';
+    close.style.background = 'transparent';
+    close.style.cursor = 'pointer';
+    close.style.color = t.c;
+
+    close.onclick = () => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(-6px)';
+      setTimeout(() => el.remove(), 200);
+    };
+
+    el.appendChild(icon);
+    el.appendChild(text);
+    el.appendChild(close);
+    container.appendChild(el);
+
+    requestAnimationFrame(() => {
+      el.style.opacity = '1';
+      el.style.transform = 'translateY(0)';
+    });
+
+    if (timeout) setTimeout(() => close.onclick(), timeout);
+  }
+
+  // Confirm dialog
+  function confirmDialog(message) {
+    let overlay = document.getElementById('confirm-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'confirm-overlay';
+      overlay.style.position = 'fixed';
+      overlay.style.inset = '0';
+      overlay.style.background = 'rgba(0,0,0,0.35)';
+      overlay.style.display = 'none';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+      overlay.style.zIndex = '9998';
+
+      const box = document.createElement('div');
+      box.style.background = '#fff';
+      box.style.width = '360px';
+      box.style.maxWidth = '92vw';
+      box.style.border = '1px solid #e5e7eb';
+      box.style.borderRadius = '12px';
+      box.style.boxShadow = '0 10px 30px rgba(0,0,0,0.15)';
+      box.style.overflow = 'hidden';
+
+      const head = document.createElement('div');
+      head.style.padding = '16px 20px';
+      head.style.borderBottom = '1px solid #e5e7eb';
+      head.innerHTML = '<h3 style="margin:0; font-size:16px; font-weight:700; color:#1a202c;">Confirm action</h3>';
+
+      const body = document.createElement('div');
+      body.id = 'confirm-message';
+      body.style.padding = '16px 20px';
+      body.style.color = '#374151';
+      body.style.fontSize = '14px';
+
+      const foot = document.createElement('div');
+      foot.style.display = 'flex';
+      foot.style.gap = '8px';
+      foot.style.justifyContent = 'flex-end';
+      foot.style.padding = '12px 16px';
+      foot.style.background = '#fafbfc';
+      foot.style.borderTop = '1px solid #e5e7eb';
+
+      const cancel = document.createElement('button');
+      cancel.id = 'confirm-cancel';
+      cancel.type = 'button';
+      cancel.className = 'px-3 py-1 border border-gray-300 rounded hover:bg-gray-50';
+      cancel.textContent = 'Cancel';
+
+      const ok = document.createElement('button');
+      ok.id = 'confirm-ok';
+      ok.type = 'button';
+      ok.className = 'px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700';
+      ok.textContent = 'Yes';
+
+      foot.appendChild(cancel);
+      foot.appendChild(ok);
+      box.appendChild(head);
+      box.appendChild(body);
+      box.appendChild(foot);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+    }
+
+    return new Promise((resolve) => {
+      const msg = document.getElementById('confirm-message');
+      const ok = document.getElementById('confirm-ok');
+      const cancel = document.getElementById('confirm-cancel');
+
+      msg.textContent = message;
+      overlay.style.display = 'flex';
+
+      const cleanup = () => {
+        overlay.style.display = 'none';
+        ok.onclick = null;
+        cancel.onclick = null;
+        overlay.onclick = null;
+      };
+
+      ok.onclick = () => { cleanup(); resolve(true); };
+      cancel.onclick = () => { cleanup(); resolve(false); };
+      overlay.onclick = (e) => {
+        if (e.target === overlay) { cleanup(); resolve(false); }
+      };
+    });
+  }
+
+  // Replaced alert/confirm only in these functions
+  function saveCategory() {
     const categoryName = document.getElementById('categoryName').value;
     const isListed = document.getElementById('listToggle').classList.contains('active');
-    
+
     if (!categoryName.trim()) {
-        alert('Please enter a category name');
-        return;
+      showToast('Please enter a category name', 'warning');
+      return;
     }
 
     const csrfToken = '{{ csrf_token }}';
-    
-    if (isEditMode) {
-        // Edit category AJAX - ADD /staff/ prefix
-        fetch(`/staff/categories/edit/${editingCategoryId}/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken,
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: `name=${encodeURIComponent(categoryName)}&is_listed=${isListed}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Category updated successfully!');
-                location.reload();
-            } else {
-                alert('Error: ' + data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Network error');
-        });
-    } else {
-        // Create category AJAX - ADD /staff/ prefix
-        fetch('/staff/categories/add/', {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken,
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: `name=${encodeURIComponent(categoryName)}&is_listed=${isListed}`
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Category created successfully!');
-                location.reload();
-            } else {
-                alert('Error: ' + data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Network error');
-        });
-    }
-    
+    const url = isEditMode
+      ? `/staff/categories/edit/${editingCategoryId}/`
+      : '/staff/categories/add/';
+    const successMsg = isEditMode ? 'Category updated successfully!' : 'Category created successfully!';
+
+    showToast(isEditMode ? 'Updating category...' : 'Creating category...', 'info', 1500);
+
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrfToken,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: `name=${encodeURIComponent(categoryName)}&is_listed=${isListed}`
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        showToast(successMsg, 'success');
+        setTimeout(() => location.reload(), 700);
+      } else {
+        showToast('Error: ' + (data.error || 'Operation failed'), 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      showToast('Network error', 'error');
+    });
+
     closeModal();
-}
+  }
 
+  async function softDeleteCategory(id) {
+    const ok = await confirmDialog('Delete this category? You can restore it later from Deleted Categories.');
+    if (!ok) return;
 
+    showToast('Deleting category...', 'info', 1500);
+    fetch(`/staff/categories/soft-delete/${id}/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+    })
+    .then(response => {
+      if (response.ok) {
+        showToast('Category moved to Deleted', 'success');
+        setTimeout(() => location.reload(), 700);
+      } else {
+        showToast('Error deleting category', 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      showToast('Network error', 'error');
+    });
+  }
 
-        // Close modal when clicking outside
-        document.getElementById('categoryModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
+  // Close modal when clicking outside
+  document.getElementById('categoryModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeModal();
+    }
+  });
 
-        // Close modal with Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeModal();
-            }
-        });
-
-        // Soft delete function
-        function softDeleteCategory(id) {
-            if (confirm("Are you sure you want to delete this category?")) {
-                fetch(`/staff/categories/soft-delete/${id}/`, {  // ADD /staff/ prefix
-                    method: 'POST',
-                    headers: {'X-CSRFToken': '{{ csrf_token }}'}
-                })
-                .then(response => {
-                    if (response.ok) {
-                        location.reload();
-                    } else {
-                        alert('Error deleting category');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Network error');
-                });
-            }
-        }
-
-    </script>
-</body>
-</html>
+  // Close modal with Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeModal();
+    }
+  });
+</script>
+{% endblock %}

@@ -14,6 +14,8 @@ from .utils import process_image
 from django.db import transaction
 from django.db.models import Q, Max  
 from django.contrib.auth import get_user_model
+from django.contrib.sessions.models import Session
+from django.contrib.auth import get_user_model
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -86,12 +88,13 @@ def customer_view(request):
 
 
 @login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def product_view(request):
     if not request.user.is_superuser:
         messages.error(request, "You do not have permission to view this page.")
         return redirect('/')
     
-    # Start with all products, ordered by newest first
+    # Start with all NON-DELETED products, ordered by newest first
     products = Product.objects.all().order_by('-created_at')
     
     # Add search functionality
@@ -104,15 +107,19 @@ def product_view(request):
             Q(category__icontains=search_query)
         )
     
-    # Add status filtering
-    status_filter = request.GET.get('status', 'all')
-    if status_filter and status_filter != 'all':
+    # FIXED: Better status filtering logic with sold out support
+    status_filter = request.GET.get('status', '')
+    if status_filter == 'out-of-stock':
+        products = products.filter(Q(status='out-of-stock') | Q(stock_quantity=0))
+    elif status_filter and status_filter != 'all' and status_filter != '':
         products = products.filter(status=status_filter)
+    # If no status filter, show ALL products (published, draft, etc.)
     
     print(f"Products count after filtering: {products.count()}")
+    print(f"Status filter applied: {status_filter}")
     
-    # Add pagination
-    paginator = Paginator(products, 5)  # 20 products per page
+    # FIXED: Increase pagination to show more products
+    paginator = Paginator(products, 10)  # 10 products per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -122,10 +129,14 @@ def product_view(request):
         'search_query': search_query,
         'current_status': status_filter,
         'status_choices': Product.STATUS_CHOICES,
+        'total_products': products.count(),
     })
 
 
+
+
 @login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def add_product(request):
     if not request.user.is_superuser:
         messages.error(request, "You do not have permission to view this page.")
@@ -138,6 +149,17 @@ def add_product(request):
         # Get multiple images from the request
         images = request.FILES.getlist('images')
         print(f"Number of images received: {len(images)}")
+
+        if request.method == 'POST':
+            print("=== DEBUGGING FORM SUBMISSION ===")
+            print(f"POST data keys: {list(request.POST.keys())}")
+            print(f"FILES data keys: {list(request.FILES.keys())}")
+            print(f"All FILES: {request.FILES}")
+            print(f"Images from getlist: {request.FILES.getlist('images')}")
+            print("=====================================")
+    
+    # Your existing code continues...
+
         
         # Validate minimum 3 images
         if len(images) < 3:
@@ -324,8 +346,10 @@ def delete_product_image(request, image_id):
 def custom_logout(request):
     """Custom logout view that redirects to admin login"""
     from django.contrib.auth import logout
-    logout(request)
-    messages.success(request, "You have been successfully logged out.")
+    if request.method == 'POST':
+        logout(request)
+        messages.success(request, "You have been successfully logged out.")
+        return redirect('login_to_account')  # ✅ Keep this - redirects to admin login
     return redirect('login_to_account')
 
 
@@ -663,7 +687,6 @@ def user_management_view(request):
 @login_required
 @require_POST
 def block_user(request, user_id):
-    """Block user with confirmation"""
     if not request.user.is_superuser:
         return JsonResponse({'success': False, 'error': 'Permission denied'})
     
@@ -676,11 +699,22 @@ def block_user(request, user_id):
         if user.is_blocked:
             return JsonResponse({'success': False, 'error': 'User is already blocked'})
         
+        # Block the user
         user.block_user(blocked_by=request.user.email)
+        
+        # Clear all sessions for this user
+        sessions = Session.objects.all()
+        for session in sessions:
+            try:
+                data = session.get_decoded()
+                if str(user.id) == data.get('_auth_user_id'):
+                    session.delete()
+            except:
+                continue
         
         return JsonResponse({
             'success': True,
-            'message': f'User {user.email} has been blocked successfully'
+            'message': f'User {user.email} has been blocked and logged out successfully'
         })
         
     except Exception as e:
@@ -708,3 +742,5 @@ def unblock_user(request, user_id):
         
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+    
+

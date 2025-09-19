@@ -16,6 +16,13 @@ from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.csrf import csrf_protect
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from django.core.paginator import Paginator
+from django.db.models import Q, Count
+from customeradmin.models import Product, Category, ProductImage
 
 
 
@@ -48,8 +55,12 @@ def signup_view(request):
 
 # ---------- 2. OTP after sign-up  ----------
 def verify_otp_signup_view(request):
-    logger.info("Sign-up OTP verification view accessed")
+    """FIXED: Complete OTP verification with proper timer and resend"""
     user_id_from_session = request.session.get('otp_user_id')
+    
+    if not user_id_from_session:
+        messages.error(request, 'Session expired. Please sign up again.')
+        return redirect('signup')
 
     # --- Handle Resend (GET request) ---
     if request.method == 'GET':
@@ -58,69 +69,86 @@ def verify_otp_signup_view(request):
             try:
                 if int(resend_user_id) == user_id_from_session:
                     user = CustomUser.objects.get(pk=resend_user_id)
+                    # Generate new OTP
                     user.otp = generate_otp()
                     user.otp_created_at = timezone.now()
                     user.save()
                     send_otp_email(user.email, user.otp)
-                    messages.success(request, 'A new OTP has been sent to your email.')
+                    messages.success(request, 'New OTP sent successfully!')
+                    logger.info(f"OTP resent for user: {user.email}")
                 else:
                     messages.error(request, 'Invalid resend request.')
             except (CustomUser.DoesNotExist, ValueError):
-                messages.error(request, 'User not found for resending OTP.')
+                messages.error(request, 'User not found.')
             return redirect('verify_otp_signup')
 
     # --- Handle OTP Submission (POST request) ---
     if request.method == 'POST':
-        otp = request.POST.get('otp')
-        logger.info(f"Received OTP: {otp}, User ID: {user_id_from_session}")
-        if user_id_from_session and otp:
+        otp = request.POST.get('otp', '').strip()
+        logger.info(f"OTP verification attempt: {otp} for user ID: {user_id_from_session}")
+        
+        if otp and len(otp) == 6:
             try:
                 user = CustomUser.objects.get(pk=user_id_from_session)
-                if otp == user.otp and timezone.now() < user.otp_created_at + timezone.timedelta(minutes=2):
-                    user.is_active = True
-                    user.otp = None
-                    user.otp_created_at = None
-                    user.save()
-                    request.session.pop('otp_user_id', None)
-                    messages.success(request, 'Account verified. Please log in.')
-                    return redirect('login')
+                
+                # Check OTP expiry (2 minutes)
+                if user.otp_created_at and timezone.now() < user.otp_created_at + timezone.timedelta(minutes=2):
+                    if otp == user.otp:
+                        # SUCCESS - Activate user
+                        user.is_active = True
+                        user.otp = None
+                        user.otp_created_at = None
+                        user.save()
+                        
+                        # Clear session
+                        request.session.pop('otp_user_id', None)
+                        
+                        messages.success(request, 'Account verified successfully! Please log in.')
+                        logger.info(f"User activated: {user.email}")
+                        return redirect('login')
+                    else:
+                        messages.error(request, 'Invalid OTP. Please check and try again.')
                 else:
-                    messages.error(request, 'Invalid or expired OTP.')
+                    messages.error(request, 'OTP has expired. Please request a new one.')
+                    
             except CustomUser.DoesNotExist:
-                logger.error("User not found")
                 messages.error(request, 'User not found.')
         else:
-            logger.error("Invalid OTP or user session expired")
-            messages.error(request, 'Invalid OTP or user session expired.')
+            messages.error(request, 'Please enter a valid 6-digit OTP.')
+    
+    # Calculate remaining time for timer
+    try:
+        user = CustomUser.objects.get(pk=user_id_from_session)
+        if user.otp_created_at:
+            elapsed_time = (timezone.now() - user.otp_created_at).total_seconds()
+            remaining_time = max(0, 120 - int(elapsed_time))  # 2 minutes = 120 seconds
+        else:
+            remaining_time = 0
+    except CustomUser.DoesNotExist:
+        remaining_time = 0
     
     context = {
         'form_action_url': 'verify_otp_signup',
         'user_id_for_resend': user_id_from_session,
+        'remaining_time': remaining_time,
     }
     return render(request, 'verify_otp.html', context)
 
+
 # ---------- 3. Log-in  ----------
+@ensure_csrf_cookie  # ✅ Add this decorator
 def login_view(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
-            email = form.cleaned_data['email']
-            password = form.cleaned_data['password']
-            user = authenticate(request, username=email, password=password)
-            if user is not None:
-                if user.is_active:
-                    login(request, user)
-                    messages.success(request, 'You have been successfully logged in.')
-                    return redirect('dummy_home') # Redirect to the dummy home page
-                else:
-                    messages.error(request, 'Your account is disabled.')
-            else:
-                messages.error(request, 'Invalid credentials.')
+            user = form.get_user()
+            login(request, user)
+            messages.success(request, f'Welcome back, {user.first_name}!')
+            return redirect('dummy_home')
     else:
         form = LoginForm()
-        
+    
     return render(request, 'login.html', {'form': form})
-
 # ---------- 4. Forgot password  ----------
 def forgot_password_view(request):
     if request.method == 'POST':
@@ -218,7 +246,22 @@ def new_password_view(request):
 
 # ---------- 7. Dummy home ----------
 def home_view(request):
-    return render(request, 'home.html')
+    """Updated home page with featured products from customadmin"""
+    featured_products = Product.objects.filter(
+        status='published',
+        stock_quantity__gt=0
+    )[:8]
+    
+    latest_products = Product.objects.filter(
+        status='published',
+        stock_quantity__gt=0
+    ).order_by('-created_at')[:8]
+    
+    context = {
+        'featured_products': featured_products,
+        'latest_products': latest_products,
+    }
+    return render(request, 'home.html', context)
 
 # ---------- 8. Generate OTP ----------
 def generate_otp():
@@ -237,46 +280,183 @@ def send_test_email(request):
     return HttpResponse('Test email sent')
 
 
+@csrf_protect
 def logout_view(request):
-    logout(request)
-    return redirect(settings.LOGOUT_REDIRECT_URL)
+    if request.method == 'POST':
+        logout(request)
+        messages.success(request, 'You have been logged out successfully.')
+        return redirect('home')  # ✅ Redirects to authenticate home page
+    return redirect('home')
 
 @login_required
 def dummy_home_view(request):
-    return render(request, 'dummy.html')
+    """Updated dummy page with REAL products including out-of-stock items"""
+    # Base queryset - ALL published products (including out-of-stock)
+    products = Product.objects.filter(
+        status='published'
+    ).select_related().prefetch_related('images')
+    
+    # 🔍 SEARCH functionality with clear button (backend)
+    search_query = request.GET.get('search', '').strip()
+    if search_query:
+        products = products.filter(
+            Q(name__icontains=search_query) | 
+            Q(short_description__icontains=search_query) |
+            Q(detailed_description__icontains=search_query) |
+            Q(brand__icontains=search_query) |
+            Q(category__icontains=search_query)
+        )
+    
+    # 🏷️ CATEGORY FILTER
+    category_filter = request.GET.get('category')
+    if category_filter and category_filter != 'all':
+        products = products.filter(category=category_filter)
+    
+    # 🏢 BRAND FILTER
+    brand_filter = request.GET.get('brand')
+    if brand_filter and brand_filter != 'all':
+        products = products.filter(brand__icontains=brand_filter)
+    
+    # 💰 PRICE RANGE FILTER
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+    if min_price:
+        try:
+            products = products.filter(price__gte=float(min_price))
+        except (ValueError, TypeError):
+            pass
+    if max_price:
+        try:
+            products = products.filter(price__lte=float(max_price))
+        except (ValueError, TypeError):
+            pass
+    
+    # 📊 SORTING OPTIONS
+    sort_by = request.GET.get('sort', 'newest')
+    if sort_by == 'price_low':
+        products = products.order_by('price')
+    elif sort_by == 'price_high':
+        products = products.order_by('-price')
+    elif sort_by == 'name_az':
+        products = products.order_by('name')
+    elif sort_by == 'name_za':
+        products = products.order_by('-name')
+    elif sort_by == 'popularity':
+        products = products.order_by('-created_at')
+    elif sort_by == 'featured':
+        products = products.order_by('-created_at')
+    elif sort_by == 'newest':
+        products = products.order_by('-created_at')
+    else:
+        products = products.order_by('-created_at')
+    
+    # 📄 PAGINATION
+    paginator = Paginator(products, 8)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # 📋 GET FILTER OPTIONS
+    available_categories = Product.objects.filter(
+        status='published'
+    ).values_list('category', flat=True).distinct()
+    
+    available_brands = Product.objects.filter(
+        status='published'
+    ).exclude(brand='').values_list('brand', flat=True).distinct()
+    
+    # Get featured products for flash sales section
+    featured_products = products[:4]
+    
+    context = {
+        'page_obj': page_obj,
+        'products': page_obj,
+        'featured_products': featured_products,
+        'available_categories': available_categories,
+        'available_brands': available_brands,
+        'category_choices': Product.CATEGORY_CHOICES,
+        'search_query': search_query,
+        'current_category': category_filter,
+        'current_brand': brand_filter,
+        'current_sort': sort_by,
+        'min_price': min_price,
+        'max_price': max_price,
+        'total_products': products.count(),
+    }
+    return render(request, 'dummy.html', context)
+
 
 
 
 
 def verify_reset_otp_view(request):
-    """
-    Displayed after forgot-password form.
-    POST only – verifies the OTP and lets the user reset the password.
-    """
+    """FIXED: Password reset OTP verification"""
     user_id = request.session.get('reset_user_id')
     if not user_id:
         messages.error(request, 'Session expired. Please start over.')
         return redirect('forgot_password')
 
-    if request.method == 'POST':
-        otp = request.POST.get('otp')
-        try:
-            user = CustomUser.objects.get(pk=user_id, otp=otp)
-            if timezone.now() < user.otp_created_at + timezone.timedelta(minutes=2):
-                # success
-                user.otp = None
-                user.otp_created_at = None
-                user.save()
-                request.session['verified_user_id'] = user.id
-                request.session.pop('reset_user_id', None)
-                messages.success(request, 'OTP verified. Create a new password.')
-                return redirect('confi_new_password')  # ← Change this line
-            else:
-                messages.error(request, 'OTP has expired.')
-        except CustomUser.DoesNotExist:
-            messages.error(request, 'Invalid OTP.')
+    # Handle resend OTP
+    if request.method == 'GET':
+        resend_user_id = request.GET.get('resend')
+        if resend_user_id:
+            try:
+                if int(resend_user_id) == user_id:
+                    user = CustomUser.objects.get(pk=resend_user_id)
+                    user.otp = generate_otp()
+                    user.otp_created_at = timezone.now()
+                    user.save()
+                    send_otp_email(user.email, user.otp)
+                    messages.success(request, 'New OTP sent to your email!')
+                else:
+                    messages.error(request, 'Invalid resend request.')
+            except (CustomUser.DoesNotExist, ValueError):
+                messages.error(request, 'User not found.')
+            return redirect('verify_reset_otp')
 
-    return render(request, 'verify_reset_otp.html')
+    # Handle OTP verification
+    if request.method == 'POST':
+        otp = request.POST.get('otp', '').strip()
+        if otp and len(otp) == 6:
+            try:
+                user = CustomUser.objects.get(pk=user_id)
+                if user.otp_created_at and timezone.now() < user.otp_created_at + timezone.timedelta(minutes=2):
+                    if otp == user.otp:
+                        # Clear OTP and set verified session
+                        user.otp = None
+                        user.otp_created_at = None
+                        user.save()
+                        
+                        request.session['verified_user_id'] = user.id
+                        request.session.pop('reset_user_id', None)
+                        
+                        messages.success(request, 'OTP verified! Set your new password.')
+                        return redirect('confi_new_password')
+                    else:
+                        messages.error(request, 'Invalid OTP.')
+                else:
+                    messages.error(request, 'OTP has expired.')
+            except CustomUser.DoesNotExist:
+                messages.error(request, 'User not found.')
+        else:
+            messages.error(request, 'Please enter a valid 6-digit OTP.')
+
+    # Calculate remaining time
+    try:
+        user = CustomUser.objects.get(pk=user_id)
+        if user.otp_created_at:
+            elapsed_time = (timezone.now() - user.otp_created_at).total_seconds()
+            remaining_time = max(0, 120 - int(elapsed_time))
+        else:
+            remaining_time = 0
+    except CustomUser.DoesNotExist:
+        remaining_time = 0
+
+    context = {
+        'user_id_for_resend': user_id,
+        'remaining_time': remaining_time,
+    }
+    return render(request, 'verify_reset_otp.html', context)
+
 
 
 
@@ -335,3 +515,164 @@ def confirm_new_password_view(request):
     
     # GET request - render the form
     return render(request, 'confi_new_password.html')
+
+
+def product_list_view(request):
+    """COMPLETE Product listing with sold-out products visible"""
+    # Base queryset - ALL published products (including out-of-stock)
+    products = Product.objects.filter(
+        status='published'
+    ).select_related().prefetch_related('images')
+    
+    # 🔍 SEARCH (Backend with clear button)
+    search_query = request.GET.get('search', '').strip()
+    if search_query:
+        products = products.filter(
+            Q(name__icontains=search_query) | 
+            Q(short_description__icontains=search_query) |
+            Q(detailed_description__icontains=search_query) |
+            Q(brand__icontains=search_query) |
+            Q(category__icontains=search_query)
+        )
+    
+    # 🏷️ CATEGORY FILTER
+    category_filter = request.GET.get('category')
+    if category_filter and category_filter != 'all':
+        products = products.filter(category=category_filter)
+    
+    # 🏢 BRAND FILTER
+    brand_filter = request.GET.get('brand')
+    if brand_filter and brand_filter != 'all':
+        products = products.filter(brand__icontains=brand_filter)
+    
+    # 💰 PRICE RANGE FILTER
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+    if min_price:
+        try:
+            products = products.filter(price__gte=float(min_price))
+        except (ValueError, TypeError):
+            pass
+    if max_price:
+        try:
+            products = products.filter(price__lte=float(max_price))
+        except (ValueError, TypeError):
+            pass
+    
+    # 📊 SORTING OPTIONS
+    sort_by = request.GET.get('sort', 'newest')
+    if sort_by == 'price_low':
+        products = products.order_by('price')
+    elif sort_by == 'price_high':
+        products = products.order_by('-price')
+    elif sort_by == 'name_az':
+        products = products.order_by('name')
+    elif sort_by == 'name_za':
+        products = products.order_by('-name')
+    elif sort_by == 'popularity':
+        products = products.order_by('-created_at')
+    elif sort_by == 'featured':
+        products = products.order_by('-created_at')
+    elif sort_by == 'newest':
+        products = products.order_by('-created_at')
+    else:
+        products = products.order_by('-created_at')
+    
+    # 📄 PAGINATION
+    paginator = Paginator(products, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # 📋 GET FILTER OPTIONS
+    available_categories = Product.objects.filter(
+        status='published'
+    ).values_list('category', flat=True).distinct()
+    
+    available_brands = Product.objects.filter(
+        status='published'
+    ).exclude(brand='').values_list('brand', flat=True).distinct()
+    
+    context = {
+        'page_obj': page_obj,
+        'available_categories': available_categories,
+        'available_brands': available_brands,
+        'category_choices': Product.CATEGORY_CHOICES,
+        'search_query': search_query,
+        'current_category': category_filter,
+        'current_brand': brand_filter,
+        'current_sort': sort_by,
+        'min_price': min_price,
+        'max_price': max_price,
+        'total_products': products.count(),
+    }
+    return render(request, 'product_list.html', context)
+
+
+def product_detail_view(request, pk):
+    """COMPLETE Product detail with sold-out handling"""
+    try:
+        product = get_object_or_404(Product, pk=pk)
+        
+        # 🚫 CHECK PRODUCT AVAILABILITY (allow viewing sold-out products)
+        if product.status != 'published':
+            messages.error(request, 'This product is no longer available.')
+            return redirect('product_list')
+        
+        # 🖼️ GET ALL PRODUCT IMAGES
+        product_images = product.images.all().order_by('order')
+        main_image = product.get_main_image()
+        
+        # 🔗 BREADCRUMBS
+        breadcrumbs = [
+            {'name': 'Home', 'url_name': 'home'},
+            {'name': 'Products', 'url_name': 'product_list'},
+            {'name': product.get_category_display(), 'url_name': 'product_list', 'category': product.category},
+            {'name': product.name, 'url_name': None}
+        ]
+        
+        # 💰 PRICE CALCULATIONS
+        original_price = product.price
+        discounted_price = product.get_discounted_price()
+        discount_amount = original_price - discounted_price if discounted_price != original_price else 0
+        final_price = product.get_final_price_with_tax()
+        
+        # 📦 STOCK STATUS - Updated to handle sold out
+        stock_status = 'in_stock'
+        if product.stock_quantity <= 0:
+            stock_status = 'sold_out'  # Changed from 'out_of_stock' to 'sold_out'
+        elif product.is_low_stock():
+            stock_status = 'low_stock'
+        
+        # 🔗 RELATED PRODUCTS (include sold-out products)
+        related_products = Product.objects.filter(
+            category=product.category,
+            status='published'
+        ).exclude(pk=product.pk)[:4]
+        
+        # 📊 PRODUCT SPECIFICATIONS
+        specs = []
+        if product.detailed_description:
+            specs = [
+                {'name': 'Brand', 'value': product.brand or 'Not specified'},
+                {'name': 'Category', 'value': product.get_category_display()},
+                {'name': 'SKU', 'value': product.sku},
+            ]
+        
+        context = {
+            'product': product,
+            'product_images': product_images,
+            'main_image': main_image,
+            'breadcrumbs': breadcrumbs,
+            'original_price': original_price,
+            'discounted_price': discounted_price,
+            'discount_amount': discount_amount,
+            'final_price': final_price,
+            'stock_status': stock_status,
+            'related_products': related_products,
+            'specs': specs,
+        }
+        return render(request, 'product_detail.html', context)
+        
+    except Product.DoesNotExist:
+        messages.error(request, 'Product not found.')
+        return redirect('product_list')

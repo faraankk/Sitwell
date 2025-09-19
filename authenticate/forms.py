@@ -35,17 +35,24 @@ class LoginForm(forms.Form):
     password = forms.CharField(label='Password', widget=forms.PasswordInput(attrs={'placeholder': 'Password'}))
 
     def clean(self):
-         cleaned_data = super().clean()
-         email = cleaned_data.get('email')
-         password = cleaned_data.get('password')
+        cleaned_data = super().clean()
+        email = cleaned_data.get('email')
+        password = cleaned_data.get('password')
 
-         if email and password:
-             self.user_cache = authenticate(email=email, password=password)
-             if self.user_cache is None:
-                 raise forms.ValidationError("Invalid email address or password.")
-             elif not self.user_cache.is_active:
-                 raise forms.ValidationError("Your account is disabled.")
-         return cleaned_data
+        if email and password:
+            self.user_cache = authenticate(email=email, password=password)
+            if self.user_cache is None:
+                raise forms.ValidationError("Invalid email address or password.")
+            elif not self.user_cache.is_active:
+                raise forms.ValidationError("Your account is not activated.")
+            elif hasattr(self.user_cache, 'is_blocked') and self.user_cache.is_blocked:
+                raise forms.ValidationError("Your account has been blocked. Please contact support.")
+        return cleaned_data
+    
+    def get_user(self):
+        return getattr(self, 'user_cache', None)
+
+
 
 class OTPForm(forms.Form):
     otp = forms.CharField(max_length=6, label='Enter OTP', widget=forms.TextInput(attrs={'placeholder': 'Enter OTP'}))

@@ -4,151 +4,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sit Well - OTP Verification</title>
+    <title>OTP Verification - Sit Well</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f8f9fa;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            color: #333;
         }
-
-        /* Header Styles */
+        
+        /* Header */
         header {
             background: #fff;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            padding: 15px 0;
         }
-
         .header-content {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 15px 20px;
+            padding: 0 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-
         .logo {
             font-size: 28px;
             font-weight: bold;
             color: #db4444;
-            text-transform: capitalize;
         }
-
-        nav {
-            display: flex;
-            gap: 20px;
-        }
-
+        nav { display: flex; gap: 20px; }
         nav a {
             text-decoration: none;
             color: #333;
             font-weight: 500;
             padding: 8px 12px;
-            transition: color 0.3s;
         }
-
-        nav a:hover {
-            color: #db4444;
-        }
-
-        .sign-up {
-            background: #db4444;
-            color: white !important;
-            padding: 8px 16px;
-            border-radius: 4px;
-            transition: background 0.3s;
-        }
-
-        .sign-up:hover {
-            background: #c13333;
-            color: white !important;
-        }
-
-        .search-bar {
-            display: flex;
-            align-items: center;
-        }
-
-        .search-bar input {
-            padding: 8px 15px;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            background-color: #f5f5f5;
-            width: 250px;
-            outline: none;
-        }
-
-        .search-bar input:focus {
-            border-color: #db4444;
-        }
-
-        /* Banner */
-        .banner {
-            background: #000;
-            color: #fff;
-            text-align: center;
-            padding: 12px 0;
-            font-size: 14px;
-        }
-
-        .banner a {
-            color: #fff;
-            text-decoration: underline;
-            margin-left: 10px;
-        }
-
-        .banner a:hover {
-            color: #db4444;
-        }
-
-        /* Messages Display */
+        nav a:hover { color: #db4444; }
+        
+        /* Messages */
         .messages {
             position: fixed;
             top: 20px;
             right: 20px;
             z-index: 1000;
-            list-style: none;
         }
-
-        .messages li {
+        .alert {
             padding: 12px 20px;
             margin-bottom: 10px;
             border-radius: 5px;
             font-weight: 500;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-
-        .messages .success {
-            background-color: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-        }
-
-        .messages .error {
-            background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-        }
-
-        .messages .info {
-            background-color: #d1ecf1;
-            border: 1px solid #bee5eb;
-            color: #0c5460;
-        }
-
+        .alert-success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+        .alert-error { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+        
         /* Main Content */
         main {
             flex: 1;
@@ -157,7 +69,6 @@
             align-items: center;
             padding: 60px 20px;
         }
-
         .otp-container {
             background: white;
             padding: 60px 40px;
@@ -167,28 +78,25 @@
             max-width: 500px;
             width: 100%;
         }
-
         .otp-container h2 {
             font-size: 28px;
             font-weight: bold;
             color: #333;
             margin-bottom: 10px;
         }
-
         .otp-container p {
             color: #666;
             margin-bottom: 40px;
             font-size: 16px;
         }
-
-        /* OTP Input Styles */
+        
+        /* OTP Inputs */
         .otp-inputs {
             display: flex;
             justify-content: center;
             gap: 15px;
             margin-bottom: 30px;
         }
-
         .otp-digit {
             width: 50px;
             height: 50px;
@@ -200,23 +108,14 @@
             background-color: #f8f9fa;
             transition: border-color 0.3s;
         }
-
         .otp-digit:focus {
             outline: none;
             border-color: #db4444;
             background-color: #fff;
         }
-
-        /* Hidden field for combined OTP */
-        #otp {
-            display: none;
-        }
-
-        /* Timer and Resend */
-        .timer-section {
-            margin-bottom: 30px;
-        }
-
+        
+        /* Timer */
+        .timer-section { margin-bottom: 30px; }
         #timer {
             color: #db4444;
             font-weight: 600;
@@ -224,7 +123,6 @@
             margin-bottom: 15px;
             display: block;
         }
-
         .resend-otp {
             background: none;
             border: 1px solid #db4444;
@@ -236,43 +134,23 @@
             font-weight: 500;
             transition: all 0.3s;
         }
-
         .resend-otp:hover:not(:disabled) {
             background: #db4444;
             color: white;
         }
-
         .resend-otp:disabled {
             background: #f5f5f5;
             border-color: #ddd;
             color: #999;
             cursor: not-allowed;
         }
-
+        
         /* Buttons */
         .buttons {
             display: flex;
             gap: 15px;
             justify-content: center;
         }
-
-        .go-back {
-            background: #f5f5f5;
-            border: 1px solid #ddd;
-            color: #666;
-            padding: 15px 30px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
-
-        .go-back:hover {
-            background: #e9ecef;
-            color: #333;
-        }
-
         .verify {
             background: #db4444;
             border: none;
@@ -284,178 +162,87 @@
             font-weight: 600;
             transition: background 0.3s;
         }
-
-        .verify:hover {
-            background: #c13333;
-        }
-
+        .verify:hover { background: #c13333; }
         .verify:disabled {
             background: #ccc;
             cursor: not-allowed;
         }
-
+        .go-back {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            color: #666;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .go-back:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+        
         /* Footer */
         footer {
             background: #000;
             color: white;
-            padding: 50px 0 20px;
+            padding: 20px 0;
             text-align: center;
             color: #ccc;
         }
-
-        /* Responsive Design */
+        
+        /* Responsive */
         @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 15px;
-                padding: 15px;
-            }
-
-            nav {
-                gap: 15px;
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-
-            .search-bar input {
-                width: 200px;
-            }
-
-            .banner {
-                font-size: 12px;
-                padding: 8px;
-            }
-
-            main {
-                padding: 30px 15px;
-            }
-
             .otp-container {
                 padding: 40px 20px;
                 margin: 0 10px;
             }
-
-            .otp-container h2 {
-                font-size: 24px;
-            }
-
-            .otp-inputs {
-                gap: 10px;
-            }
-
+            .otp-inputs { gap: 10px; }
             .otp-digit {
                 width: 45px;
                 height: 45px;
                 font-size: 18px;
             }
-
             .buttons {
                 flex-direction: column;
                 gap: 10px;
-            }
-
-            .go-back, .verify {
-                width: 100%;
-                padding: 12px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header-content {
-                padding: 10px;
-            }
-
-            nav {
-                flex-direction: column;
-                width: 100%;
-            }
-
-            nav a {
-                text-align: center;
-                padding: 5px 0;
-            }
-
-            .search-bar {
-                width: 100%;
-            }
-
-            .search-bar input {
-                width: 100%;
-            }
-
-            main {
-                padding: 20px 10px;
-            }
-
-            .otp-container {
-                padding: 30px 15px;
-            }
-
-            .otp-container h2 {
-                font-size: 22px;
-            }
-
-            .otp-inputs {
-                gap: 8px;
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-
-            .otp-digit {
-                width: 40px;
-                height: 40px;
-                font-size: 16px;
-            }
-
-            .messages {
-                right: 10px;
-                left: 10px;
-            }
-
-            .messages li {
-                padding: 10px 15px;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Header -->
     <header>
         <div class="header-content">
             <div class="logo">sit well</div>
             <nav>
                 <a href="{% url 'home' %}">Home</a>
-                <a href="#">Contact</a>
-                <a href="#">About</a>
-                <a href="{% url 'signup' %}" class="sign-up">Sign Up</a>
+                <a href="{% url 'login' %}">Login</a>
+                <a href="{% url 'signup' %}">Sign Up</a>
             </nav>
-            <div class="search-bar">
-                <input type="text" placeholder="What are you looking for?">
-            </div>
-        </div>
-        <div class="banner">
-            Summer Sale For All Swim Suits And Free Express Delivery - OFF 50%! 
-            <a href="#">Shop Now</a>
         </div>
     </header>
 
-    <!-- Messages Display -->
+    <!-- Messages -->
     {% if messages %}
-        <ul class="messages">
+        <div class="messages">
             {% for message in messages %}
-                <li class="{{ message.tags }}">{{ message }}</li>
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
             {% endfor %}
-        </ul>
+        </div>
     {% endif %}
 
+    <!-- Main Content -->
     <main>
         <div class="otp-container">
             <h2>OTP VERIFICATION</h2>
-            <p>Enter the 6-digit OTP sent to your registered email</p>
-
+            <p>Enter the 6-digit OTP sent to your email</p>
+            
             <form method="post" action="{% url form_action_url %}" id="otpForm">
                 {% csrf_token %}
                 
-                <!-- 6-digit OTP input boxes -->
+                <!-- OTP Input Fields -->
                 <div class="otp-inputs">
                     <input type="text" class="otp-digit" maxlength="1" id="digit1" autocomplete="off">
                     <input type="text" class="otp-digit" maxlength="1" id="digit2" autocomplete="off">
@@ -466,15 +253,17 @@
                 </div>
 
                 <!-- Hidden field for combined OTP -->
-                <input type="text" id="otp" name="otp" required>
+                <input type="hidden" id="otp" name="otp" required>
 
+                <!-- Timer and Resend -->
                 <div class="timer-section">
-                    <span id="timer">2:00 seconds remaining</span>
-                    <button class="resend-otp" type="button" onclick="resendOTP()" {% if not user_id_for_resend %}disabled{% endif %}>
+                    <span id="timer">2:00 remaining</span>
+                    <button class="resend-otp" type="button" onclick="resendOTP()" id="resendBtn" disabled>
                         Resend OTP
                     </button>
                 </div>
 
+                <!-- Action Buttons -->
                 <div class="buttons">
                     <button class="go-back" type="button" onclick="goBack()">Go Back</button>
                     <button class="verify" type="submit" id="verifyBtn" disabled>Verify</button>
@@ -483,23 +272,28 @@
         </div>
     </main>
 
+    <!-- Footer -->
     <footer>
         <p>© Copyright Sit Well 2025. All rights reserved</p>
     </footer>
 
     <script>
-        // Get all OTP digit inputs
+        // OTP functionality with timer
         const otpDigits = document.querySelectorAll('.otp-digit');
         const combinedOtpField = document.getElementById('otp');
         const verifyBtn = document.getElementById('verifyBtn');
+        const resendBtn = document.getElementById('resendBtn');
+        const timerEl = document.getElementById('timer');
 
-        // Function to update the hidden combined OTP field
+        // Initialize timer with server-provided remaining time
+        let timeLeft = {{ remaining_time|default:120 }};
+        
+        // Update combined OTP field
         function updateCombinedOTP() {
             const otpValues = Array.from(otpDigits).map(input => input.value).join('');
             combinedOtpField.value = otpValues;
             
-            // Enable/disable verify button based on OTP completion
-            if (otpValues.length === 6) {
+            if (otpValues.length === 6 && timeLeft > 0) {
                 verifyBtn.disabled = false;
                 verifyBtn.style.backgroundColor = '#db4444';
             } else {
@@ -508,28 +302,23 @@
             }
         }
 
-        // Add event listeners to each OTP digit input
+        // OTP input handling
         otpDigits.forEach((input, index) => {
-            // Handle input - move to next field and update combined OTP
             input.addEventListener('input', (e) => {
                 const value = e.target.value;
                 
-                // Only allow numbers
                 if (!/^\d*$/.test(value)) {
                     e.target.value = '';
                     return;
                 }
                 
-                // Move to next input if current is filled and not the last input
                 if (value.length === 1 && index < otpDigits.length - 1) {
                     otpDigits[index + 1].focus();
                 }
                 
-                // Update the combined OTP
                 updateCombinedOTP();
             });
             
-            // Handle backspace - move to previous field
             input.addEventListener('keydown', (e) => {
                 if (e.key === 'Backspace') {
                     if (e.target.value === '' && index > 0) {
@@ -539,17 +328,8 @@
                         updateCombinedOTP();
                     }
                 }
-                
-                // Handle arrow keys for navigation
-                if (e.key === 'ArrowLeft' && index > 0) {
-                    otpDigits[index - 1].focus();
-                }
-                if (e.key === 'ArrowRight' && index < otpDigits.length - 1) {
-                    otpDigits[index + 1].focus();
-                }
             });
 
-            // Handle paste - distribute pasted digits across inputs
             input.addEventListener('paste', (e) => {
                 e.preventDefault();
                 const pastedData = e.clipboardData.getData('text');
@@ -562,46 +342,42 @@
                 });
                 
                 updateCombinedOTP();
-                
-                // Focus on the next empty field or the last field
-                const nextEmptyIndex = Math.min(index + digits.length, otpDigits.length - 1);
-                otpDigits[nextEmptyIndex].focus();
             });
         });
 
-        // Countdown Timer for OTP
-        let secs = 120; // 2 minutes
-        const timerEl = document.getElementById('timer');
-        const resendBtn = document.querySelector('.resend-otp');
-        
-        const interval = setInterval(() => {
-            secs--;
-            if (secs >= 0) {
-                const minutes = Math.floor(secs / 60);
-                const remainingSeconds = secs % 60;
-                timerEl.textContent = `${minutes}:${String(remainingSeconds).padStart(2, '0')} seconds remaining`;
-            } else {
-                clearInterval(interval);
-                timerEl.textContent = "OTP has expired";
+        // Timer countdown
+        const timer = setInterval(() => {
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                timerEl.textContent = "OTP expired";
                 timerEl.style.color = '#dc3545';
                 
-                // Disable all inputs and verify button when timer expires
+                // Disable inputs and verify button
                 otpDigits.forEach(input => input.disabled = true);
                 verifyBtn.disabled = true;
                 verifyBtn.style.backgroundColor = '#ccc';
                 
                 // Enable resend button
-                if (resendBtn && !resendBtn.disabled) {
-                    resendBtn.disabled = false;
-                    resendBtn.textContent = 'Resend OTP (Expired)';
-                }
+                resendBtn.disabled = false;
+                resendBtn.textContent = 'Resend OTP';
+                return;
+            }
+            
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerEl.textContent = `${minutes}:${seconds.toString().padStart(2, '0')} remaining`;
+            timeLeft--;
+            
+            // Enable resend button in last 30 seconds
+            if (timeLeft <= 30) {
+                resendBtn.disabled = false;
+                resendBtn.textContent = 'Resend OTP';
             }
         }, 1000);
 
-        // Form submission handler
+        // Form submission
         document.getElementById('otpForm').addEventListener('submit', function(e) {
             updateCombinedOTP();
-            
             if (combinedOtpField.value.length !== 6) {
                 e.preventDefault();
                 alert('Please enter the complete 6-digit OTP');
@@ -609,24 +385,13 @@
             }
         });
 
-        // Initialize the form
-        updateCombinedOTP();
-
         // Resend OTP function
         function resendOTP() {
             {% if user_id_for_resend %}
-                // Reset timer and enable inputs
-                secs = 120;
-                otpDigits.forEach(input => {
-                    input.disabled = false;
-                    input.value = '';
-                });
-                updateCombinedOTP();
-                
-                // Redirect to resend OTP
                 window.location.href = `{% url form_action_url %}?resend={{ user_id_for_resend }}`;
             {% else %}
-                alert("Your session has expired. Please go back and try again.");
+                alert("Session expired. Please start over.");
+                window.location.href = "{% url 'signup' %}";
             {% endif %}
         }
 
@@ -635,17 +400,18 @@
             window.history.back();
         }
 
-        // Auto-hide messages after 5 seconds
+        // Auto-hide messages
         setTimeout(() => {
             const messages = document.querySelector('.messages');
             if (messages) {
                 messages.style.opacity = '0';
                 messages.style.transition = 'opacity 0.5s';
-                setTimeout(() => {
-                    messages.style.display = 'none';
-                }, 500);
+                setTimeout(() => messages.style.display = 'none', 500);
             }
         }, 5000);
+
+        // Initialize
+        updateCombinedOTP();
     </script>
 </body>
 </html>
