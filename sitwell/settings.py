@@ -29,11 +29,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
-
-
-
-# settings.py
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -41,12 +36,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
-    # Your apps
     'authenticate',
     'customeradmin',
-    
-    # AllAuth - Following video tutorial order
     'django.contrib.sites',
     'allauth',
     'allauth.account',
@@ -63,36 +54,33 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     
-    # Your existing custom middleware
+    
     'customeradmin.middleware.BlockedUserMiddleware',
     'authenticate.middleware.OTPRateLimitMiddleware',
     
-    # AllAuth middleware
+    
     'allauth.account.middleware.AccountMiddleware',
 ]
 
-# Site framework - CRITICAL as shown in video
 SITE_ID = 1
 
-# Authentication backends - From video
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-# AllAuth settings - Following video approach
+
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 SOCIALACCOUNT_AUTO_SIGNUP = True 
 
-# Social account settings - Following video
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'APP': {
             'client_id': config("GOOGLE_CLIENT_ID"), 
-            'secret': config("GOOGLE_CLIENT_SECRET"),     # Will be filled from Google Console
+            'secret': config("GOOGLE_CLIENT_SECRET"),     
             'key': ''
         },
         "AUTH_PARAMS": {"prompt": "select_account"},
@@ -100,12 +88,14 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-# Redirect URLs - Following video pattern
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = '/dummy-home/'  # After login redirect
-LOGOUT_REDIRECT_URL = 'login'        # After logout redirect
+LOGIN_REDIRECT_URL = '/dummy-home/' 
 
-# Keep your existing custom user model
+LOGOUT_REDIRECT_URL = 'login'       
+# ACCOUNT_LOGIN_REDIRECT_URL = '/dummy-home/'
+# ACCOUNT_SIGNUP_REDIRECT_URL = 'login'        
+
+
 AUTH_USER_MODEL = 'authenticate.CustomUser'
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 
@@ -125,8 +115,8 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            BASE_DIR / 'templates',  # Global templates
-            BASE_DIR / 'authenticate',  # Add your app folder directly
+            BASE_DIR / 'templates',  
+            BASE_DIR / 'authenticate',  
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -216,25 +206,22 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 
-# Also ensure cookies work properly
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = 'Lax'
-# Add these to your existing CSRF settings
-CSRF_COOKIE_SECURE = False  # Set to True only in production with HTTPS
-CSRF_USE_SESSIONS = False
-CSRF_COOKIE_AGE = 31449600  # 1 year
 
-# Session settings
-SESSION_COOKIE_AGE = 1209600  # 2 weeks
+CSRF_COOKIE_SECURE = False  
+CSRF_USE_SESSIONS = False
+CSRF_COOKIE_AGE = 31449600  
+
+SESSION_COOKIE_AGE = 1209600  
 SESSION_SAVE_EVERY_REQUEST = True
 
-# Session Security
-SESSION_COOKIE_AGE = 3600  # 1 hour
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_COOKIE_SECURE = True  # Enable in production
-SESSION_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SECURE = True  # Enable in production
 
-# OTP Security
+SESSION_COOKIE_AGE = 3600  
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_SECURE = True  
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SECURE = True  
 OTP_EXPIRY_MINUTES = 2
 MAX_OTP_ATTEMPTS = 5
+SOCIALACCOUNT_LOGIN_ON_GET = True

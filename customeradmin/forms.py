@@ -90,7 +90,6 @@ class ProductForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Make these fields not required
         self.fields['discount_type'].required = False
         self.fields['discount_value'].required = False
         self.fields['tax_type'].required = False
@@ -104,7 +103,6 @@ class ProductForm(forms.ModelForm):
     def clean_sku(self):
         sku = self.cleaned_data.get('sku')
         if sku:
-            # Check for duplicate SKU (excluding current instance if editing)
             existing = Product.objects.filter(sku=sku)
             if self.instance.pk:
                 existing = existing.exclude(pk=self.instance.pk)
@@ -158,17 +156,14 @@ class ProductImageForm(forms.ModelForm):
     def clean_image(self):
         image = self.cleaned_data.get('image')
         if image:
-            # Only validate if this is a newly uploaded file (not an existing ImageFieldFile)
             if hasattr(image, 'content_type') and hasattr(image, 'size'):
-                # Check file size (5MB limit)
+             
                 if image.size > 5 * 1024 * 1024:
                     raise forms.ValidationError("Image file too large. Maximum size is 5MB.")
                 
-                # Check file type
                 if not image.content_type.startswith('image/'):
                     raise forms.ValidationError("File must be an image.")
                 
-                # Check file extension
                 valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
                 if not any(image.name.lower().endswith(ext) for ext in valid_extensions):
                     raise forms.ValidationError("Invalid image format. Use JPG, PNG, GIF, or WebP.")
@@ -176,30 +171,29 @@ class ProductImageForm(forms.ModelForm):
         return image
 
 
-# Enhanced formset for multiple images with proper validation
 ProductImageFormSet = inlineformset_factory(
     Product, 
     ProductImage,
     form=ProductImageForm,
     fields=['image', 'is_primary', 'order'],
-    extra=0,  # We handle this dynamically with JavaScript
-    min_num=3,  # Minimum 3 images required
-    validate_min=True,  # Enforce minimum validation
-    max_num=6,  # Maximum 6 images allowed
-    validate_max=True,  # Enforce maximum validation
-    can_delete=True,  # Allow deletion of existing images
-    can_order=True,  # Allow reordering of images
+    extra=0,  
+    min_num=3,  
+    validate_min=True,  
+    max_num=6,  
+    validate_max=True,  
+    can_delete=True,  
+    can_order=True,  
 )
 
 
-# Legacy formset (keep for backward compatibility if needed)
+
 ProductImageFormSetLegacy = inlineformset_factory(
     Product, 
     ProductImage,
     form=ProductImageForm,
     fields=['image', 'is_primary', 'order'],
-    extra=4,  # Show 4 empty forms
-    max_num=6,  # Maximum 6 images
+    extra=4,  
+    max_num=6,
     can_delete=True
 )
 
@@ -237,7 +231,7 @@ class CategoryForm(forms.ModelForm):
     def clean_thumbnail(self):
         thumbnail = self.cleaned_data.get('thumbnail')
         if thumbnail:
-            if thumbnail.size > 5 * 1024 * 1024:  # 5MB limit
+            if thumbnail.size > 5 * 1024 * 1024:  
                 raise forms.ValidationError("Image file too large. Maximum size is 5MB.")
             if not thumbnail.content_type.startswith('image/'):
                 raise forms.ValidationError("File must be an image.")

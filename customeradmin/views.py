@@ -17,7 +17,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.sessions.models import Session
 from django.contrib.auth import get_user_model
 
-# Set up logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -60,8 +60,7 @@ def admin_dashboard(request):
     if not request.user.is_superuser:
         messages.error(request, "You do not have permission to view this page.")
         return redirect('/')
-    
-    # Get real statistics
+
     total_products = Product.objects.count()
     published_products = Product.objects.filter(status='published').count()
     low_stock_products = Product.objects.filter(status='low-stock').count()
@@ -94,10 +93,9 @@ def product_view(request):
         messages.error(request, "You do not have permission to view this page.")
         return redirect('/')
     
-    # Start with all NON-DELETED products, ordered by newest first
     products = Product.objects.all().order_by('-created_at')
     
-    # Add search functionality
+   
     search_query = request.GET.get('search', '').strip()
     if search_query:
         products = products.filter(
@@ -107,19 +105,18 @@ def product_view(request):
             Q(category__icontains=search_query)
         )
     
-    # FIXED: Better status filtering logic with sold out support
+    
     status_filter = request.GET.get('status', '')
     if status_filter == 'out-of-stock':
         products = products.filter(Q(status='out-of-stock') | Q(stock_quantity=0))
     elif status_filter and status_filter != 'all' and status_filter != '':
         products = products.filter(status=status_filter)
-    # If no status filter, show ALL products (published, draft, etc.)
+    
     
     print(f"Products count after filtering: {products.count()}")
     print(f"Status filter applied: {status_filter}")
     
-    # FIXED: Increase pagination to show more products
-    paginator = Paginator(products, 10)  # 10 products per page
+    paginator = Paginator(products, 10) 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -146,7 +143,7 @@ def add_product(request):
         print("=== ADD PRODUCT WITH MULTIPLE IMAGES DEBUG ===")
         form = ProductForm(request.POST)
         
-        # Get multiple images from the request
+        
         images = request.FILES.getlist('images')
         print(f"Number of images received: {len(images)}")
 
@@ -158,10 +155,9 @@ def add_product(request):
             print(f"Images from getlist: {request.FILES.getlist('images')}")
             print("=====================================")
     
-    # Your existing code continues...
 
         
-        # Validate minimum 3 images
+        
         if len(images) < 3:
             messages.error(request, "Please upload at least 3 images for the product.")
             return render(request, 'products/add_product.html', {'form': form})
@@ -173,20 +169,19 @@ def add_product(request):
         if form.is_valid():
             try:
                 with transaction.atomic():
-                    # Save the product first
                     product = form.save()
                     print(f"Product saved: {product.id} - {product.name}")
                     
-                    # Process and save each image
+                   
                     for index, image in enumerate(images):
-                        # Process image (resize and optimize)
+                        
                         processed_image = process_image(image)
                         
-                        # Create ProductImage instance
+                        
                         product_image = ProductImage(
                             product=product,
                             image=processed_image,
-                            is_primary=(index == 0),  # First image is primary
+                            is_primary=(index == 0),  
                             order=index
                         )
                         product_image.save()
@@ -201,7 +196,7 @@ def add_product(request):
                 logger.error(error_msg)
                 messages.error(request, error_msg)
         else:
-            # Show specific field errors
+            
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field}: {error}")
@@ -224,7 +219,7 @@ def edit_product(request, product_id):
     if request.method == 'POST':
         form = ProductForm(request.POST, instance=product)
         
-        # Get new images if any
+       
         new_images = request.FILES.getlist('images')
         existing_images_count = product.images.count()
         total_images = existing_images_count + len(new_images)
@@ -234,7 +229,7 @@ def edit_product(request, product_id):
         print(f"New images: {len(new_images)}")
         print(f"Total images: {total_images}")
         
-        # Validate minimum images (existing + new)
+        
         if total_images < 3:
             messages.error(request, f"Product must have at least 3 images. Currently has {existing_images_count}. Please upload {3 - existing_images_count} more images.")
             existing_images = product.images.all().order_by('order')
@@ -266,16 +261,16 @@ def edit_product(request, product_id):
         if form.is_valid():
             try:
                 with transaction.atomic():
-                    # Save the product
+                    
                     updated_product = form.save()
                     
-                    # Add new images if any
+                    
                     if new_images:
                         current_max_order = product.images.aggregate(max_order=Max('order'))['max_order'] or -1
                         
                         for index, image in enumerate(new_images):
-                            # Basic validation
-                            if image.size > 5 * 1024 * 1024:  # 5MB limit
+                           
+                            if image.size > 5 * 1024 * 1024:  
                                 messages.warning(request, f"Image '{image.name}' is too large (max 5MB). Skipped.")
                                 continue
                             
@@ -283,14 +278,12 @@ def edit_product(request, product_id):
                                 messages.warning(request, f"'{image.name}' is not a valid image. Skipped.")
                                 continue
                             
-                            # Process image
                             processed_image = process_image(image)
                             
-                            # Create new ProductImage
                             product_image = ProductImage(
                                 product=product,
                                 image=processed_image,
-                                is_primary=False,  # Don't make new images primary by default
+                                is_primary=False,  
                                 order=current_max_order + index + 1
                             )
                             product_image.save()
@@ -305,14 +298,13 @@ def edit_product(request, product_id):
                 logger.error(error_msg)
                 messages.error(request, error_msg)
         else:
-            # Show specific field errors
+            
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field}: {error}")
     else:
         form = ProductForm(instance=product)
     
-    # Prepare context with helpful variables
     existing_images = product.images.all().order_by('order')
     images_count = existing_images.count()
     images_remaining = 6 - images_count
@@ -349,7 +341,7 @@ def custom_logout(request):
     if request.method == 'POST':
         logout(request)
         messages.success(request, "You have been successfully logged out.")
-        return redirect('login_to_account')  # ✅ Keep this - redirects to admin login
+        return redirect('login_to_account')  
     return redirect('login_to_account')
 
 
@@ -431,7 +423,6 @@ def delete_single_image(request, image_id):
         image = get_object_or_404(ProductImage, id=image_id)
         product = image.product
         
-        # Check if deleting this image would leave less than 3 images
         remaining_images = product.images.exclude(id=image_id).count()
         if remaining_images < 3:
             return JsonResponse({
@@ -465,7 +456,7 @@ def category_view(request):
     if request.GET.get('clear'):
         return redirect('category-list')
     
-    paginator = Paginator(categories, 5)  # Changed to 5 categories per page
+    paginator = Paginator(categories, 5)  
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -490,7 +481,6 @@ def add_category(request):
         if not name:
             return JsonResponse({'success': False, 'error': 'Name is required'})
         
-        # Check if category already exists
         if Category.objects.filter(name=name).exists():
             return JsonResponse({'success': False, 'error': 'Category already exists'})
         
@@ -571,7 +561,6 @@ def restore_category(request, category_id):
     
     return redirect('category-list')
 
-# Optional: View for deleted categories (similar to deleted_products_view)
 @login_required
 def deleted_categories_view(request):
     if not request.user.is_superuser:
@@ -584,7 +573,7 @@ def deleted_categories_view(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    return render(request, 'categories/deleted_categories.html', {  # Create this template if needed
+    return render(request, 'categories/deleted_categories.html', {  
         'categories': page_obj,
         'page_obj': page_obj,
     })
@@ -656,10 +645,8 @@ def user_management_view(request):
         messages.error(request, "You do not have permission to access this page.")
         return redirect('/')
     
-    # Get all users except superusers, ordered by latest first (descending)
     users = User.objects.filter(is_superuser=False).order_by('-created_at')
     
-    # Backend search functionality
     search_query = request.GET.get('search', '').strip()
     if search_query:
         users = users.filter(
@@ -669,16 +656,14 @@ def user_management_view(request):
             Q(phone_number__icontains=search_query)
         )
     
-    # Clear search if requested
     if request.GET.get('clear'):
         return redirect('user-management')
     
-    # Backend pagination - 5 users per page
     paginator = Paginator(users, 5)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    return render(request, 'User/user_management.html', {  # Changed path
+    return render(request, 'User/user_management.html', {  
     'users': page_obj,
     'page_obj': page_obj,
     'search_query': search_query,
@@ -699,10 +684,10 @@ def block_user(request, user_id):
         if user.is_blocked:
             return JsonResponse({'success': False, 'error': 'User is already blocked'})
         
-        # Block the user
+        
         user.block_user(blocked_by=request.user.email)
         
-        # Clear all sessions for this user
+        
         sessions = Session.objects.all()
         for session in sessions:
             try:

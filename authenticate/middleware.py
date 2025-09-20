@@ -10,7 +10,6 @@ class OTPRateLimitMiddleware:
     def __call__(self, request):
         if request.path in ['/verify-otp-signup/', '/verify-reset-otp/']:
             if request.method == 'POST':
-                # Check rate limiting
                 session_key = f"otp_attempts_{request.session.session_key}"
                 attempts = request.session.get(session_key, 0)
                 
@@ -18,7 +17,6 @@ class OTPRateLimitMiddleware:
                     messages.error(request, 'Too many failed attempts. Please try again later.')
                     return redirect('login')
                 
-                # Increment attempts on failed OTP
                 if 'Invalid OTP' in str(request.POST):
                     request.session[session_key] = attempts + 1
         

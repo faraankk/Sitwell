@@ -10,15 +10,10 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('forgot-password/', views.forgot_password_view, name='forgot_password'),
     path('confi-new-password/', views.confirm_new_password_view, name='confi_new_password'),
-    
-    # ✅ Home and dashboard
     path('', views.home_view, name='home'),
     path('dummy-home/', views.dummy_home_view, name='dummy_home'),
-    
-    # ✅ NEW: Product views
     path('products/', views.product_list_view, name='product_list'),
     path('product/<int:pk>/', views.product_detail_view, name='product_detail'),
-    
     path('logout/', views.logout_view, name='logout'),
     path('verify-reset-otp/', views.verify_reset_otp_view, name='verify_reset_otp'),
 ]

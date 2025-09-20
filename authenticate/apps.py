@@ -6,7 +6,6 @@ class AuthenticateConfig(AppConfig):
     name = 'authenticate'
 
 
-# authenticate/apps.py
 from django.apps import AppConfig
 
 
@@ -15,4 +14,4 @@ class AuthenticateConfig(AppConfig):
     name = "authenticate"
 
     def ready(self):
-        import authenticate.signals  # 👈 ensures signals are loaded
+        import authenticate.signals 
