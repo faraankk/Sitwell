@@ -1,0 +1,510 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sitwell{% endblock %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            line-height: 1.6;
+            background-color: #fff;
+        }
+
+        header {
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #db4444;
+            text-transform: capitalize;
+            text-decoration: none;
+        }
+
+        .nav-left {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .nav-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        nav a {
+            text-decoration: none;
+            font-weight: 500;
+            color: #333;
+            transition: color 0.3s ease;
+            padding: 8px 12px;
+        }
+
+        nav a:hover {
+            color: #db4444;
+        }
+
+        /* Search Bar */
+        .search-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-input {
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+            font-size: 14px;
+        }
+
+        .search-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+        }
+
+        /* User Profile Dropdown */
+        .user-profile {
+            position: relative;
+            display: inline-block;
+        }
+
+        .profile-toggle {
+            background: none;
+            border: none;
+            font-weight: 500;
+            color: #333;
+            cursor: pointer;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        .profile-toggle:hover {
+            background-color: #f8f8f8;
+            color: #db4444;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: #db4444;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            padding: 8px 0;
+            min-width: 200px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .profile-dropdown.show {
+            display: block;
+        }
+
+        .profile-dropdown a {
+            display: block;
+            padding: 12px 16px;
+            color: #333;
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+            font-size: 14px;
+        }
+
+        .profile-dropdown a:hover {
+            background-color: #f8f8f8;
+            color: #db4444;
+        }
+
+        .profile-dropdown hr {
+            margin: 8px 0;
+            border: none;
+            height: 1px;
+            background: #eee;
+        }
+
+        /* Notification/Cart Icons */
+        .nav-icons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .nav-icon {
+            position: relative;
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #333;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        .nav-icon:hover {
+            background-color: #f8f8f8;
+            color: #db4444;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: #db4444;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Banner */
+        .banner {
+            margin: 25px 20px;
+            min-height: 30px;
+            background: linear-gradient(135deg, #000 0%, #333 100%);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .banner-text {
+            white-space: nowrap;
+            animation: scrollText 15s linear infinite;
+            font-weight: bold;
+        }
+
+        @keyframes scrollText {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        .banner:hover .banner-text {
+            animation-play-state: paused;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Footer styles */
+        footer {
+            background-color: #000;
+            color: #ccc;
+            padding: 50px 0 20px 0;
+            margin-top: 80px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .footer-section {
+            text-align: left;
+        }
+
+        .footer-section h3 {
+            color: #db4444;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .footer-section p, .footer-section a {
+            color: #ccc;
+            font-size: 14px;
+            margin: 10px 0;
+            text-decoration: none;
+            line-height: 1.6;
+        }
+
+        .footer-section a:hover {
+            color: #db4444;
+            transition: color 0.3s ease;
+        }
+
+        .email-input {
+            width: 100%;
+            padding: 10px 15px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            background-color: #222;
+            color: white;
+            box-sizing: border-box;
+            margin-top: 15px;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-links a {
+            width: 35px;
+            height: 35px;
+            background: #333;
+            color: #ccc;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .social-links a:hover {
+            background-color: #db4444;
+            color: white;
+        }
+
+        .copyright {
+            border-top: 1px solid #333;
+            margin-top: 40px;
+            padding-top: 20px;
+            text-align: center;
+            color: #999;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                padding: 15px;
+            }
+
+            .nav-left, .nav-right {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .search-container {
+                width: 100%;
+            }
+
+            .search-input {
+                flex: 1;
+            }
+
+            .logo {
+                font-size: 24px;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="{% url 'home' %}" class="logo">Sit Well</a>
+            
+            <nav class="nav-left">
+                <a href="{% url 'home' %}">Home</a>
+                <a href="/products/">Products</a>
+                <a href="/contact/">Contact</a>
+                <a href="/about/">About</a>
+                {% if user.is_staff %}
+                    <a href="/staff/">Staff Panel</a>
+                {% endif %}
+            </nav>
+
+            <div class="nav-right">
+                <div class="search-container">
+                    <input type="text" class="search-input" placeholder="Search products...">
+                    <button class="search-btn"><i class="fas fa-search"></i></button>
+                </div>
+
+                <div class="nav-icons">
+                    <button class="nav-icon" title="Wishlist">
+                        <i class="fas fa-heart"></i>
+                        <span class="notification-badge">2</span>
+                    </button>
+                    <button class="nav-icon" title="Cart">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="notification-badge">3</span>
+                    </button>
+                </div>
+
+                <div class="user-profile">
+                    <button class="profile-toggle" onclick="toggleProfileDropdown()">
+                        <div class="user-avatar">
+                            {{ user.first_name.0|default:user.email.0|upper }}
+                        </div>
+                        <span>{{ user.first_name|default:"User" }}</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="profile-dropdown" id="profileDropdown">
+                        <a href="/profile/"><i class="fas fa-user"></i> My Profile</a>
+                        <a href="/orders/"><i class="fas fa-shopping-bag"></i> My Orders</a>
+                        <a href="/wishlist/"><i class="fas fa-heart"></i> My Wishlist</a>
+                        <a href="/settings/"><i class="fas fa-cog"></i> Settings</a>
+                        <hr>
+                        <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% block banner %}
+        <div class="banner">
+            <div class="banner-text">Up to 10% off Voucher - Discover Amazing Furniture Deals</div>
+        </div>
+        {% endblock %}
+    </header>
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    {% block footer %}
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Sit Well</h3>
+                <p>Subscribe</p>
+                <p>Get 10% off your first order</p>
+                <input type="email" placeholder="Enter your email" class="email-input">
+            </div>
+            <div class="footer-section">
+                <h3>Support</h3>
+                <p>III, Bijoy sarani, Dhaka,</p>
+                <p>DH 15/5, Bangladesh.</p>
+                <p>sitwell@gmail.com</p>
+                <p>+8801-88888-9999</p>
+            </div>
+            <div class="footer-section">
+                <h3>Account</h3>
+                <p>My Account</p>
+                <p>Orders</p>
+                <p>Cart</p>
+                <p>Wishlist</p>
+                <p>Settings</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Link</h3>
+                <p>Privacy Policy</p>
+                <p>Terms Of Use</p>
+                <p>FAQ</p>
+                <p>Contact</p>
+            </div>
+            <div class="footer-section">
+                <h3>Download App</h3>
+                <p>Save $3 with App New User Only</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+            </div>
+        </div>
+        <p class="copyright">© Copyright Sit Well 2025. All rights reserved</p>
+    </footer>
+    {% endblock %}
+
+    <script>
+        function toggleProfileDropdown() {
+            const dropdown = document.getElementById('profileDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('profileDropdown');
+            const toggle = event.target.closest('.profile-toggle');
+            
+            if (!toggle && dropdown) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Search functionality
+        document.querySelector('.search-btn').addEventListener('click', function() {
+            const query = document.querySelector('.search-input').value;
+            if (query.trim()) {
+                // Redirect to search page
+                window.location.href = `/search/?q=${encodeURIComponent(query)}`;
+            }
+        });
+
+        // Enter key search
+        document.querySelector('.search-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.querySelector('.search-btn').click();
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

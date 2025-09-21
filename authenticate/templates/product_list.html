@@ -1,175 +1,302 @@
+{% extends 'authenticated_base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Products - Sit Well Furniture</title>
-    {% comment %} <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"> {% endcomment %}
-    <style>
-        .product-card {
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .product-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-        }
-        .product-overlay {
-            position: absolute;
+
+{% block title %}Products - Sitwell{% endblock %}
+
+{% block content %}
+<style>
+    .product-card {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+    
+    .product-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.7);
+        opacity: 0;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .product-card:hover .product-overlay {
+        opacity: 1;
+    }
+    
+    .product-image {
+        height: 280px;
+        object-fit: cover;
+        width: 100%;
+        transition: transform 0.3s ease;
+    }
+    
+    .product-card:hover .product-image {
+        transform: scale(1.05);
+    }
+    
+    .discount-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: linear-gradient(45deg, #e74c3c, #c0392b);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+    }
+    
+    .sold-out-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: linear-gradient(45deg, #dc3545, #c82333);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
+        z-index: 10;
+    }
+    
+    .sold-out-overlay {
+        background: rgba(220, 53, 69, 0.1);
+    }
+    
+    .filter-sidebar {
+        transition: transform 0.3s ease;
+    }
+    
+    .mobile-filter-toggle {
+        display: none;
+    }
+    
+    /* Base styles */
+    .bg-gray-50 { background-color: #f9fafb; }
+    .bg-white { background-color: #ffffff; }
+    .bg-gray-100 { background-color: #f3f4f6; }
+    .bg-blue-600 { background-color: #2563eb; }
+    .bg-blue-700 { background-color: #1d4ed8; }
+    .bg-red-600 { background-color: #dc2626; }
+    .bg-gray-200 { background-color: #e5e7eb; }
+    .bg-gray-400 { background-color: #9ca3af; }
+    .text-gray-600 { color: #4b5563; }
+    .text-gray-700 { color: #374151; }
+    .text-gray-900 { color: #111827; }
+    .text-white { color: #ffffff; }
+    .text-blue-600 { color: #2563eb; }
+    .text-red-500 { color: #ef4444; }
+    .text-red-600 { color: #dc2626; }
+    .text-gray-400 { color: #9ca3af; }
+    .text-gray-500 { color: #6b7280; }
+    .text-blue-800 { color: #1e40af; }
+    .bg-blue-100 { background-color: #dbeafe; }
+    
+    /* Layout */
+    .max-w-7xl { max-width: 80rem; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .px-4 { padding-left: 1rem; padding-right: 1rem; }
+    .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
+    .py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+    .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+    .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+    .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .px-5 { padding-left: 1.25rem; padding-right: 1.25rem; }
+    .p-6 { padding: 1.5rem; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .mb-4 { margin-bottom: 1rem; }
+    .mb-8 { margin-bottom: 2rem; }
+    .mb-12 { margin-bottom: 3rem; }
+    .mt-1 { margin-top: 0.25rem; }
+    .mt-4 { margin-top: 1rem; }
+    .mr-2 { margin-right: 0.5rem; }
+    .gap-4 { gap: 1rem; }
+    .gap-6 { gap: 1.5rem; }
+    .gap-8 { gap: 2rem; }
+    .gap-2 { gap: 0.5rem; }
+    .gap-3 { gap: 0.75rem; }
+    
+    /* Flexbox */
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .flex-row { flex-direction: row; }
+    .items-center { align-items: center; }
+    .items-start { align-items: flex-start; }
+    .justify-between { justify-content: space-between; }
+    .justify-center { justify-content: center; }
+    .space-x-4 > * + * { margin-left: 1rem; }
+    .space-x-2 > * + * { margin-left: 0.5rem; }
+    .space-y-6 > * + * { margin-top: 1.5rem; }
+    .space-y-3 > * + * { margin-top: 0.75rem; }
+    
+    /* Grid */
+    .grid { display: grid; }
+    .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+    .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    
+    /* Width */
+    .w-full { width: 100%; }
+    .w-80 { width: 20rem; }
+    .flex-1 { flex: 1; }
+    
+    /* Height */
+    .h-fit { height: fit-content; }
+    
+    /* Border */
+    .border { border-width: 1px; }
+    .border-gray-200 { border-color: #e5e7eb; }
+    .border-gray-300 { border-color: #d1d5db; }
+    .border-t { border-top-width: 1px; }
+    .rounded-lg { border-radius: 0.5rem; }
+    .rounded-xl { border-radius: 0.75rem; }
+    .rounded-t-xl { border-top-left-radius: 0.75rem; border-top-right-radius: 0.75rem; }
+    .rounded-full { border-radius: 9999px; }
+    
+    /* Shadow */
+    .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+    .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    
+    /* Focus */
+    .focus\:ring-2:focus { box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.5); }
+    .focus\:border-blue-500:focus { border-color: #3b82f6; }
+    
+    /* Hover */
+    .hover\:bg-gray-50:hover { background-color: #f9fafb; }
+    .hover\:bg-gray-100:hover { background-color: #f3f4f6; }
+    .hover\:bg-blue-700:hover { background-color: #1d4ed8; }
+    .hover\:shadow-lg:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    
+    /* Text */
+    .text-sm { font-size: 0.875rem; }
+    .text-lg { font-size: 1.125rem; }
+    .text-xl { font-size: 1.25rem; }
+    .text-2xl { font-size: 1.5rem; }
+    .text-3xl { font-size: 1.875rem; }
+    .font-medium { font-weight: 500; }
+    .font-semibold { font-weight: 600; }
+    .font-bold { font-weight: 700; }
+    .text-left { text-align: left; }
+    .text-center { text-align: center; }
+    .line-through { text-decoration-line: line-through; }
+    
+    /* Position */
+    .relative { position: relative; }
+    .absolute { position: absolute; }
+    .sticky { position: sticky; }
+    .top-8 { top: 2rem; }
+    
+    /* Cursor */
+    .cursor-pointer { cursor: pointer; }
+    .cursor-not-allowed { cursor: not-allowed; }
+    
+    /* Opacity */
+    .opacity-75 { opacity: 0.75; }
+    
+    /* Transition */
+    .transition { transition-property: background-color, border-color, color, fill, stroke; }
+    .transition-colors { transition-property: background-color, border-color, color, fill, stroke; }
+    .duration-200 { transition-duration: 200ms; }
+    
+    /* Misc */
+    .block { display: block; }
+    .inline-block { display: inline-block; }
+    .hidden { display: none; }
+    .font-sans { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif; }
+    
+    @media (max-width: 1024px) {
+        .lg\:flex-row { flex-direction: column; }
+        .lg\:w-80 { width: 100%; }
+        .lg\:sticky { position: static; }
+        .lg\:top-8 { top: 0; }
+        .lg\:grid-cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .lg\:text-3xl { font-size: 1.5rem; }
+        
+        .filter-sidebar {
+            position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.7);
-            opacity: 0;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 12px;
+            height: 100vh;
+            z-index: 50;
+            transform: translateX(-100%);
+            width: 300px;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        .product-card:hover .product-overlay {
-            opacity: 1;
+        
+        .filter-sidebar.active {
+            transform: translateX(0);
         }
-        .product-image {
-            height: 280px;
-            object-fit: cover;
+        
+        .filter-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            transition: transform 0.3s ease;
-        }
-        .product-card:hover .product-image {
-            transform: scale(1.05);
-        }
-        .discount-badge {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: linear-gradient(45deg, #e74c3c, #c0392b);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
-        }
-        .sold-out-badge {
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            background: linear-gradient(45deg, #dc3545, #c82333);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 700;
-            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4);
-            z-index: 10;
-        }
-        .sold-out-overlay {
-            background: rgba(220, 53, 69, 0.1);
-        }
-        .filter-sidebar {
-            transition: transform 0.3s ease;
-        }
-        .mobile-filter-toggle {
-            display: none;
-        }
-        @media (max-width: 1024px) {
-            .filter-sidebar {
-                position: fixed;
-                top: 0;
-                left: 0;
-                height: 100vh;
-                z-index: 50;
-                transform: translateX(-100%);
-                width: 300px;
-                background: white;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            }
-            .filter-sidebar.active {
-                transform: translateX(0);
-            }
-            .filter-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 40;
-                opacity: 0;
-                visibility: hidden;
-                transition: all 0.3s ease;
-            }
-            .filter-overlay.active {
-                opacity: 1;
-                visibility: visible;
-            }
-            .mobile-filter-toggle {
-                display: block;
-            }
-        }
-        .pagination-button {
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+            opacity: 0;
+            visibility: hidden;
             transition: all 0.3s ease;
         }
-        .pagination-button:hover {
-            transform: translateY(-2px);
+        
+        .filter-overlay.active {
+            opacity: 1;
+            visibility: visible;
         }
-    </style>
-</head>
-<body class="bg-gray-50 font-sans">
-
-<!-- Header -->
-<header class="bg-white shadow-sm border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-            <!-- Logo -->
-            <div class="flex items-center">
-                <div class="border border-gray-300 px-3 py-2 rounded">
-                    <span class="text-sm font-medium text-gray-700">sit well</span>
-                </div>
-            </div>
-
-            <!-- Navigation -->
-            <nav class="hidden md:flex space-x-8">
-                <a href="{% url 'dummy_home' %}" class="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium">Home</a>
-                <a href="{% url 'product_list' %}" class="text-blue-600 px-3 py-2 text-sm font-medium border-b-2 border-blue-600">Products</a>
-                <a href="#" class="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium">Contact</a>
-                <a href="#" class="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium">About</a>
-            </nav>
-
-            <!-- Right side -->
-            <div class="flex items-center space-x-4">
-                <div class="hidden md:flex items-center space-x-4">
-                    <i class="fas fa-heart text-gray-400 hover:text-red-500 cursor-pointer"></i>
-                    <i class="fas fa-shopping-cart text-gray-400 hover:text-blue-500 cursor-pointer"></i>
-                    <i class="fas fa-user text-gray-400 hover:text-gray-600 cursor-pointer"></i>
-                </div>
-                <!-- Mobile menu button -->
-                <button class="md:hidden p-2 text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-bars"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-</header>
+        
+        .mobile-filter-toggle {
+            display: block;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .sm\:grid-cols-2 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        .sm\:flex-row { flex-direction: column; }
+        .sm\:items-center { align-items: flex-start; }
+    }
+    
+    .pagination-button {
+        transition: all 0.3s ease;
+    }
+    
+    .pagination-button:hover {
+        transform: translateY(-2px);
+    }
+</style>
 
 <!-- Breadcrumb -->
-<div class="bg-gray-50 border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-        <nav class="text-sm text-gray-500">
-            <a href="{% url 'home' %}" class="hover:text-gray-700">Home</a>
-            <span class="mx-2">></span>
-            <span class="text-gray-900">Products</span>
+<div class="bg-gray-50" style="border-bottom: 1px solid #e5e7eb; margin-bottom: 20px;">
+    <div class="max-w-7xl mx-auto px-4 py-3">
+        <nav style="font-size: 0.875rem; color: #6b7280;">
+            <a href="{% url 'home' %}" style="color: #6b7280;" onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#6b7280'">Home</a>
+            <span style="margin: 0 0.5rem;">></span>
+            <span style="color: #111827;">Products</span>
         </nav>
     </div>
 </div>
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="flex flex-col lg:flex-row gap-8">
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="flex flex-col gap-8" style="display: flex; flex-direction: column; gap: 2rem;">
         
         <!-- Mobile Filter Toggle -->
         <div class="mobile-filter-toggle">
@@ -182,239 +309,243 @@
             </button>
         </div>
 
-        <!-- Filter Overlay -->
-        <div id="filter-overlay" class="filter-overlay"></div>
+        <div style="display: flex; flex-direction: row; gap: 2rem;">
+            <!-- Filter Overlay -->
+            <div id="filter-overlay" class="filter-overlay"></div>
 
-        <!-- Filter Sidebar -->
-        <div id="filter-sidebar" class="filter-sidebar lg:w-80 bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-fit lg:sticky lg:top-8">
-            <form method="GET" class="space-y-6">
-                <!-- Search -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
-                    <input type="text" name="search" value="{{ search_query|default:'' }}" placeholder="Search products..." class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-
-                <!-- Category -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                    <select name="category" class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="">All Categories</option>
-                        {% for category_key, category_name in category_choices %}
-                        <option value="{{ category_key }}" {% if current_category == category_key %}selected{% endif %}>{{ category_name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <!-- Brand -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Brand</label>
-                    <select name="brand" class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="">All Brands</option>
-                        {% for brand in available_brands %}
-                        <option value="{{ brand }}" {% if current_brand == brand %}selected{% endif %}>{{ brand }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <!-- Price Range -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
-                    <div class="grid grid-cols-2 gap-3">
-                        <input type="number" name="min_price" value="{{ min_price }}" placeholder="Min" class="px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <input type="number" name="max_price" value="{{ max_price }}" placeholder="Max" class="px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <!-- Filter Sidebar -->
+            <div id="filter-sidebar" class="filter-sidebar bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-fit sticky top-8" style="width: 20rem;">
+                <form method="GET" class="space-y-6">
+                    <!-- Search -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                        <input type="text" name="search" value="{{ search_query|default:'' }}" placeholder="Search products..." class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
-                </div>
 
-                <!-- Sort -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                    <select name="sort" class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest First</option>
-                        <option value="price_low" {% if current_sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
-                        <option value="price_high" {% if current_sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
-                        <option value="name_az" {% if current_sort == 'name_az' %}selected{% endif %}>Name: A-Z</option>
-                        <option value="name_za" {% if current_sort == 'name_za' %}selected{% endif %}>Name: Z-A</option>
-                        <option value="popularity" {% if current_sort == 'popularity' %}selected{% endif %}>Most Popular</option>
-                        <option value="featured" {% if current_sort == 'featured' %}selected{% endif %}>Featured</option>
-                    </select>
-                </div>
+                    <!-- Category -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                        <select name="category" class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">All Categories</option>
+                            {% for category_key, category_name in category_choices %}
+                            <option value="{{ category_key }}" {% if current_category == category_key %}selected{% endif %}>{{ category_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-                <!-- Action Buttons -->
-                <div class="space-y-3 pt-4 border-t border-gray-200">
-                    <button type="submit" class="btn-primary w-full px-4 py-3 text-white rounded-lg font-medium">
-                        <i class="fas fa-search mr-2"></i>Apply Filters
-                    </button>
-                    <a href="{% url 'product_list' %}" class="block w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-center">
-                        <i class="fa-solid fa-rotate-right mr-2"></i>Clear All
-                    </a>
-                </div>
-            </form>
-        </div>
+                    <!-- Brand -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Brand</label>
+                        <select name="brand" class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">All Brands</option>
+                            {% for brand in available_brands %}
+                            <option value="{{ brand }}" {% if current_brand == brand %}selected{% endif %}>{{ brand }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-        <!-- Products Section -->
-        <div class="flex-1">
-            <!-- Results Header -->
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-                <div>
-                    <h1 class="text-2xl lg:text-3xl font-bold text-gray-900">Furniture Collection</h1>
-                    <p class="text-gray-600 mt-1">Discover our premium furniture selection</p>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">{{ total_products }} products found</span>
-                </div>
-            </div>
-
-            <!-- Products Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-                {% for product in page_obj %}
-                <div class="product-card bg-white rounded-xl shadow-sm border border-gray-200 {% if product.stock_quantity == 0 %}opacity-75{% endif %}">
-                    <div class="relative">
-                        {% if product.get_main_image_url %}
-                            <img src="{{ product.get_main_image_url }}" alt="{{ product.name }}" class="product-image rounded-t-xl">
-                        {% else %}
-                            <div class="product-image rounded-t-xl bg-gray-200 flex items-center justify-center">
-                                <i class="fas fa-image fa-3x text-gray-400"></i>
-                            </div>
-                        {% endif %}
-                        
-                        <!-- Stock Status & Discount Badge -->
-                        {% if product.stock_quantity == 0 %}
-                            <div class="sold-out-badge">
-                                SOLD OUT
-                            </div>
-                        {% elif product.discount_type != 'none' and product.discount_value > 0 %}
-                            <div class="discount-badge">
-                                {% if product.discount_type == 'percentage' %}
-                                    -{{ product.discount_value|floatformat:0 }}%
-                                {% else %}
-                                    -₹{{ product.discount_value }}
-                                {% endif %}
-                            </div>
-                        {% endif %}
-                        
-                        <div class="product-overlay rounded-t-xl {% if product.stock_quantity == 0 %}sold-out-overlay{% endif %}">
-                            {% if product.stock_quantity > 0 %}
-                                <button class="bg-white text-gray-900 px-6 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors">
-                                    <i class="fas fa-shopping-cart mr-2"></i>Add to Cart
-                                </button>
-                            {% else %}
-                                <button class="bg-gray-400 text-white px-6 py-2 rounded-lg font-medium cursor-not-allowed" disabled>
-                                    <i class="fas fa-ban mr-2"></i>Sold Out
-                                </button>
-                            {% endif %}
-                            <a href="{% url 'product_detail' product.pk %}" class="bg-transparent border-2 border-white text-white px-6 py-2 rounded-lg font-medium hover:bg-white hover:text-gray-900 transition-colors">
-                                <i class="fas fa-eye mr-2"></i>View Details
-                            </a>
+                    <!-- Price Range -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="number" name="min_price" value="{{ min_price }}" placeholder="Min" class="px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <input type="number" name="max_price" value="{{ max_price }}" placeholder="Max" class="px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         </div>
                     </div>
-                    <div class="p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ product.name|truncatechars:40 }}</h3>
-                        
-                        <div class="flex items-center mb-2">
-                            <div class="rating-stars text-sm mr-2">
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="fas fa-star"></i>
-                                <i class="far fa-star"></i>
-                            </div>
-                            <!-- Updated Stock Display -->
+
+                    <!-- Sort -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                        <select name="sort" class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest First</option>
+                            <option value="price_low" {% if current_sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                            <option value="price_high" {% if current_sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                            <option value="name_az" {% if current_sort == 'name_az' %}selected{% endif %}>Name: A-Z</option>
+                            <option value="name_za" {% if current_sort == 'name_za' %}selected{% endif %}>Name: Z-A</option>
+                            <option value="popularity" {% if current_sort == 'popularity' %}selected{% endif %}>Most Popular</option>
+                            <option value="featured" {% if current_sort == 'featured' %}selected{% endif %}>Featured</option>
+                        </select>
+                    </div>
+
+                    <div class="space-y-3" style="padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+                        <!-- Apply Filters -->
+                        <button type="submit" class="w-full px-5 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 hover:shadow-lg transition duration-200 flex items-center justify-center gap-2" style="font-size: 1.125rem;">
+                            <i class="fas fa-filter"></i>
+                            Apply Filters
+                        </button>
+
+                        <!-- Clear All -->
+                        <a href="{% url 'product_list' %}" class="block w-full px-5 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-100 transition duration-200 flex items-center justify-center gap-2" style="font-size: 1.125rem; text-decoration: none;">
+                            <i class="fa-solid fa-rotate-right"></i>
+                            Clear All
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Products Section -->
+            <div class="flex-1">
+                <!-- Results Header -->
+                <div class="flex justify-between items-center mb-8 gap-4" style="flex-direction: column; align-items: flex-start;">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">Furniture Collection</h1>
+                        <p class="text-gray-600 mt-1">Discover our premium furniture selection</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">{{ total_products }} products found</span>
+                    </div>
+                </div>
+
+                <!-- Products Grid -->
+                <div class="grid grid-cols-3 gap-6 mb-12">
+                    {% for product in page_obj %}
+                    <div class="product-card bg-white rounded-xl shadow-sm border border-gray-200 {% if product.stock_quantity == 0 %}opacity-75{% endif %}">
+                        <div class="relative">
+                            {% if product.get_main_image_url %}
+                                <img src="{{ product.get_main_image_url }}" alt="{{ product.name }}" class="product-image rounded-t-xl">
+                            {% else %}
+                                <div class="product-image rounded-t-xl bg-gray-200 flex items-center justify-center">
+                                    <i class="fas fa-image fa-3x text-gray-400"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Stock Status & Discount Badge -->
                             {% if product.stock_quantity == 0 %}
-                                <span class="text-red-500 text-sm font-medium">Sold Out</span>
-                            {% else %}
-                                <span class="text-gray-500 text-sm">({{ product.stock_quantity }} in stock)</span>
+                                <div class="sold-out-badge">
+                                    SOLD OUT
+                                </div>
+                            {% elif product.discount_type != 'none' and product.discount_value > 0 %}
+                                <div class="discount-badge">
+                                    {% if product.discount_type == 'percentage' %}
+                                        -{{ product.discount_value|floatformat:0 }}%
+                                    {% else %}
+                                        -₹{{ product.discount_value }}
+                                    {% endif %}
+                                </div>
                             {% endif %}
-                        </div>
-                        
-                        {% if product.short_description %}
-                            <p class="text-gray-600 text-sm mb-4">{{ product.short_description|truncatewords:20 }}</p>
-                        {% endif %}
-                        
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-2">
-                                {% if product.discount_type != 'none' and product.discount_value > 0 %}
-                                    <span class="text-red-600 font-bold text-lg">₹{{ product.get_discounted_price }}</span>
-                                    <span class="text-gray-400 line-through text-sm">₹{{ product.price }}</span>
+                            
+                            <div class="product-overlay rounded-t-xl {% if product.stock_quantity == 0 %}sold-out-overlay{% endif %}">
+                                {% if product.stock_quantity > 0 %}
+                                    <button class="bg-white text-gray-900 px-6 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors">
+                                        <i class="fas fa-shopping-cart mr-2"></i>Add to Cart
+                                    </button>
                                 {% else %}
-                                    <span class="text-gray-900 font-bold text-lg">₹{{ product.price }}</span>
+                                    <button class="bg-gray-400 text-white px-6 py-2 rounded-lg font-medium cursor-not-allowed" disabled>
+                                        <i class="fas fa-ban mr-2"></i>Sold Out
+                                    </button>
+                                {% endif %}
+                                <a href="{% url 'product_detail' product.pk %}" class="bg-transparent text-white px-6 py-2 rounded-lg font-medium hover:bg-white hover:text-gray-900 transition-colors" style="border: 2px solid white; text-decoration: none;">
+                                    <i class="fas fa-eye mr-2"></i>View Details
+                                </a>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ product.name|truncatechars:40 }}</h3>
+                            
+                            <div class="flex items-center mb-2">
+                                <div class="text-sm mr-2" style="color: #fbbf24;">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="far fa-star"></i>
+                                </div>
+                                {% if product.stock_quantity == 0 %}
+                                    <span class="text-red-500 text-sm font-medium">Sold Out</span>
+                                {% else %}
+                                    <span class="text-gray-500 text-sm">({{ product.stock_quantity }} in stock)</span>
                                 {% endif %}
                             </div>
-                            <div class="text-sm text-gray-500">
-                                {{ product.get_category_display }}
+                            
+                            {% if product.short_description %}
+                                <p class="text-gray-600 text-sm mb-4">{{ product.short_description|truncatewords:20 }}</p>
+                            {% endif %}
+                            
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    {% if product.discount_type != 'none' and product.discount_value > 0 %}
+                                        <span class="text-red-600 font-bold text-lg">₹{{ product.get_discounted_price }}</span>
+                                        <span class="text-gray-400 line-through text-sm">₹{{ product.price }}</span>
+                                    {% else %}
+                                        <span class="text-gray-900 font-bold text-lg">₹{{ product.price }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="text-sm text-gray-500">
+                                    {{ product.get_category_display }}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                {% empty %}
-                <div class="col-span-3 text-center py-12">
-                    <i class="fas fa-search fa-3x text-gray-300 mb-4"></i>
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">No products found</h3>
-                    <p class="text-gray-500">Try adjusting your search or filter criteria</p>
-                    <a href="{% url 'product_list' %}" class="mt-4 inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                        View All Products
-                    </a>
-                </div>
-                {% endfor %}
-            </div>
-
-            <!-- Pagination -->
-            {% if page_obj.has_other_pages %}
-            <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-                <div class="text-sm text-gray-600">
-                    Showing {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ total_products }} products
-                </div>
-                <nav class="flex items-center space-x-2">
-                    {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}&sort={{ current_sort }}" class="px-3 py-2 text-gray-400 hover:text-gray-600">
-                            <i class="fas fa-chevron-left"></i>
+                    {% empty %}
+                    <div style="grid-column: span 3; text-align: center; padding: 3rem 0;">
+                        <i class="fas fa-search fa-3x text-gray-300 mb-4"></i>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">No products found</h3>
+                        <p class="text-gray-500">Try adjusting your search or filter criteria</p>
+                        <a href="{% url 'product_list' %}" class="mt-4 inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" style="text-decoration: none;">
+                            View All Products
                         </a>
-                    {% else %}
-                        <span class="px-3 py-2 text-gray-400">
-                            <i class="fas fa-chevron-left"></i>
-                        </span>
-                    {% endif %}
-
-                    {% for num in page_obj.paginator.page_range %}
-                        {% if page_obj.number == num %}
-                            <span class="px-3 py-2 bg-blue-600 text-white rounded-lg">{{ num }}</span>
-                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                            <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}&sort={{ current_sort }}" class="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg pagination-button">{{ num }}</a>
-                        {% endif %}
+                    </div>
                     {% endfor %}
+                </div>
 
-                    {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_brand %}&brand={{ current_brand }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}&sort={{ current_sort }}" class="px-3 py-2 text-gray-400 hover:text-gray-600">
-                            <i class="fas fa-chevron-right"></i>
-                        </a>
-                    {% else %}
-                        <span class="px-3 py-2 text-gray-400">
-                            <i class="fas fa-chevron-right"></i>
-                        </span>
-                    {% endif %}
-                </nav>
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <div class="flex justify-between items-center gap-4" style="flex-direction: column;">
+                    <div class="text-sm text-gray-600">
+                        Showing {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ total_products }} products
+                    </div>
+                    <nav class="flex items-center space-x-2">
+                        {% if page_obj.has_previous %}
+                            <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}" class="px-3 py-2 text-gray-400 hover:text-gray-600" style="text-decoration: none;">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        {% else %}
+                            <span class="px-3 py-2 text-gray-400">
+                                <i class="fas fa-chevron-left"></i>
+                            </span>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <span class="px-3 py-2 bg-blue-600 text-white rounded-lg">{{ num }}</span>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ num }}" class="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg pagination-button" style="text-decoration: none;">{{ num }}</a>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}" class="px-3 py-2 text-gray-400 hover:text-gray-600" style="text-decoration: none;">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        {% else %}
+                            <span class="px-3 py-2 text-gray-400">
+                                <i class="fas fa-chevron-right"></i>
+                            </span>
+                        {% endif %}
+                    </nav>
+                </div>
+                {% endif %}
             </div>
-            {% endif %}
         </div>
     </div>
 </div>
 
 <script>
-// Mobile filter toggle
+// Mobile filter toggle (safeguarded)
 const filterToggle = document.getElementById('filter-toggle');
 const filterSidebar = document.getElementById('filter-sidebar');
 const filterOverlay = document.getElementById('filter-overlay');
 
-filterToggle.addEventListener('click', () => {
-    filterSidebar.classList.add('active');
-    filterOverlay.classList.add('active');
-});
+if (filterToggle && filterSidebar && filterOverlay) {
+    filterToggle.addEventListener('click', () => {
+        filterSidebar.classList.add('active');
+        filterOverlay.classList.add('active');
+    });
 
-filterOverlay.addEventListener('click', () => {
-    filterSidebar.classList.remove('active');
-    filterOverlay.classList.remove('active');
-});
+    filterOverlay.addEventListener('click', () => {
+        filterSidebar.classList.remove('active');
+        filterOverlay.classList.remove('active');
+    });
+}
 </script>
-<script src="https://cdn.tailwindcss.com"></script>
-
-</body>
-</html>
+{% endblock %}

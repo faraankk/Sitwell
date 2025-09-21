@@ -1,629 +1,377 @@
+{% extends 'base.html' %}
 {% load static %}
 {% load socialaccount %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sit Well - Create Account</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background-color: #fff;
-        }
+{% block title %}Create Account - Sitwell{% endblock %}
 
-        /* Header Styles */
-        header {
-            background: #fff;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+{% block banner %}
+<!-- Small furniture banner instead of swim suits banner -->
+<div style="margin: 15px 20px; min-height: 80px; background: linear-gradient(135deg, #000 0%, #333 100%); border-radius: 8px; display: flex; justify-content: center; align-items: center; color: white; font-size: 18px; text-align: center; position: relative; overflow: hidden;">
+    <div style="white-space: nowrap; animation: scrollText 12s linear infinite; font-weight: bold;">
+        Up to 10% off Voucher - Discover Amazing Furniture Deals
+    </div>
+</div>
 
-        .header-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+<style>
+@keyframes scrollText {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+}
+</style>
+{% endblock %}
 
-        .logo {
-            font-size: 28px;
-            font-weight: bold;
-            color: #db4444;
-            text-transform: capitalize;
-        }
+{% block content %}
+<style>
+    .signup-main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 60px 20px;
+    }
 
-        nav {
-            display: flex;
-            gap: 20px;
-        }
+    .signup-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 60px;
+        align-items: center;
+        min-height: 70vh;
+    }
 
-        nav a {
-            text-decoration: none;
-            color: #333;
-            font-weight: 500;
-            padding: 8px 12px;
-            transition: color 0.3s;
-        }
+    .sofa-image {
+        width: 100%;
+        max-width: 600px;
+        height: 750px;
+        object-fit: cover;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        justify-self: center;
+    }
 
-        nav a:hover {
-            color: #db4444;
-        }
+    .form-section {
+        max-width: 400px;
+        justify-self: center;
+    }
 
-        /* Banner */
-        .banner {
-            background: #000;
-            color: #fff;
-            text-align: center;
-            padding: 12px 0;
-            font-size: 14px;
-        }
+    .form-section h2 {
+        font-size: 36px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #333;
+    }
 
-        .banner a {
-            color: #fff;
-            text-decoration: underline;
-            margin-left: 10px;
-        }
+    .form-section p {
+        color: #666;
+        margin-bottom: 40px;
+        font-size: 16px;
+    }
 
-        .banner a:hover {
-            color: #db4444;
-        }
+    .error {
+        background: #fee;
+        border: 1px solid #fcc;
+        border-radius: 4px;
+        padding: 15px;
+        margin-bottom: 20px;
+        color: #c33;
+    }
 
-        /* Main Content */
-        main {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 60px 20px;
-        }
+    .error p {
+        margin: 5px 0;
+        font-size: 14px;
+    }
 
-        .container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 60px;
-            align-items: center;
-            min-height: 70vh;
+    .errorlist {
+        list-style: none;
+        color: #db4444;
+        font-size: 14px;
+        margin-top: 5px;
+    }
+
+    .errorlist li {
+        margin: 0;
+    }
+
+    .form-field {
+        margin-bottom: 24px;
+        position: relative;
+    }
+
+    .form-field label {
+        position: absolute;
+        top: -8px;
+        left: 0;
+        background: white;
+        padding: 0 5px;
+        font-size: 12px;
+        color: #666;
+        font-weight: 500;
+    }
+
+    .form-field input {
+        width: 100%;
+        padding: 15px;
+        border: none;
+        border-bottom: 2px solid #e0e0e0;
+        font-size: 16px;
+        transition: border-color 0.3s;
+        background: transparent;
+    }
+
+    .form-field input:focus {
+        outline: none;
+        border-bottom-color: #db4444;
+    }
+
+    .form-field input::placeholder {
+        color: #999;
+    }
+
+    .form-field input.error {
+        border-bottom-color: #db4444;
+    }
+
+    .create-account {
+        width: 100%;
+        background: #db4444;
+        color: white;
+        border: none;
+        padding: 15px;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        margin-bottom: 20px;
+    }
+
+    .create-account:hover {
+        background: #c13333;
+    }
+
+    .social-login-section {
+        margin-bottom: 24px;
+    }
+
+    .or-divider {
+        text-align: center;
+        margin: 25px 0;
+        position: relative;
+    }
+    
+    .or-divider::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: #ddd;
+    }
+    
+    .or-divider span {
+        background: white;
+        padding: 0 15px;
+        color: #666;
+        font-weight: 500;
+    }
+
+    .google-signup {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        width: 100%;
+        padding: 15px;
+        border: 1px solid #db4444;
+        border-radius: 4px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-size: 16px;
+        font-weight: 500;
+        color: #333;
+        background: white;
+        margin-bottom: 20px;
+    }
+    
+    .google-signup:hover {
+        background: #f8f8f8;
+        border-color: #c13333;
+        color: #333;
+    }
+
+    .social-icon {
+        font-size: 18px;
+        color: #4285f4;
+    }
+
+    .login-link {
+        text-align: center;
+        color: #666;
+    }
+
+    .login-link a {
+        color: #db4444;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .login-link a:hover {
+        text-decoration: underline;
+    }
+
+    @media (max-width: 992px) {
+        .signup-container {
+            grid-template-columns: 1fr;
+            gap: 40px;
         }
 
         .sofa-image {
-            width: 100%;
-            max-width: 450px;
-            height: 400px;
-            object-fit: cover;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            justify-self: center;
+            order: 2;
         }
 
         .form-section {
-            max-width: 400px;
-            justify-self: center;
+            order: 1;
+            max-width: 100%;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .signup-main {
+            padding: 30px 15px;
+        }
+
+        .signup-container {
+            gap: 30px;
         }
 
         .form-section h2 {
-            font-size: 36px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #333;
+            font-size: 28px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .signup-main {
+            padding: 20px 10px;
         }
 
-        .form-section p {
-            color: #666;
-            margin-bottom: 40px;
-            font-size: 16px;
+        .form-section h2 {
+            font-size: 24px;
         }
+    }
+</style>
 
-        /* Error Messages */
-        .error {
-            background: #fee;
-            border: 1px solid #fcc;
-            border-radius: 4px;
-            padding: 15px;
-            margin-bottom: 20px;
-            color: #c33;
-        }
-
-        .error p {
-            margin: 5px 0;
-            font-size: 14px;
-        }
-
-        .errorlist {
-            list-style: none;
-            color: #db4444;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-
-        .errorlist li {
-            margin: 0;
-        }
-
-        /* Form Fields */
-        .form-field {
-            margin-bottom: 24px;
-            position: relative;
-        }
-
-        .form-field label {
-            position: absolute;
-            top: -8px;
-            left: 0;
-            background: white;
-            padding: 0 5px;
-            font-size: 12px;
-            color: #666;
-            font-weight: 500;
-        }
-
-        .form-field input {
-            width: 100%;
-            padding: 15px;
-            border: none;
-            border-bottom: 2px solid #e0e0e0;
-            font-size: 16px;
-            transition: border-color 0.3s;
-            background: transparent;
-        }
-
-        .form-field input:focus {
-            outline: none;
-            border-bottom-color: #db4444;
-        }
-
-        .form-field input::placeholder {
-            color: #999;
-        }
-
-        .form-field input.error {
-            border-bottom-color: #db4444;
-        }
-
-        /* Buttons */
-        .create-account {
-            width: 100%;
-            background: #db4444;
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 4px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            margin-bottom: 20px;
-        }
-
-        .create-account:hover {
-            background: #c13333;
-        }
-
-        /* Google Signup Styles */
-        .social-login-section {
-            margin-bottom: 24px;
-        }
-
-        .or-divider {
-            text-align: center;
-            margin: 25px 0;
-            position: relative;
-        }
-        .or-divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: #ddd;
-        }
-        .or-divider span {
-            background: white;
-            padding: 0 15px;
-            color: #666;
-            font-weight: 500;
-        }
-
-        .google-signup {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            width: 100%;
-            padding: 15px;
-            border: 1px solid #db4444;
-            border-radius: 4px;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            font-size: 16px;
-            font-weight: 500;
-            color: #333;
-            background: white;
-            margin-bottom: 20px;
-        }
-        .google-signup:hover {
-            background: #f8f8f8;
-            border-color: #c13333;
-            color: #333;
-        }
-
-        .social-icon {
-            font-size: 18px;
-            color: #4285f4;
-        }
-
-        .login-link {
-            text-align: center;
-            color: #666;
-        }
-
-        .login-link a {
-            color: #db4444;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .login-link a:hover {
-            text-decoration: underline;
-        }
-
-        /* Footer */
-        footer {
-            background: #000;
-            color: white;
-            padding: 50px 0 20px;
-            margin-top: 80px;
-        }
-
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 40px;
-            margin-bottom: 40px;
-        }
-
-        .footer-section h3 {
-            font-size: 20px;
-            margin-bottom: 20px;
-            color: #db4444;
-        }
-
-        .footer-section p {
-            color: #ccc;
-            font-size: 14px;
-            margin: 10px 0;
-            line-height: 1.6;
-        }
-
-        .email-input {
-            width: 100%;
-            padding: 10px 15px;
-            border-radius: 4px;
-            border: 1px solid #444;
-            background-color: #222;
-            color: white;
-            box-sizing: border-box;
-            margin-top: 15px;
-        }
-
-        .app-links {
-            margin: 20px 0;
-        }
-
-        .app-links img {
-            height: 40px;
-            margin-right: 10px;
-        }
-
-        .social-links {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .social-links a {
-            width: 35px;
-            height: 35px;
-            background: #333;
-            color: #ccc;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 18px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        .social-links a:hover {
-            background-color: #db4444;
-            color: white;
-        }
-
-        .copyright {
-            border-top: 1px solid #333;
-            margin-top: 40px;
-            padding-top: 20px;
-            text-align: center;
-            color: #999;
-            font-size: 14px;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 992px) {
-            .container {
-                grid-template-columns: 1fr;
-                gap: 40px;
-                padding: 40px 20px;
-            }
-
-            .sofa-image {
-                order: 2;
-            }
-
-            .form-section {
-                order: 1;
-                max-width: 100%;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 15px;
-            }
-
-            nav {
-                gap: 15px;
-                flex-wrap: wrap;
-            }
-
-            main {
-                padding: 30px 15px;
-            }
-
-            .container {
-                gap: 30px;
-            }
-
-            .form-section h2 {
-                font-size: 28px;
-            }
-
-            .footer-content {
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 30px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header-content {
-                padding: 10px;
-            }
-
-            nav {
-                flex-direction: column;
-                width: 100%;
-                text-align: center;
-            }
-
-            .banner {
-                font-size: 12px;
-                padding: 8px 0;
-            }
-
-            main {
-                padding: 20px 10px;
-            }
-
-            .form-section h2 {
-                font-size: 24px;
-            }
-
-            .footer-content {
-                grid-template-columns: 1fr;
-                gap: 25px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <div class="header-content">
-            <div class="logo">sit well</div>
-            <nav>
-                <a href="{% url 'home' %}">Home</a>
-                <a href="#">Contact</a>
-                <a href="#">About</a>
-                <a href="{% url 'signup' %}">Sign Up</a>
-                <a href="{% url 'login' %}">Log in</a>
-            </nav>
-        </div>
-        <div class="banner">
-            Summer Sale For All Swim Suits And Free Express Delivery - OFF 50%! 
-            <a href="#">Shop Now</a>
-        </div>
-    </header>
-
-    <main>
-        <div class="container">
-            <img src="/media/sofa.webp" alt="Modern Furniture Collection" width="800" height="700">
-            <div class="form-section">
-                <h2>Create an Account</h2>
-                <p>Enter your details below</p>
-                
-                {% if form.errors %}
-                    <div class="error">
-                        {% for field in form %}
-                            {% for error in field.errors %}
-                                <p>{{ error }}</p>
-                            {% endfor %}
-                        {% endfor %}
-                        {% for error in form.non_field_errors %}
+<div class="signup-main">
+    <div class="signup-container">
+        <img src="/media/sofa.webp" alt="Modern Furniture Collection" class="sofa-image" width="800" height="700">
+        
+        <div class="form-section">
+            <h2>Create an Account</h2>
+            <p>Enter your details below</p>
+            
+            {% if form.errors %}
+                <div class="error">
+                    {% for field in form %}
+                        {% for error in field.errors %}
                             <p>{{ error }}</p>
                         {% endfor %}
-                    </div>
-                {% endif %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
 
-                <form method="POST">
-                    {% csrf_token %}
-                    
-                    <div class="form-field">
-                        <label for="{{ form.first_name.id_for_label }}">First Name</label>
-                        {{ form.first_name }}
-                        {% if form.first_name.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.first_name.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-field">
-                        <label for="{{ form.last_name.id_for_label }}">Last Name</label>
-                        {{ form.last_name }}
-                        {% if form.last_name.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.last_name.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-field">
-                        <label for="{{ form.email.id_for_label }}">Email</label>
-                        {{ form.email }}
-                        {% if form.email.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.email.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-field">
-                        <label for="{{ form.phone_number.id_for_label }}">Phone Number</label>
-                        {{ form.phone_number }}
-                        {% if form.phone_number.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.phone_number.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-field">
-                        <label for="{{ form.password1.id_for_label }}">Password</label>
-                        {{ form.password1 }}
-                        {% if form.password1.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.password1.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                    </div>
-
-                    <div class="form-field">
-                        <label for="{{ form.password2.id_for_label }}">Confirm Password</label>
-                        {{ form.password2 }}
-                        {% if form.password2.errors %}
-                            <ul class="errorlist">
-                                {% for error in form.password2.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                    </div>
-
-                    <button type="submit" class="create-account">Create Account</button>
-                </form>
-
-                <!-- Google Signup Section -->
-                <div class="social-login-section">
-                    <div class="or-divider">
-                        <span>OR</span>
-                    </div>
-                    
-                    <a href="{% provider_login_url 'google' %}" class="google-signup">
-                        <i class="fab fa-google social-icon"></i>
-                        Sign up with Google
-                    </a>
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="form-field">
+                    <label for="{{ form.first_name.id_for_label }}">First Name</label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.first_name.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
                 </div>
 
-                <p class="login-link">
-                    Already have an account? <a href="{% url 'login' %}">Log in</a>
-                </p>
+                <div class="form-field">
+                    <label for="{{ form.last_name.id_for_label }}">Last Name</label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.last_name.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <div class="form-field">
+                    <label for="{{ form.email.id_for_label }}">Email</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.email.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <div class="form-field">
+                    <label for="{{ form.phone_number.id_for_label }}">Phone Number</label>
+                    {{ form.phone_number }}
+                    {% if form.phone_number.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.phone_number.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <div class="form-field">
+                    <label for="{{ form.password1.id_for_label }}">Password</label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.password1.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <div class="form-field">
+                    <label for="{{ form.password2.id_for_label }}">Confirm Password</label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.password2.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="create-account">Create Account</button>
+            </form>
+
+            <div class="social-login-section">
+                <div class="or-divider">
+                    <span>OR</span>
+                </div>
+                
+                <a href="{% provider_login_url 'google' %}" class="google-signup">
+                    <i class="fab fa-google social-icon"></i>
+                    Sign up with Google
+                </a>
             </div>
+
+            <p class="login-link">
+                Already have an account? <a href="{% url 'login' %}">Log in</a>
+            </p>
         </div>
-    </main>
-
-    <footer>
-        <div class="footer-content">
-            <div class="footer-section">
-                <h3>Sit Well</h3>
-                <p>Subscribe</p>
-                <p>Get 10% off your first order</p>
-                <input type="email" placeholder="Enter your email" class="email-input">
-            </div>
-            <div class="footer-section">
-                <h3>Support</h3>
-                <p>III, Bijoy sarani, Dhaka,</p>
-                <p>DH 15/5, Bangladesh.</p>
-                <p>sitwellstore@gmail.com</p>
-                <p>+8801-88888-9999</p>
-            </div>
-            <div class="footer-section">
-                <h3>Account</h3>
-                <p>My Account</p>
-                <p>Login / Register</p>
-                <p>Cart</p>
-                <p>Wishlist</p>
-                <p>Shop</p>
-            </div>
-            <div class="footer-section">
-                <h3>Quick Link</h3>
-                <p>Privacy Policy</p>
-                <p>Terms Of Use</p>
-                <p>FAQ</p>
-                <p>Contact</p>
-            </div>
-            <div class="footer-section">
-                <h3>Download App</h3>
-                <p>Save $3 with App New User Only</p>
-                <div class="app-links">
-                    <img src="{% static 'images/google-play.png' %}" alt="Google Play">
-                    <img src="{% static 'images/app-store.png' %}" alt="App Store">
-                </div>
-                <div class="social-links">
-                    <a href="#"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#"><i class="fab fa-twitter"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                </div>
-            </div>
-        </div>
-        <p class="copyright">© Copyright Sit Well 2025. All rights reserved</p>
-    </footer>
-</body>
-</html>
+    </div>
+</div>
+{% endblock %}

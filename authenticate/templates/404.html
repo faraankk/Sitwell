@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #000000;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        
+        /* Enhanced walking animation with more realistic movement */
+        .walking-person {
+            animation: walk 6s ease-in-out infinite;
+        }
+        
+        @keyframes walk {
+            0% { transform: translateX(-150px) scaleX(1); }
+            25% { transform: translateX(-50px) scaleX(1); }
+            50% { transform: translateX(100px) scaleX(-1); }
+            75% { transform: translateX(50px) scaleX(-1); }
+            100% { transform: translateX(-150px) scaleX(1); }
+        }
+        
+        /* More natural sitting animation with breathing effect */
+        .sitting-person {
+            animation: breathe 3s ease-in-out infinite;
+        }
+        
+        @keyframes breathe {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-3px) scale(1.02); }
+        }
+        
+        /* Enhanced floating sofa with rotation */
+        .floating-sofa {
+            animation: sofaFloat 4s ease-in-out infinite;
+        }
+        
+        @keyframes sofaFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-8px) rotate(0.5deg); }
+            50% { transform: translateY(-12px) rotate(0deg); }
+            75% { transform: translateY(-8px) rotate(-0.5deg); }
+        }
+        
+        /* Added leg movement animation for walking person */
+        .walking-legs {
+            animation: legMove 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes legMove {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(15deg); }
+            50% { transform: rotate(0deg); }
+            75% { transform: rotate(-15deg); }
+        }
+        
+        /* Added arm swing animation */
+        .walking-arms {
+            animation: armSwing 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes armSwing {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-10deg); }
+            50% { transform: rotate(0deg); }
+            75% { transform: rotate(10deg); }
+        }
+        
+        /* Added blinking animation for sitting person */
+        .blinking-eyes {
+            animation: blink 4s ease-in-out infinite;
+        }
+        
+        @keyframes blink {
+            0%, 90%, 100% { opacity: 1; }
+            95% { opacity: 0; }
+        }
+        
+        /* Added subtle shadow animation */
+        .person-shadow {
+            animation: shadowMove 6s ease-in-out infinite;
+        }
+        
+        @keyframes shadowMove {
+            0% { transform: translateX(-150px) scaleX(0.8); opacity: 0.3; }
+            25% { transform: translateX(-50px) scaleX(1); opacity: 0.5; }
+            50% { transform: translateX(100px) scaleX(1); opacity: 0.5; }
+            75% { transform: translateX(50px) scaleX(1); opacity: 0.5; }
+            100% { transform: translateX(-150px) scaleX(0.8); opacity: 0.3; }
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Added particle effect background */
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #374151;
+            border-radius: 50%;
+            animation: float-particles 8s linear infinite;
+        }
+        
+        @keyframes float-particles {
+            0% { transform: translateY(100vh) translateX(0px); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100px) translateX(50px); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Added floating particles background -->
+    <div class="particles">
+        <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
+        <div class="particle" style="left: 20%; animation-delay: 1s;"></div>
+        <div class="particle" style="left: 30%; animation-delay: 2s;"></div>
+        <div class="particle" style="left: 40%; animation-delay: 3s;"></div>
+        <div class="particle" style="left: 50%; animation-delay: 4s;"></div>
+        <div class="particle" style="left: 60%; animation-delay: 5s;"></div>
+        <div class="particle" style="left: 70%; animation-delay: 6s;"></div>
+        <div class="particle" style="left: 80%; animation-delay: 7s;"></div>
+        <div class="particle" style="left: 90%; animation-delay: 8s;"></div>
+    </div>
+
+    <!-- Simplified navigation for dark theme -->
+    <nav class="w-full px-6 py-4 relative z-10">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                    <span class="text-black font-bold text-sm">SW</span>  
+                </div>
+                <span class="font-semibold text-lg text-white">Sitwell</span>  
+            </div>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="/" class="text-gray-300 hover:text-white transition-colors">Home</a>
+                <a href="/about" class="text-gray-300 hover:text-white transition-colors">About</a>
+                <a href="/contact" class="text-gray-300 hover:text-white transition-colors">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content with person and sofa scene -->
+    <main class="flex-1 flex items-center justify-center px-6 py-12 relative">
+        <div class="max-w-6xl mx-auto text-center relative">
+            
+            <!-- Enhanced scene container with shadows and more realistic animations -->
+            <div class="relative mb-12 h-96 flex items-center justify-center">
+                
+                <!-- Added shadow for walking person -->
+                <div class="person-shadow absolute left-0 top-3/4 w-12 h-4 bg-gray-800 rounded-full opacity-30 blur-sm"></div>
+                
+                <!-- Enhanced Walking Person with more detailed animation -->
+                <div class="walking-person absolute left-0 top-1/2 transform -translate-y-1/2">
+                    <svg width="60" height="80" viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Head -->
+                        <circle cx="30" cy="15" r="8" fill="#60a5fa"/>
+                        <!-- Added eyes with blinking -->
+                        <circle cx="27" cy="13" r="1" fill="#000" class="blinking-eyes"/>
+                        <circle cx="33" cy="13" r="1" fill="#000" class="blinking-eyes"/>
+                        <!-- Body -->
+                        <rect x="25" y="23" width="10" height="25" rx="5" fill="#60a5fa"/>
+                        <!-- Enhanced arms with swing animation -->
+                        <g class="walking-arms" style="transform-origin: 25px 30px;">
+                            <rect x="20" y="30" width="8" height="3" rx="1.5" fill="#60a5fa"/>
+                        </g>
+                        <g class="walking-arms" style="transform-origin: 35px 35px; animation-delay: 0.75s;">
+                            <rect x="32" y="35" width="8" height="3" rx="1.5" fill="#60a5fa"/>
+                        </g>
+                        <!-- Enhanced legs with movement -->
+                        <g class="walking-legs" style="transform-origin: 30px 48px;">
+                            <rect x="27" y="48" width="6" height="20" rx="3" fill="#60a5fa"/>
+                        </g>
+                        <g class="walking-legs" style="transform-origin: 25px 48px; animation-delay: 0.75s;">
+                            <rect x="22" y="48" width="6" height="18" rx="3" fill="#60a5fa"/>
+                        </g>
+                    </svg>
+                </div>
+
+                <!-- Enhanced 404 Sofa with more realistic design -->
+                <div class="floating-sofa relative">
+                    <svg width="300" height="150" viewBox="0 0 300 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Sofa shadow -->
+                        <ellipse cx="150" cy="140" rx="120" ry="8" fill="#111111" opacity="0.5"/>
+                        <!-- Sofa base with gradient -->
+                        <defs>
+                            <linearGradient id="sofaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#4b5563"/>
+                                <stop offset="100%" style="stop-color:#374151"/>
+                            </linearGradient>
+                        </defs>
+                        <rect x="20" y="80" width="260" height="50" rx="25" fill="url(#sofaGradient)"/>
+                        <!-- Sofa back -->
+                        <rect x="30" y="40" width="240" height="60" rx="30" fill="#4b5563"/>
+                        <!-- Left armrest -->
+                        <rect x="10" y="50" width="40" height="80" rx="20" fill="#4b5563"/>
+                        <!-- Right armrest -->
+                        <rect x="250" y="50" width="40" height="80" rx="20" fill="#4b5563"/>
+                        <!-- Cushion details -->
+                        <rect x="50" y="85" width="60" height="35" rx="15" fill="#374151"/>
+                        <rect x="130" y="85" width="60" height="35" rx="15" fill="#374151"/>
+                        <rect x="210" y="85" width="60" height="35" rx="15" fill="#374151"/>
+                        <!-- Sofa legs -->
+                        <rect x="40" y="130" width="8" height="15" fill="#1f2937"/>
+                        <rect x="80" y="130" width="8" height="15" fill="#1f2937"/>
+                        <rect x="212" y="130" width="8" height="15" fill="#1f2937"/>
+                        <rect x="252" y="130" width="8" height="15" fill="#1f2937"/>
+                        
+                        <!-- 404 Text on sofa -->
+                        <text x="150" y="85" text-anchor="middle" fill="#60a5fa" font-size="36" font-weight="bold" font-family="Inter">404</text>
+                    </svg>
+                </div>
+
+                <!-- Enhanced Sitting Person with more realistic details -->
+                <div class="sitting-person absolute">
+                    <svg width="80" height="100" viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Head -->
+                        <circle cx="40" cy="20" r="10" fill="#a78bfa"/>
+                        <!-- Added facial features -->
+                        <circle cx="37" cy="18" r="1" fill="#000" class="blinking-eyes"/>
+                        <circle cx="43" cy="18" r="1" fill="#000" class="blinking-eyes"/>
+                        <path d="M37 23 Q40 25 43 23" stroke="#000" stroke-width="1" fill="none"/>
+                        <!-- Body -->
+                        <rect x="32" y="30" width="16" height="20" rx="8" fill="#a78bfa"/>
+                        <!-- Arms -->
+                        <rect x="25" y="35" width="12" height="4" rx="2" fill="#a78bfa"/>
+                        <rect x="43" y="40" width="12" height="4" rx="2" fill="#a78bfa"/>
+                        <!-- Sitting legs -->
+                        <rect x="35" y="50" width="6" height="25" rx="3" fill="#a78bfa"/>
+                        <rect x="45" y="50" width="6" height="25" rx="3" fill="#a78bfa"/>
+                        <!-- Feet -->
+                        <ellipse cx="38" cy="80" rx="8" ry="4" fill="#a78bfa"/>
+                        <ellipse cx="48" cy="80" rx="8" ry="4" fill="#a78bfa"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Error Message -->
+            <div class="mb-12">
+                <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">
+                    Looks like you found our <span class="gradient-text">404 Lounge</span>
+                </h1>
+                <p class="text-lg text-gray-300 max-w-2xl mx-auto leading-relaxed">
+                    Someone's already made themselves comfortable on our error sofa. 
+                    The page you're looking for seems to have taken a seat too. Let's get you back on track!
+                </p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+                <button onclick="history.back()" class="px-8 py-3 bg-white text-black rounded-lg font-medium hover:bg-gray-200 transition-colors">
+                    ← Go Back
+                </button>
+                <a href="/" class="px-8 py-3 border border-gray-600 text-gray-300 rounded-lg font-medium hover:bg-gray-900 transition-colors">
+                    🏠 Go Home
+                </a>
+            </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full px-6 py-8 border-t border-gray-900">
+        <div class="max-w-7xl mx-auto text-center">
+            <p class="text-gray-500 text-sm">
+                © 2025 Sitwell. Even our errors have style.
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

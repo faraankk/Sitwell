@@ -1,364 +1,285 @@
+{% extends 'base.html' %}
 {% load static %}
 {% load socialaccount %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Title</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/home.css' %}">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
 
-        .top-banner {
-            background: #000;
-            color: #fff;
-            text-align: center;
-            font-size: 12px;
-            padding: 8px 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-        }
-        .top-banner a { color: #e74c3c; text-decoration: none; }
+{% block title %}Login - Sitwell{% endblock %}
 
-        .header {
-            background: #fff;
-            padding: 15px 0;
-            border-bottom: 1px solid #eee;
-        }
-        .header .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .logo h2 { font-size: 24px; font-weight: bold; color: #333; }
-        .nav { display: flex; gap: 30px; }
-        .nav-link { text-decoration: none; color: #333; font-weight: 500; }
-        .search-container { display: flex; gap: 10px; align-items: center; }
-        .search-input { padding: 8px 15px; border: 1px solid #ddd; border-radius: 4px; width: 200px; }
-        .search-btn { background: none; border: none; cursor: pointer; }
-
-        .main-content .container {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
-        .content-grid {
-            display: grid;
-            grid-template-columns: 1fr 400px;
-            gap: 40px;
-            align-items: center;
-        }
-        .product-image img {
-            width: 100%;
-            border-radius: 8px;
-        }
-
-        .login-section {
-            background: #fafafa;
-            padding: 40px;
-            border-radius: 8px;
-        }
-        .login-section h2 { font-size: 24px; margin-bottom: 8px; }
-        .login-section p { font-size: 14px; margin-bottom: 20px; color: #666; }
-        .form-group { margin-bottom: 20px; }
-        .form-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; }
-        .form-actions { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
-        .login-btn {
-            background: #e74c3c;
-            color: #fff;
-            padding: 12px 30px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .forgot-password { font-size: 14px; color: #e74c3c; text-decoration: none; }
-
-        /* Form Error Styles */
-        .form-errors { 
-            background: #ffe0e0; 
-            color: #b30000; 
-            padding: 10px; 
-            margin-bottom: 20px; 
-            border-radius: 4px; 
-            font-size: 14px;
-        }
-        .form-errors ul { 
-            margin: 0; 
-            padding-left: 20px; 
-        }
-
-        /* Google Login Styles */
-        .social-login-section {
-            margin-top: 25px;
-        }
-
-        .or-divider {
-            text-align: center;
-            margin: 25px 0;
-            position: relative;
-        }
-        .or-divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: #ddd;
-        }
-        .or-divider span {
-            background: #fafafa;
-            padding: 0 15px;
-            color: #666;
-            font-weight: 500;
-        }
-
-        .google-login {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #db4444;
-            border-radius: 4px;
-            text-decoration: none;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-            font-size: 14px;
-            font-weight: 500;
-            color: #333;
-            background: white;
-        }
-        .google-login:hover {
-            background: #f8f8f8;
-            border-color: #c13333;
-            color: #333;
-        }
-
-        .social-icon {
-            font-size: 16px;
-            color: #4285f4;
-        }
-
-        .signup-link {
-            text-align: center;
-            margin-top: 20px;
-            color: #666;
-        }
-        .signup-link a {
-            color: #e74c3c;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .footer { background: #000; color: #fff; padding: 40px 0 20px; }
-        .footer .container { max-width: 1200px; margin: auto; padding: 0 20px; }
-        .footer-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 40px; }
-        .footer-section h3 { margin-bottom: 15px; }
-        .footer-section ul { list-style: none; }
-        .footer-section ul li { margin-bottom: 8px; }
-        .footer-section ul li a { color: #ccc; font-size: 14px; text-decoration: none; }
-        .footer-section ul li a:hover { color: #fff; }
-        .newsletter { display: flex; margin-top: 10px; }
-        .newsletter-input { flex: 1; padding: 8px; border: 1px solid #333; background: transparent; color: white; }
-        .newsletter-btn { padding: 8px 15px; background: #333; border: 1px solid #333; color: white; cursor: pointer; }
-        .app-downloads { margin-top: 10px; }
-        .app-buttons img { width: 120px; margin-top: 10px; }
-        .social-icons { display: flex; gap: 15px; margin-top: 20px; font-size: 20px; }
-        .footer-bottom { text-align: center; border-top: 1px solid #333; margin-top: 30px; padding-top: 20px; font-size: 12px; color: #666; }
-
-        @media (max-width: 768px) {
-            .content-grid { grid-template-columns: 1fr; }
-            .footer-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; }
-            .nav { display: none; }
-            .login-section { padding: 30px 20px; }
-        }
-    </style>
-</head>
-<body>
-    <!-- Banner -->
-    <div class="top-banner">
-        <p>Summer Sale for All Swim Suits And Free Express Delivery - OFF 50%! <a href="#">ShopNow</a></p>
-        <div class="language-selector">English ▼</div>
+{% block banner %}
+<!-- Remove the swim suits banner and use small furniture banner -->
+<div style="margin: 15px 20px; min-height: 120px; background: linear-gradient(135deg, #000 0%, #333 100%); border-radius: 8px; display: flex; justify-content: center; align-items: center; color: white; font-size: 18px; text-align: center; position: relative; overflow: hidden;">
+    <div style="white-space: nowrap; animation: scrollText 12s linear infinite; font-weight: bold;">
+        Up to 10% off Voucher - Discover Amazing Furniture Deals
     </div>
+</div>
 
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="logo"><h2>sit well</h2></div>
-            <nav class="nav">
-                <a href="{% url 'home' %}" class="nav-link">Home</a>
-                <a href="#" class="nav-link">Contact</a>
-                <a href="#" class="nav-link">About</a>
-                <a href="{% url 'signup' %}" class="nav-link">Sign Up</a>
-            </nav>
-            <div class="search-container">
-                <input type="text" class="search-input" placeholder="What are you looking for?">
-                <button class="search-btn">🔍</button>
+<style>
+@keyframes scrollText {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<style>
+    .main-content .container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+    
+    .content-grid {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 40px;
+        align-items: center;
+    }
+    
+    .product-image img {
+        width: 100%;
+        border-radius: 8px;
+        max-height: 600px;
+        object-fit: cover;
+    }
+
+    .login-section {
+        background: #fafafa;
+        padding: 40px;
+        border-radius: 8px;
+    }
+    
+    .login-section h2 { 
+        font-size: 24px; 
+        margin-bottom: 8px; 
+        color: #333;
+    }
+    
+    .login-section p { 
+        font-size: 14px; 
+        margin-bottom: 20px; 
+        color: #666; 
+    }
+    
+    .form-group { 
+        margin-bottom: 20px; 
+    }
+    
+    .form-group input { 
+        width: 100%; 
+        padding: 12px; 
+        border: 1px solid #ddd; 
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    
+    .form-group input:focus {
+        outline: none;
+        border-color: #db4444;
+    }
+    
+    .form-actions { 
+        display: flex; 
+        align-items: center; 
+        gap: 20px; 
+        margin-bottom: 20px; 
+    }
+    
+    .login-btn {
+        background: #db4444;
+        color: #fff;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: background-color 0.3s ease;
+    }
+    
+    .login-btn:hover {
+        background: #c13333;
+    }
+    
+    .forgot-password { 
+        font-size: 14px; 
+        color: #db4444; 
+        text-decoration: none; 
+    }
+
+    .form-errors { 
+        background: #ffe0e0; 
+        color: #b30000; 
+        padding: 10px; 
+        margin-bottom: 20px; 
+        border-radius: 4px; 
+        font-size: 14px;
+    }
+    
+    .form-errors ul { 
+        margin: 0; 
+        padding-left: 20px; 
+    }
+
+    .google-login {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #db4444;
+        border-radius: 4px;
+        text-decoration: none;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+        font-size: 14px;
+        font-weight: 500;
+        color: #333;
+        background: white;
+    }
+    
+    .google-login:hover {
+        background: #f8f8f8;
+        border-color: #c13333;
+        color: #333;
+    }
+
+    .social-icon {
+        font-size: 16px;
+        color: #4285f4;
+    }
+
+    .signup-link {
+        text-align: center;
+        margin-top: 20px;
+        color: #666;
+        font-size: 14px;
+    }
+    
+    .signup-link a {
+        color: #db4444;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .search-container { 
+        display: flex; 
+        gap: 10px; 
+        align-items: center; 
+    }
+    
+    .search-input { 
+        padding: 8px 15px; 
+        border: 1px solid #ddd; 
+        border-radius: 4px; 
+        width: 200px; 
+    }
+    
+    .search-btn { 
+        background: none; 
+        border: none; 
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    @media (max-width: 768px) {
+        .content-grid { 
+            grid-template-columns: 1fr; 
+        }
+        .login-section { 
+            padding: 30px 20px; 
+        }
+        .search-container {
+            display: none;
+        }
+    }
+</style>
+
+<!-- Search Bar -->
+<div style="background: #fff; padding: 15px 0; border-bottom: 1px solid #eee;">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px; text-align: right;">
+        {% comment %} <div class="search-container" style="display: inline-flex;">
+            <input type="text" class="search-input" placeholder="What are you looking for?">
+            <button class="search-btn">🔍</button>
+        </div> {% endcomment %}
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="container">
+    <div class="content-grid">
+        <div class="product-section">
+            <div class="product-image">
+                <img src="/media/carle.webp" alt="Modern Furniture Collection" width="500" height="600">
             </div>
         </div>
-    </header>
 
-    <!-- Main -->
-    <main class="main-content">
-        <div class="container">
-            <div class="content-grid">
-                <div class="product-section">
-                    <div class="product-image">
-                        <img src="/media/carle.webp" alt="Modern Furniture Collection" width="500" height="600">
+        <div class="login-section">
+            <h2>Log in to Sit Well</h2>
+            <p>Enter your details below</p>
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="form-errors">
+                        {{ message }}
                     </div>
-                </div>
+                {% endfor %}
+            {% endif %}
+            
+            <form method="post" action="{% url 'login' %}">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                    <div class="form-errors">
+                        <ul>
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
 
-                <div class="login-section">
-                    <h2>Log in to sit well</h2>
-                    <p>Enter your details below</p>
-                    
-                    <!-- Display Django Messages -->
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="form-errors">
-                                {{ message }}
-                            </div>
-                        {% endfor %}
+                <div class="form-group">
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="form-errors">
+                            <ul>
+                                {% for error in form.email.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
                     {% endif %}
-                    
-                    <form method="post" action="{% url 'login' %}">
-                        {% csrf_token %}
-                        
-                        <!-- Display non-field errors -->
-                        {% if form.non_field_errors %}
-                            <div class="form-errors">
-                                <ul>
-                                    {% for error in form.non_field_errors %}
-                                        <li>{{ error }}</li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                        {% endif %}
-
-                        <!-- Email Field -->
-                        <div class="form-group">
-                            {{ form.email }}
-                            {% if form.email.errors %}
-                                <div class="form-errors">
-                                    <ul>
-                                        {% for error in form.email.errors %}
-                                            <li>{{ error }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Password Field -->
-                        <div class="form-group">
-                            {{ form.password }}
-                            {% if form.password.errors %}
-                                <div class="form-errors">
-                                    <ul>
-                                        {% for error in form.password.errors %}
-                                            <li>{{ error }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="form-actions">
-                            <button type="submit" class="login-btn">Log In</button>
-                            <a href="{% url 'forgot_password' %}" class="forgot-password">Forget Password?</a>
-                        </div>
-                    </form>
-
-                    <!-- Google Login Section -->
-                    {% comment %} <div class="social-login-section">
-                        <div class="or-divider">
-                            <span>OR</span>
-                        </div>
-                        
-                        <a href="{% provider_login_url 'google' %}" class="google-login">
-                            <i class="fab fa-google social-icon"></i>
-                            Login with Google
-                        </a>
-                    </div> {% endcomment %}
-                    <a href="{% provider_login_url 'google' %}" class="google-login">
-                        <i class="fab fa-google social-icon"></i>
-                        Login with Google
-                    </a>
-                    <!-- Sign Up Link -->
-                    <div class="signup-link">
-                        Don't have an account? <a href="{% url 'signup' %}">Sign up</a>
-                    </div>
                 </div>
+
+                <div class="form-group">
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <div class="form-errors">
+                            <ul>
+                                {% for error in form.password.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="login-btn">Log In</button>
+                    <a href="{% url 'forgot_password' %}" class="forgot-password">Forget Password?</a>
+                </div>
+            </form>
+
+            <a href="{% provider_login_url 'google' %}" class="google-login">
+                <i class="fab fa-google social-icon"></i>
+                Login with Google
+            </a>
+
+            <div class="signup-link">
+                Don't have an account? <a href="{% url 'signup' %}">Sign up</a>
             </div>
         </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-section">
-                    <h3>Exclusive</h3>
-                    <p>Subscribe</p>
-                    <small>Get 10% off your first order</small>
-                    <div class="newsletter">
-                        <input type="email" placeholder="Enter your email" class="newsletter-input">
-                        <button class="newsletter-btn">→</button>
-                    </div>
-                </div>
-                <div class="footer-section">
-                    <h3>Support</h3>
-                    <p>111 Bijoy sarani, Dhaka,<br>DH 1515, Bangladesh.</p>
-                    <p>exclusive@gmail.com</p>
-                    <p>+88015-88888-9999</p>
-                </div>
-                <div class="footer-section">
-                    <h3>Account</h3>
-                    <ul>
-                        <li><a href="#">My Account</a></li>
-                        <li><a href="{% url 'login' %}">Login / Register</a></li>
-                        <li><a href="#">Cart</a></li>
-                        <li><a href="#">Wishlist</a></li>
-                        <li><a href="#">Shop</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>Quick Link</h3>
-                    <ul>
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Terms Of Use</a></li>
-                        <li><a href="#">FAQ</a></li>
-                        <li><a href="#">Contact</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>Download App</h3>
-                    <p>Save $3 with App New User Only</p>
-                    <div class="app-downloads">
-                        <img src="{% static 'images/qr-code.png' %}" alt="QR Code" width="80">
-                        <div class="app-buttons">
-                            <img src="{% static 'images/google-play.png' %}" alt="Google Play">
-                            <img src="{% static 'images/app-store.png' %}" alt="App Store">
-                        </div>
-                    </div>
-                    <div class="social-icons">
-                        <a href="#">📘</a><a href="#">🐦</a><a href="#">📷</a><a href="#">💼</a>
-                    </div>
-                </div>
-            </div>
-            <div class="footer-bottom"><p>© Copyright Rimel 2022. All right reserved</p></div>
-        </div>
-    </footer>
-</body>
-</html>
+    </div>
+</div>
+{% endblock %}

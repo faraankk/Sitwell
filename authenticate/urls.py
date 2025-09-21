@@ -1,4 +1,3 @@
-# authenticate/urls.py (ADD these lines to your existing URLs)
 from django.urls import path
 from django.contrib.auth.views import LogoutView
 from . import views
