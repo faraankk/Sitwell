@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Order Successful - Sitwell{% endblock %}
+
+{% block content %}
+<div class="container text-center py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <img src="{% static 'images/order_placed_illustration.png' %}" alt="Order Successful" style="max-width: 280px; margin-bottom: 2rem;">
+            <h1 class="h2" style="color: #28a745;">Thank You For Your Order!</h1>
+            <p class="lead text-muted">Your order has been placed successfully.</p>
+            <p class="mt-4">Your Order ID is: <br><strong class="h5">{{ order.order_number }}</strong></p>
+            <p>An email confirmation has been sent to you. You can view your order details and track its status in your account.</p>
+            <div class="mt-4 d-flex justify-content-center gap-3">
+                <a href="{% url 'order_detail' order.order_number %}" class="btn btn-primary">View Order Details</a>
+                <a href="{% url 'product_list' %}" class="btn btn-outline-secondary">Continue Shopping</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

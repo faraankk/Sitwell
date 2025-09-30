@@ -24,6 +24,7 @@ urlpatterns = [
     path('', include('authenticate.urls')),
     path('staff/', include('customeradmin.urls')),
     path('accounts/', include('allauth.urls')),
+    # path("wishlist/", views.wishlist, name="wishlist"), 
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -24,12 +24,146 @@
             background-color: #fff;
         }
 
+        /* Left Navigation Sidebar Styles */
+        .profile-sidebar-nav {
+            position: fixed;
+            left: -300px;
+            top: 0;
+            width: 300px;
+            height: 100vh;
+            background: white;
+            z-index: 1000;
+            transition: left 0.3s ease;
+            box-shadow: 2px 0 15px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            padding-top: 20px;
+        }
+
+        .profile-sidebar-nav.active {
+            left: 0;
+        }
+
+        .profile-sidebar {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin: 20px;
+        }
+
+        .profile-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #f8f9fa;
+            margin: 0 auto 15px;
+            display: block;
+        }
+
+        .profile-nav {
+            margin-top: 20px;
+        }
+
+        .profile-nav .nav-link {
+            color: #6c757d;
+            border: none;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            background: none;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .profile-nav .nav-link:hover {
+            background-color: #f8f9fa;
+            color: #db4444;
+        }
+
+        .profile-nav .nav-link.active {
+            background-color: #db4444;
+            color: white;
+        }
+
+        .profile-nav .nav-link i {
+            width: 20px;
+            margin-right: 10px;
+        }
+
+        /* Overlay for mobile */
+        .navbar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
+        }
+
+        .navbar-overlay.active {
+            display: block;
+        }
+
+        /* Navbar toggle button */
+        .navbar-toggle-btn {
+            position: fixed;
+            top: 100px;
+            left: 20px;
+            z-index: 1001;
+            background: #db4444;
+            color: white;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .navbar-toggle-btn:hover {
+            background: #c13333;
+            transform: translateY(-2px);
+        }
+
+        .navbar-toggle-btn.active {
+            left: 320px;
+        }
+
+        .navbar-toggle-btn.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .navbar-toggle-btn.active {
+                left: 20px;
+            }
+        }
+
+        /* Main content wrapper */
+        .main-wrapper {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header positioning */
         header {
             background: #fff;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             position: sticky;
             top: 0;
             z-index: 100;
+            width: 100%;
         }
 
         .header-content {
@@ -97,6 +231,7 @@
         }
 
         /* User Profile Dropdown */
+        .user-profile is
         .user-profile {
             position: relative;
             display: inline-block;
@@ -243,10 +378,20 @@
             animation-play-state: paused;
         }
 
+        /* Main content area */
         main {
+            flex: 1;
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
+            transition: margin-left 0.3s ease;
+            z-index: 1;
+            position: relative;
+        }
+
+        /* Content adjustment when navbar is active */
+        main.content-pushed {
+            margin-left: 300px;
         }
 
         /* Footer styles */
@@ -255,6 +400,7 @@
             color: #ccc;
             padding: 50px 0 20px 0;
             margin-top: 80px;
+            width: 100%;
         }
 
         .footer-content {
@@ -359,119 +505,185 @@
             .logo {
                 font-size: 24px;
             }
+
+            main.content-pushed {
+                margin-left: 0;
+            }
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <header>
-        <div class="header-content">
-            <a href="{% url 'home' %}" class="logo">Sit Well</a>
-            
-            <nav class="nav-left">
-                <a href="{% url 'home' %}">Home</a>
-                <a href="/products/">Products</a>
-                <a href="/contact/">Contact</a>
-                <a href="/about/">About</a>
-                {% if user.is_staff %}
-                    <a href="/staff/">Staff Panel</a>
-                {% endif %}
-            </nav>
+    <div class="main-wrapper">
+        <!-- Left Navigation Toggle Button -->
+        <button class="navbar-toggle-btn {% block show_navbar_toggle %}{% endblock %}" onclick="toggleLeftNavbar()">
+            <i class="fas fa-bars"></i>
+        </button>
 
-            <div class="nav-right">
-                <div class="search-container">
-                    <input type="text" class="search-input" placeholder="Search products...">
-                    <button class="search-btn"><i class="fas fa-search"></i></button>
-                </div>
+        <!-- Left Navigation Overlay -->
+        <div class="navbar-overlay" onclick="toggleLeftNavbar()"></div>
 
-                <div class="nav-icons">
-                    <button class="nav-icon" title="Wishlist">
-                        <i class="fas fa-heart"></i>
-                        <span class="notification-badge">2</span>
-                    </button>
-                    <button class="nav-icon" title="Cart">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span class="notification-badge">3</span>
-                    </button>
-                </div>
-
-                <div class="user-profile">
-                    <button class="profile-toggle" onclick="toggleProfileDropdown()">
-                        <div class="user-avatar">
-                            {{ user.first_name.0|default:user.email.0|upper }}
+        <!-- Left Navigation Sidebar -->
+        <div class="profile-sidebar-nav {% block show_left_navbar %}{% endblock %}" id="leftNavbar">
+            <div class="profile-sidebar">
+                <!-- Profile Picture Section -->
+                <div style="text-align: center; margin-bottom: 20px;">
+                    {% if user.profile_image %}
+                        <img src="{{ user.profile_image.url }}" alt="Profile Picture" class="profile-image">
+                    {% else %}
+                        <div class="profile-image" style="display: flex; align-items: center; justify-content: center; background: #f8f9fa;">
+                            <i class="fas fa-user" style="font-size: 3rem; color: #6c757d;"></i>
                         </div>
-                        <span>{{ user.first_name|default:"User" }}</span>
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
-                    <div class="profile-dropdown" id="profileDropdown">
-                        <a href="/profile/"><i class="fas fa-user"></i> My Profile</a>
-                        <a href="/orders/"><i class="fas fa-shopping-bag"></i> My Orders</a>
-                        <a href="/wishlist/"><i class="fas fa-heart"></i> My Wishlist</a>
-                        <a href="/settings/"><i class="fas fa-cog"></i> Settings</a>
-                        <hr>
-                        <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    {% endif %}
+                    <h6 style="margin: 10px 0 5px; color: #333;">{{ user.full_name|default:"Customer Name" }}</h6>
+                </div>
+
+                <!-- Navigation Menu -->
+                <div class="profile-nav">
+                    <h6 style="color: #666; margin-bottom: 15px; font-size: 14px;">Manage My Account</h6>
+                    <div style="display: flex; flex-direction: column;">
+                        <a href="javascript:void(0)" class="nav-link active" onclick="showTabFromSidebar('profile-details')">
+                            <i class="fas fa-user"></i>My Profile
+                        </a>
+                        <a href="{% url 'edit_profile' %}" class="nav-link">
+                            <i class="fas fa-edit"></i>Edit Profile
+                        </a>
+                        <a href="/profile/addresses/" class="nav-link">
+                            <i class="fas fa-address-book"></i>Address Book
+                        </a>
+                        <a href="javascript:void(0)" class="nav-link" onclick="showTabFromSidebar('orders')">
+                            <i class="fas fa-shopping-bag"></i>My Orders
+                        </a>
+                        <a href="javascript:void(0)" class="nav-link" onclick="showTabFromSidebar('security')">
+                            <i class="fas fa-shield-alt"></i>Security
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
-        
-        {% block banner %}
-        <div class="banner">
-            <div class="banner-text">Up to 10% off Voucher - Discover Amazing Furniture Deals</div>
-        </div>
-        {% endblock %}
-    </header>
 
-    <main>
-        {% block content %}
-        {% endblock %}
-    </main>
+        <header>
+            <div class="header-content">
+                <a href="{% url 'dummy_home' %}" class="logo">Sit Well</a>
+                
+                <nav class="nav-left">
+                    <a href="{% url 'dummy_home' %}">Home</a>
+                    <a href="{% url 'product_list' %}">Products</a>
+                    <a href="/contact/">Contact</a>
+                    <a href="/about/">About</a>
+                </nav>
 
-    {% block footer %}
-    <footer>
-        <div class="footer-content">
-            <div class="footer-section">
-                <h3>Sit Well</h3>
-                <p>Subscribe</p>
-                <p>Get 10% off your first order</p>
-                <input type="email" placeholder="Enter your email" class="email-input">
-            </div>
-            <div class="footer-section">
-                <h3>Support</h3>
-                <p>III, Bijoy sarani, Dhaka,</p>
-                <p>DH 15/5, Bangladesh.</p>
-                <p>sitwell@gmail.com</p>
-                <p>+8801-88888-9999</p>
-            </div>
-            <div class="footer-section">
-                <h3>Account</h3>
-                <p>My Account</p>
-                <p>Orders</p>
-                <p>Cart</p>
-                <p>Wishlist</p>
-                <p>Settings</p>
-            </div>
-            <div class="footer-section">
-                <h3>Quick Link</h3>
-                <p>Privacy Policy</p>
-                <p>Terms Of Use</p>
-                <p>FAQ</p>
-                <p>Contact</p>
-            </div>
-            <div class="footer-section">
-                <h3>Download App</h3>
-                <p>Save $3 with App New User Only</p>
-                <div class="social-links">
-                    <a href="#"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#"><i class="fab fa-twitter"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                <div class="nav-right">
+                    <div class="search-container">
+                        <input type="text" class="search-input" placeholder="Search products...">
+                        <button class="search-btn"><i class="fas fa-search"></i></button>
+                    </div>
+
+                    <div class="nav-icons">
+                        <!-- Wishlist paused -->
+                        <a href="javascript:void(0)" class="nav-icon" title="Wishlist">
+                            <i class="fas fa-heart"></i>
+                            <span class="notification-badge">2</span>
+                        </a>
+
+                        <!-- Cart link -->
+                        <a href="{% url 'cart' %}" class="nav-icon" title="Cart">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span class="notification-badge cart-count">0</span>
+                        </a>
+                    </div>
+
+                    {% if user.is_authenticated %}
+                        <div class="user-profile">
+                            <button class="profile-toggle" onclick="toggleProfileDropdown()">
+                                <div class="user-avatar">
+                                    {{ user.first_name.0|default:user.email.0|upper }}
+                                </div>
+                                <span>{{ user.first_name|default:"User" }}</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+
+                            <div class="profile-dropdown" id="profileDropdown">
+                                <a href="{% url 'user_profile' %}"><i class="fas fa-user"></i> My Profile</a>
+                                <a href="/orders/"><i class="fas fa-shopping-bag"></i> My Orders</a>
+                                <!-- Wishlist paused -->
+                                <a href="javascript:void(0)"><i class="fas fa-heart"></i> My Wishlist</a>
+                                {% if user.is_staff %}
+                                    <a href="/staff/">Staff Panel</a>
+                                {% endif %}
+                                <a href="/settings/"><i class="fas fa-cog"></i> Settings</a>
+                                <hr>
+                                <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Show Login / Sign Up if not authenticated -->
+                        <div class="auth-links">
+                            <a href="{% url 'signup' %}">Sign Up</a>
+                            <a href="{% url 'login' %}">Log in</a>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
-        </div>
-        <p class="copyright">© Copyright Sit Well 2025. All rights reserved</p>
-    </footer>
-    {% endblock %}
+            
+            {% block banner %}
+            <div class="banner">
+                <div class="banner-text">Up to 10% off Voucher - Discover Amazing Furniture Deals</div>
+            </div>
+            {% endblock %}
+        </header>
+
+        <main id="mainContent">
+            {% block content %}
+            {% endblock %}
+        </main>
+
+        {% block footer %}
+        <footer>
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Sit Well</h3>
+                    <p>Subscribe</p>
+                    <p>Get 10% off your first order</p>
+                    <input type="email" placeholder="Enter your email" class="email-input">
+                </div>
+                <div class="footer-section">
+                    <h3>Support</h3>
+                    <p>III, Bijoy sarani, Dhaka,</p>
+                    <p>DH 15/5, Bangladesh.</p>
+                    <p>sitwell@gmail.com</p>
+                    <p>+8801-88888-9999</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Account</h3>
+                    <p>My Account</p>
+                    <p>Orders</p>
+                    <p>Cart</p>
+                    <p>Wishlist</p>
+                    <p>Settings</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Quick Link</h3>
+                    <p>Privacy Policy</p>
+                    <p>Terms Of Use</p>
+                    <p>FAQ</p>
+                    <p>Contact</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Download App</h3>
+                    <p>Save $3 with App New User Only</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+            </div>
+            <p class="copyright">© Copyright Sit Well 2025. All rights reserved</p>
+        </footer>
+        {% endblock %}
+    </div>
 
     <script>
         function toggleProfileDropdown() {
@@ -493,7 +705,6 @@
         document.querySelector('.search-btn').addEventListener('click', function() {
             const query = document.querySelector('.search-input').value;
             if (query.trim()) {
-                // Redirect to search page
                 window.location.href = `/search/?q=${encodeURIComponent(query)}`;
             }
         });
@@ -504,6 +715,31 @@
                 document.querySelector('.search-btn').click();
             }
         });
+
+        // Left navbar toggle function
+        function toggleLeftNavbar() {
+            const navbar = document.getElementById('leftNavbar');
+            const overlay = document.querySelector('.navbar-overlay');
+            const toggleBtn = document.querySelector('.navbar-toggle-btn');
+            const content = document.getElementById('mainContent');
+            
+            if (navbar) {
+                navbar.classList.toggle('active');
+                if (overlay) overlay.classList.toggle('active');
+                if (toggleBtn) toggleBtn.classList.toggle('active');
+                
+                // Only push content on desktop
+                if (window.innerWidth > 768 && content) {
+                    content.classList.toggle('content-pushed');
+                }
+            }
+        }
+
+        // Tab switching for sidebar
+        function showTabFromSidebar(tabId) {
+            // This function will be overridden in profile pages
+            console.log('Switching to tab:', tabId);
+        }
     </script>
     {% block extra_js %}{% endblock %}
 </body>

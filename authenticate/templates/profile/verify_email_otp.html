@@ -1,0 +1,55 @@
+{% extends 'authenticated_base.html' %}
+{% load static %}
+
+{% block title %}Verify Email OTP - Sitwell{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+{% comment %} <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dummy_home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'user_profile' %}">My Account</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Verify Email</li>
+    </ol>
+</nav> {% endcomment %}
+
+<!-- Main Content -->
+<div class="content-card">
+    <div class="email-icon">
+        <i class="fas fa-envelope"></i>
+        <h4 style="color: #db4444; margin: 0;">Verify Your New Email</h4>
+        <p style="color: #666; margin-top: 10px;">Enter the 6-digit OTP sent to your new email address.</p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="otp">OTP</label>
+            <input type="text" id="otp" name="otp" maxlength="6" placeholder="Enter 6-digit OTP" required pattern="[0-9]{6}" title="Please enter a 6-digit number">
+        </div>
+
+        <div style="display: flex; justify-content: center; margin-top: 30px;">
+            <a href="{% url 'change_email' %}" class="btn-cancel">Cancel</a>
+            <button type="submit" class="btn-primary">
+                <i class="fas fa-check" style="margin-right: 8px;"></i>Verify
+            </button>
+        </div>
+    </form>
+
+    <p style="text-align: center; margin-top: 20px; color: #666;">Time remaining: {{ remaining_time }} seconds</p>
+    <p style="text-align: center; color: #666; font-size: 14px;">If you didn't receive the OTP or it expired, <a href="{% url 'change_email' %}">start over</a>.</p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Basic OTP input validation (optional enhancement)
+    const otpField = document.getElementById('otp');
+    if (otpField) {
+        otpField.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            if (this.value.length > 6) this.value = this.value.slice(0, 6);
+        });
+    }
+</script>
+{% endblock %}

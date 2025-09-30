@@ -1,0 +1,353 @@
+{% extends 'authenticated_base.html' %}
+{% load static %}
+
+{% block title %}Change Email - Sitwell{% endblock %}
+
+{% block show_navbar_toggle %}show{% endblock %}
+
+{% block extra_css %}
+<style>
+    .content-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 25px;
+        margin-bottom: 20px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        font-weight: 500;
+        color: #555;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .form-control {
+        width: 100%;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 12px 15px;
+        font-size: 0.95rem;
+    }
+    
+    .form-control:focus {
+        border-color: #db4444;
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(219, 68, 68, 0.25);
+    }
+    
+    .form-control:disabled {
+        background-color: #f8f9fa;
+        color: #6c757d;
+    }
+    
+    .btn-primary {
+        background-color: #db4444;
+        border-color: #db4444;
+        color: white;
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    
+    .btn-primary:hover {
+        background-color: #c13333;
+    }
+    
+    .btn-cancel {
+        background-color: transparent;
+        border: 1px solid #6c757d;
+        color: #6c757d;
+        padding: 12px 30px;
+        border-radius: 8px;
+        margin-right: 15px;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+    }
+    
+    .btn-cancel:hover {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .alert-info {
+        background-color: #d1ecf1;
+        border: 1px solid #bee5eb;
+        color: #0c5460;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .error {
+        color: #dc3545;
+        font-size: 14px;
+        margin-top: 5px;
+    }
+    
+    .breadcrumb {
+        background: none;
+        padding: 0;
+        margin: 20px 0;
+    }
+    
+    .breadcrumb-item {
+        color: #666;
+    }
+    
+    .breadcrumb-item a {
+        color: #333;
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item.active {
+        color: #db4444;
+    }
+
+    /* Email icon */
+    .email-icon {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .email-icon i {
+        font-size: 4rem;
+        color: #db4444;
+        margin-bottom: 10px;
+    }
+
+    /* Current email display */
+    .current-email-display {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 12px 15px;
+        color: #6c757d;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .current-email-display i {
+        margin-right: 8px;
+        color: #6c757d;
+    }
+
+    /* Email validation */
+    .email-valid {
+        border-color: #28a745 !important;
+    }
+
+    .email-invalid {
+        border-color: #dc3545 !important;
+    }
+
+    .validation-message {
+        font-size: 12px;
+        margin-top: 5px;
+    }
+
+    .validation-message.valid {
+        color: #28a745;
+    }
+
+    .validation-message.invalid {
+        color: #dc3545;
+    }
+    
+    @media (max-width: 768px) {
+        .content-card {
+            padding: 20px 15px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block banner %}
+<!-- Remove banner for profile pages -->
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dummy_home' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="/profile/">My Account</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Change Email</li>
+    </ol>
+</nav>
+
+{% if user.first_name %}
+    <p style="text-align: right; color: #666; margin-bottom: 30px;">
+        Welcome! <span style="color: #db4444; font-weight: 500;">{{ user.first_name }}</span>
+    </p>
+{% endif %}
+
+<!-- Main Content -->
+<div class="content-card">
+    <div class="email-icon">
+        <i class="fas fa-envelope"></i>
+        <h4 style="color: #db4444; margin: 0;">Change Email Address</h4>
+        <p style="color: #666; margin-top: 10px;">Update your account email address</p>
+    </div>
+    
+    <div class="alert-info">
+        <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+        A verification email will be sent to your new email address before the change takes effect.
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label>Current Email Address</label>
+            <div class="current-email-display">
+                <i class="fas fa-envelope"></i>
+                {{ user.email }}
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.new_email.id_for_label }}">New Email Address</label>
+            {{ form.new_email }}
+            <div id="email-validation" class="validation-message"></div>
+            {% if form.new_email.errors %}
+                <div class="error">{{ form.new_email.errors.0 }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.password.id_for_label }}">Current Password</label>
+            {{ form.password }}
+            <small style="color: #666; font-size: 12px;">Enter your current password to confirm this change</small>
+            {% if form.password.errors %}
+                <div class="error">{{ form.password.errors.0 }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Security Notice -->
+        <div style="background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 15px; border-radius: 8px; margin: 20px 0; font-size: 14px;">
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <i class="fas fa-exclamation-triangle" style="margin-right: 8px; color: #856404;"></i>
+                <strong>Security Notice</strong>
+            </div>
+            <ul style="margin: 0; padding-left: 20px;">
+                <li>You will need to verify your new email address before it becomes active</li>
+                <li>Your current email will remain active until verification is complete</li>
+                <li>Make sure you have access to the new email address</li>
+            </ul>
+        </div>
+        
+        <div style="display: flex; justify-content: center; margin-top: 30px;">
+            <a href="/profile/" class="btn-cancel">Cancel</a>
+            <button type="submit" class="btn-primary" id="submit-btn">
+                <i class="fas fa-paper-plane" style="margin-right: 8px;"></i>
+                Send Verification Email
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Show navbar on page load and set active state
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-open the navbar on desktop
+        if (window.innerWidth > 768) {
+            const navbar = document.getElementById('leftNavbar');
+            const content = document.getElementById('mainContent');
+            const toggleBtn = document.querySelector('.navbar-toggle-btn');
+            
+            if (navbar && content && toggleBtn) {
+                navbar.classList.add('active');
+                content.classList.add('content-pushed');
+                toggleBtn.classList.add('active');
+            }
+        }
+        
+        // Set security tab as active in sidebar (since change email is part of security)
+        const sidebarLinks = document.querySelectorAll('.profile-sidebar-nav .nav-link');
+        sidebarLinks.forEach(link => link.classList.remove('active'));
+        
+        // Find the security link and set it as active
+        const securityLink = document.querySelector('.profile-sidebar-nav .nav-link[onclick*="security"]');
+        if (securityLink) {
+            securityLink.classList.add('active');
+        }
+    });
+
+    // Override tab switching for change email
+    function showTabFromSidebar(tabId) {
+        // For navigation from change email, redirect to appropriate pages
+        if (tabId === 'profile-details') {
+            window.location.href = '/profile/';
+        } else if (tabId === 'addresses') {
+            window.location.href = '/profile/addresses/';
+        } else if (tabId === 'orders') {
+            window.location.href = '/profile/#orders';
+        } else if (tabId === 'security') {
+            window.location.href = '/profile/#security';
+        }
+    }
+
+    // Email validation
+    const emailField = document.getElementById('id_new_email');
+    const validationMessage = document.getElementById('email-validation');
+    const currentEmail = '{{ user.email }}';
+    
+    if (emailField && validationMessage) {
+        emailField.addEventListener('input', function() {
+            const email = this.value.trim();
+            
+            if (!email) {
+                this.className = this.className.replace(/email-(valid|invalid)/g, '');
+                validationMessage.textContent = '';
+                validationMessage.className = 'validation-message';
+                return;
+            }
+            
+            if (email === currentEmail) {
+                this.className = this.className.replace(/email-(valid|invalid)/g, '') + ' email-invalid';
+                validationMessage.textContent = 'New email must be different from current email';
+                validationMessage.className = 'validation-message invalid';
+            } else if (validateEmail(email)) {
+                this.className = this.className.replace(/email-(valid|invalid)/g, '') + ' email-valid';
+                validationMessage.textContent = 'Valid email address';
+                validationMessage.className = 'validation-message valid';
+            } else {
+                this.className = this.className.replace(/email-(valid|invalid)/g, '') + ' email-invalid';
+                validationMessage.textContent = 'Please enter a valid email address';
+                validationMessage.className = 'validation-message invalid';
+            }
+        });
+    }
+    
+    function validateEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    // Form submission with loading state
+    const form = document.querySelector('form');
+    const submitBtn = document.getElementById('submit-btn');
+    
+    if (form && submitBtn) {
+        form.addEventListener('submit', function() {
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Sending...';
+            submitBtn.disabled = true;
+        });
+    }
+</script>
+{% endblock %}

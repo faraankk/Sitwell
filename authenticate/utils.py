@@ -4,21 +4,21 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+import re
+from django.contrib.auth.password_validation import CommonPasswordValidator
+
 
 def generate_otp():
     otp = ''.join(random.choices(string.digits, k=6))
     print(f"Generated OTP: {otp}") 
     return otp
 
+
 def send_otp_email(email, otp):
     subject = "Sit Well – Your One-Time Password"
     message = f"Hi,\nYour OTP is {otp}. It is valid for 2 minutes.\n\nRegards,\nSit Well"
     send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
 
-import random
-import string
-from django.core.mail import send_mail
-from django.conf import settings
 
 def send_otp(email):
     otp = ''.join(random.choices(string.digits, k=6))  
@@ -27,14 +27,8 @@ def send_otp(email):
     from_email = settings.EMAIL_HOST_USER
     recipient_list = [email]
 
-    
     send_mail(subject, message, from_email, recipient_list)
-
-    
     return otp
-
-import re
-from django.contrib.auth.password_validation import CommonPasswordValidator
 
 
 def is_strong_password(password):
@@ -77,9 +71,20 @@ def is_strong_password(password):
     return errors if errors else None
 
 
+def clean_phone_number(number):
+    """Clean phone number by removing all non-digit characters"""
+    if not number:
+        return number
+    return re.sub(r'[^\d]', '', str(number))
+
 
 def is_valid_phone_number(number):
-    cleaned_number = re.sub(r'\D', '', number)
+    """Validate phone number and return cleaned number or error message"""
+    if not number:
+        return "Phone number is required."
+    
+    # Clean the number first
+    cleaned_number = clean_phone_number(number)
     
     if len(cleaned_number) < 10 or len(cleaned_number) > 15:
         return "Phone number must be between 10 and 15 digits."
@@ -97,7 +102,18 @@ def is_valid_phone_number(number):
     if cleaned_number in fake_patterns:
         return "Please enter a valid phone number."
     
+    # Return None if valid (no error)
     return None
+
+
+def format_phone_display(number):
+    """Format phone number for display purposes only - NOT for storage"""
+    cleaned = clean_phone_number(number)
+    if cleaned and len(cleaned) == 10:
+        # Only format for display, never store formatted version
+        return f"{cleaned[:3]}-{cleaned[3:6]}-{cleaned[6:]}"
+    return cleaned
+
 
 # Updated name validation
 def is_valid_full_name(name):
