@@ -24,15 +24,8 @@ from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from django.core.paginator import Paginator
 from django.db.models import Sum
 from decimal import Decimal
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
-from django.template.loader import render_to_string
-from django.contrib.sites.shortcuts import get_current_site
+from .utils import generate_otp, send_otp_email
 from django.contrib.auth import update_session_auth_hash
-import uuid
-import random  # Already imported
-import string  # Add this
 import logging
 
 logger = logging.getLogger(__name__)
@@ -896,8 +889,7 @@ def verify_email_otp_view(request):
 def change_password_view(request):
     """Change user password"""
     try:
-        # CHANGE THIS: Get fresh user data from database
-        user = CustomUser.objects.get(pk=request.user.pk)  # CHANGE THIS LINE
+        user = CustomUser.objects.get(pk=request.user.pk)  
         
         if request.method == 'POST':
             form = PasswordChangeForm(user, request.POST)

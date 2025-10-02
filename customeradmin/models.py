@@ -1,11 +1,12 @@
-# customeradmin/models.py
 from django.db import models
 from PIL import Image as PILImage
 import io
 from django.core.files.uploadedfile import InMemoryUploadedFile
 import sys
 from django.contrib.auth.models import AbstractUser
-
+from django.conf import settings
+from django.utils import timezone
+from decimal import Decimal
 
 class SoftDeleteManager(models.Manager):
     """Manager that excludes soft-deleted objects by default"""
@@ -328,3 +329,6 @@ class Category(models.Model):
         self.deleted_at = None
         self.deleted_by = None
         self.save()
+
+
+

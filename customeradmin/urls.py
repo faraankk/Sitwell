@@ -27,5 +27,9 @@ urlpatterns = [
     path('block-user/<int:user_id>/', views.block_user, name='block-user'),
     path('unblock-user/<int:user_id>/', views.unblock_user, name='unblock-user'),
 
-    
+
+    path("orders/", views.order_list, name="order-list"),
+    path("orders/<int:order_id>/", views.order_detail, name="order-detail"),
+    path("orders/<int:order_id>/status", views.order_update_status, name="order-update-status"),
+    path("orders/<int:order_id>/cancel", views.order_cancel, name="order-cancel"),
 ]

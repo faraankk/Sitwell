@@ -2,6 +2,8 @@ from django.forms import inlineformset_factory
 from django.contrib.auth.forms import AuthenticationForm
 from django import forms
 from .models import Product, ProductImage, Category
+from authenticate.models import Order
+
 
 
 class CustomAuthenticationForm(AuthenticationForm):
@@ -236,3 +238,37 @@ class CategoryForm(forms.ModelForm):
             if not thumbnail.content_type.startswith('image/'):
                 raise forms.ValidationError("File must be an image.")
         return thumbnail
+    
+
+class OrderStatusForm(forms.Form):
+    status = forms.ChoiceField(choices=())  # will be set in __init__
+
+    def __init__(self, *args, order=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.order = order
+
+        # Build choices dynamically so it's never empty
+        if hasattr(Order, "Status") and getattr(Order.Status, "choices", None):
+            status_tuple = Order.Status.choices
+        elif hasattr(Order, "ORDERSTATUSCHOICES") and getattr(Order, "ORDERSTATUSCHOICES", ()):
+            status_tuple = Order.ORDERSTATUSCHOICES
+        else:
+            status_tuple = (
+                ("pending", "Pending"),
+                ("paid", "Paid"),
+                ("shipped", "Shipped"),
+                ("out-for-delivery", "Out for Delivery"),
+                ("delivered", "Delivered"),
+                ("cancelled", "Cancelled"),
+            )
+
+        self.fields["status"].choices = status_tuple
+        if order is not None:
+            self.fields["status"].initial = order.status
+
+    def clean_status(self):
+        new_status = self.cleaned_data["status"]
+        if self.order and hasattr(self.order, "can_transition_to"):
+            if not self.order.can_transition_to(new_status):
+                raise forms.ValidationError("Invalid status transition for this order.")
+        return new_status

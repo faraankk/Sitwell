@@ -1,0 +1,75 @@
+{# templates/orders/order_detail.html #}
+{% extends "admin/base_admin.html" %}
+{% block body %}
+<div class="mb-4">
+  <a href="{% url 'order-list' %}" class="text-blue-600">← Back to Orders</a>
+</div>
+
+<div class="bg-white border rounded p-4 mb-4">
+  <div class="flex items-center justify-between">
+    <h1 class="text-xl font-semibold">Order {{ order.order_number }}</h1>
+    <form method="post" action="{% url 'order-update-status' order.id %}" class="flex gap-2">
+      {% csrf_token %}
+      {{ statusform.status }}
+      <button class="px-4 py-2 bg-blue-600 text-white rounded" type="submit">Update</button>
+    </form>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 text-sm">
+    <div>
+      <span class="text-gray-500">Placed</span>
+      <div>{{ order.created_at|date:"Y-m-d H:i" }}</div>
+    </div>
+    <div>
+      <span class="text-gray-500">User</span>
+      <div>
+        {% if order.user.first_name %}{{ order.user.first_name }} {{ order.user.last_name }}{% else %}{{ order.user.username }}{% endif %}
+        <div class="text-gray-500 text-xs">{{ order.user.email }}</div>
+      </div>
+    </div>
+    <div>
+      <span class="text-gray-500">Status</span>
+      <div>{{ order.get_status_display }}</div>
+    </div>
+    {# Optional totals block #}
+    {# <div><span class="text-gray-500">Subtotal</span><div>{{ order.subtotal }}</div></div>
+    <div><span class="text-gray-500">Tax</span><div>{{ order.tax }}</div></div>
+    <div><span class="text-gray-500">Shipping</span><div>{{ order.shipping }}</div></div>
+    <div><span class="text-gray-500">Discount</span><div>- {{ order.discount }}</div></div> #}
+    <div class="text-gray-500 font-medium">Total</div>
+    <div>{{ order.total_amount }}</div>
+  </div>
+</div>
+
+<div class="bg-white border rounded">
+  <table class="min-w-full text-sm">
+    <thead class="bg-gray-100">
+      <tr>
+        <th class="text-left px-4 py-2">Product</th>
+        <th class="text-right px-4 py-2">Price</th>
+        <th class="text-right px-4 py-2">Qty</th>
+        <th class="text-right px-4 py-2">Line Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for it in items %}
+      <tr class="border-t">
+        <td class="px-4 py-2">{{ it.name_snapshot|default:it.product.name }}</td>
+        <td class="px-4 py-2 text-right">{{ it.price_snapshot }}</td>
+        <td class="px-4 py-2 text-right">{{ it.quantity }}</td>
+        <td class="px-4 py-2 text-right">{{ it.line_total }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="px-4 py-6 text-center text-gray-500">No items.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if order.status != 'delivered' and order.status != 'cancelled' %}
+<form method="post" action="{% url 'order-cancel' order.id %}" class="mt-4">
+  {% csrf_token %}
+  <button class="px-4 py-2 bg-red-600 text-white rounded" type="submit">Cancel Order</button>
+</form>
+{% endif %}
+{% endblock %}

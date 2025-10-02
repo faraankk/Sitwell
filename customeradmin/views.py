@@ -16,6 +16,15 @@ from django.db.models import Q, Max
 from django.contrib.auth import get_user_model
 from django.contrib.sessions.models import Session
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+from django.core.paginator import Paginator
+from django.db.models import Q
+from django.db import transaction
+from django.utils import timezone
+
+from authenticate.models import Order, OrderItem, Product
+from .forms import OrderStatusForm
 
 
 logger = logging.getLogger(__name__)
@@ -121,7 +130,7 @@ def product_view(request):
     page_obj = paginator.get_page(page_number)
     
     return render(request, 'products/product_list.html', {
-        'products': page_obj,
+        'products': page_obj.object_list,
         'page_obj': page_obj,
         'search_query': search_query,
         'current_status': status_filter,
@@ -728,4 +737,208 @@ def unblock_user(request, user_id):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
     
+
+@login_required
+def order_list(request):
+    if not request.user.is_superuser:
+        messages.error(request, "You do not have permission to view this page.")
+        return redirect("admindashboard")
+
+    # Base queryset
+    orders = Order.objects.all().order_by("-created_at")
+
+    # Search by order number or user fields
+    search = (request.GET.get("search") or "").strip()
+    if search:
+        orders = orders.filter(
+            Q(order_number__icontains=search)
+            | Q(user__email__icontains=search)
+            | Q(user__first_name__icontains=search)
+            | Q(user__last_name__icontains=search)
+            | Q(user__username__icontains=search)
+        )
+
+    # Status filter
+    status_filter = request.GET.get("status") or ""
+    if status_filter and status_filter != "all":
+        orders = orders.filter(status=status_filter)
+
+    # Date range filters
+    date_from = request.GET.get("from") or ""
+    date_to = request.GET.get("to") or ""
+    if date_from:
+        orders = orders.filter(created_at__date__gte=date_from)
+    if date_to:
+        orders = orders.filter(created_at__date__lte=date_to)
+
+    # Sorting
+    sort = (request.GET.get("sort") or "").strip()
+    sort_map = {
+         "datedesc": "-created_at",
+         "dateasc": "created_at",
+         "totaldesc": "-total_amount",
+         "totalasc": "total_amount",
+    }
+    if sort in sort_map:
+        orders = orders.order_by(sort_map[sort])
+
+    # Clear filters shortcut
+    if request.GET.get("clear"):
+        return redirect("order-list")
+
+    # Pagination
+    paginator = Paginator(orders, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    # Build a non-empty choices tuple for the list dropdown
+    if hasattr(Order, "Status") and getattr(Order.Status, "choices", None):
+        status_tuple = Order.Status.choices
+    elif hasattr(Order, "ORDERSTATUSCHOICES") and Order.ORDERSTATUSCHOICES:
+        status_tuple = Order.ORDERSTATUSCHOICES
+    else:
+        status_tuple = (
+            ("pending", "Pending"),
+            ("paid", "Paid"),
+            ("shipped", "Shipped"),
+            ("out-for-delivery", "Out for Delivery"),
+            ("delivered", "Delivered"),
+            ("cancelled", "Cancelled"),
+        )
+
+    context = {
+        "orders": page_obj.object_list,
+        "pageobj": page_obj,
+        "searchquery": search,
+        "currentstatus": status_filter,
+        "statuschoices": status_tuple,
+        "sort": sort or "datedesc",
+        "datefrom": date_from,
+        "dateto": date_to,
+        "totalorders": orders.count(),
+    }
+    return render(request, "orders/order_list.html", context)
+
+
+@login_required
+def order_detail(request, order_id: int):
+    if not request.user.is_superuser:
+        messages.error(request, "You do not have permission to view this page.")
+        return redirect("admindashboard")
+
+    order = get_object_or_404(Order, id=order_id)
+    items = order.items.select_related("product").all().order_by("id")
+    status_form = OrderStatusForm(order=order, initial={"status": order.status})
+    context = {"order": order, "items": items, "statusform": status_form}
+    return render(request, "orders/order_detail.html", context)
+
+
+@login_required
+@require_POST
+@transaction.atomic
+def order_update_status(request, order_id: int):
+    if not request.user.is_superuser:
+        messages.error(request, "Permission denied.")
+        return redirect("order-list")
+
+    order = get_object_or_404(Order, id=order_id)
+    form = OrderStatusForm(request.POST, order=order)
+    if not form.is_valid():
+        messages.error(request, "; ".join([str(v[0]) for v in form.errors.values()]))
+        return redirect("order-detail", order_id=order.id)
+
+    new_status = form.cleaned_data.get("status")
+    if not new_status:
+        messages.error(request, "Status is required.")
+        return redirect("order-detail", order_id=order.id)
+
+    old_status = order.status
+
+    def deduct_for_paid():
+        for item in order.items.select_related("product").all():
+            product = item.product
+            if not getattr(product, "manage_stock", True):
+                continue
+            # Only deduct once: if order is moving from PENDING to PAID
+            if product.stock_quantity < item.quantity:
+                raise ValueError(f"Insufficient stock for {product.name} (SKU {product.sku}).")
+            product.stock_quantity -= item.quantity
+            product.save()  # Product.save updates published/low-stock/out-of-stock
+
+    def restock_for_cancel():
+        for item in order.items.select_related("product").all():
+            product = item.product
+            if not getattr(product, "manage_stock", True):
+                continue
+            remaining = item.remaining_qty  # quantity - delivered - cancelled
+            if remaining > 0:
+                product.stock_quantity += remaining
+                item.cancelled_qty += remaining
+                product.save()
+                item.save(update_fields=["cancelled_qty", "updated_at"])
+
+    def mark_shipped_full():
+        for item in order.items.all():
+            # If partial shipments are planned, replace with item-level qty UI and mark_shipped(qty)
+            if item.remaining_qty > 0:
+                item.mark_shipped_full()
+
+    def mark_delivered_full():
+        for item in order.items.all():
+            if item.remaining_qty > 0:
+                item.mark_delivered_full()
+
+    try:
+        # Stock effects
+        if old_status == "pending" and new_status == "paid":
+            deduct_for_paid()
+
+        if new_status == "cancelled":
+            restock_for_cancel()
+
+        # Persist order status and timestamp
+        print(order.status)
+        order.status =new_status
+        order.updated_at = timezone.now() 
+        order.save()
+    except Exception as e:
+        print(e)
+        transaction.set_rollback(True)
+        messages.error(request, f"Error updating order: {e}")
+    return redirect("order-list")
+
+
+@login_required
+@require_POST
+@transaction.atomic
+def order_cancel(request, order_id: int):
+    if not request.user.is_superuser:
+        messages.error(request, "Permission denied.")
+        return redirect("order-list")
+
+    order = get_object_or_404(Order, id=order_id)
+    if not order.can_be_cancelled():
+        messages.error(request, "Order cannot be cancelled in its current status.")
+        return redirect("order-detail", order_id=order.id)
+
+    try:
+        # Restock only the remaining, not yet delivered or previously cancelled
+        for item in order.items.select_related("product").all():
+            product = item.product
+            if not getattr(product, "manage_stock", True):
+                continue
+            remaining = item.remaining_qty
+            if remaining > 0:
+                product.stock_quantity += remaining
+                item.cancelled_qty += remaining
+                product.save()
+                item.save(update_fields=["cancelled_qty", "updated_at"])
+
+        order.set_status("cancelled")
+        order.save()
+        messages.success(request, f"Order {order.order_id} has been cancelled and stock restored.")
+    except Exception as e:
+        transaction.set_rollback(True)
+        messages.error(request, f"Order {order.order_id} could not be cancelled: {e}")
+    return redirect("order-detail", order_id=order.id)
 
