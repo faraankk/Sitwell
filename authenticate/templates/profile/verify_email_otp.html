@@ -1,55 +1,568 @@
-{% extends 'authenticated_base.html' %}
+{% extends 'left_navbar.html' %}
 {% load static %}
 
 {% block title %}Verify Email OTP - Sitwell{% endblock %}
 
+{% block show_navbar_toggle %}show{% endblock %}
+
+{% block extra_css %}
+<style>
+    .verify-container {
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    /* Beautiful Breadcrumbs */
+    .breadcrumb {
+        background: white;
+        padding: 15px 20px;
+        margin-bottom: 25px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        list-style: none;
+    }
+    
+    .breadcrumb-item {
+        display: flex;
+        align-items: center;
+        color: #666;
+        font-size: 14px;
+    }
+
+    .breadcrumb-item a {
+        color: #666;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .breadcrumb-item a:hover {
+        color: #667eea;
+    }
+    
+    .breadcrumb-item.active {
+        color: #667eea;
+        font-weight: 600;
+    }
+    
+    .breadcrumb-item::after {
+        content: '/';
+        margin: 0 10px;
+        color: #ddd;
+    }
+    
+    .breadcrumb-item:last-child::after {
+        content: '';
+        margin: 0;
+    }
+
+    .breadcrumb-item i {
+        margin-right: 6px;
+    }
+
+    .content-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        padding: 40px;
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Email Verification Header */
+    .email-icon {
+        text-align: center;
+        margin-bottom: 35px;
+        padding-bottom: 25px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    .email-icon-circle {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    .email-icon-circle i {
+        font-size: 3rem;
+        color: white;
+    }
+
+    .email-icon h4 {
+        color: #333;
+        margin: 0 0 10px;
+        font-size: 26px;
+        font-weight: 700;
+    }
+
+    .email-icon p {
+        color: #666;
+        margin: 0;
+        font-size: 15px;
+        line-height: 1.6;
+    }
+
+    .form-group {
+        margin-bottom: 30px;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 12px;
+        display: block;
+        font-size: 15px;
+        text-align: center;
+    }
+
+    /* OTP Input Styling */
+    .otp-input-wrapper {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        margin: 25px 0;
+    }
+
+    .otp-input {
+        width: 60px;
+        height: 70px;
+        text-align: center;
+        font-size: 28px;
+        font-weight: 700;
+        border: 3px solid #e9ecef;
+        border-radius: 12px;
+        background: #f8f9fa;
+        transition: all 0.3s ease;
+        color: #333;
+    }
+
+    .otp-input:focus {
+        border-color: #667eea;
+        background: white;
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        transform: scale(1.05);
+    }
+
+    .otp-input.filled {
+        border-color: #28a745;
+        background: #f0fff4;
+    }
+
+    /* Single Input Fallback */
+    #otp {
+        width: 100%;
+        text-align: center;
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: 15px;
+        padding: 20px;
+        border: 3px solid #e9ecef;
+        border-radius: 12px;
+        background: #f8f9fa;
+        transition: all 0.3s ease;
+    }
+
+    #otp:focus {
+        border-color: #667eea;
+        background: white;
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        padding: 14px 36px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-primary:active {
+        transform: translateY(0);
+    }
+
+    .btn-cancel {
+        background-color: transparent;
+        border: 2px solid #6c757d;
+        color: #6c757d;
+        padding: 12px 34px;
+        border-radius: 10px;
+        margin-right: 15px;
+        text-decoration: none;
+        display: inline-block;
+        font-weight: 600;
+        font-size: 16px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-cancel:hover {
+        background-color: #6c757d;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+    }
+
+    /* Timer Box */
+    .timer-box {
+        text-align: center;
+        margin: 30px 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #fff3cd 0%, #ffe9a6 100%);
+        border-radius: 10px;
+        border-left: 4px solid #ffc107;
+    }
+
+    .timer-box .timer-label {
+        color: #856404;
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        letter-spacing: 0.5px;
+    }
+
+    .timer-box .timer-value {
+        color: #856404;
+        font-size: 32px;
+        font-weight: 700;
+        font-family: 'Courier New', monospace;
+    }
+
+    .timer-box.expired {
+        background: linear-gradient(135deg, #ffe6e6 0%, #ffcccc 100%);
+        border-left-color: #dc3545;
+    }
+
+    .timer-box.expired .timer-label,
+    .timer-box.expired .timer-value {
+        color: #721c24;
+    }
+
+    /* Info Notice */
+    .info-notice {
+        background: linear-gradient(135deg, #e3f2fd 0%, #e8eaf6 100%);
+        border-left: 4px solid #2196f3;
+        padding: 16px 20px;
+        border-radius: 10px;
+        margin-top: 25px;
+        text-align: center;
+    }
+
+    .info-notice p {
+        margin: 0;
+        color: #1565c0;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .info-notice a {
+        color: #1565c0;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    .info-notice a:hover {
+        color: #0d47a1;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 35px;
+    }
+
+    /* Resend Link */
+    .resend-section {
+        text-align: center;
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .resend-link {
+        color: #667eea;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.3s ease;
+    }
+
+    .resend-link:hover {
+        color: #764ba2;
+        text-decoration: underline;
+    }
+
+    @media (max-width: 768px) {
+        .content-card {
+            padding: 25px 20px;
+        }
+
+        .email-icon h4 {
+            font-size: 22px;
+        }
+
+        .email-icon-circle {
+            width: 80px;
+            height: 80px;
+        }
+
+        .email-icon-circle i {
+            font-size: 2.5rem;
+        }
+
+        .otp-input {
+            width: 50px;
+            height: 60px;
+            font-size: 24px;
+        }
+
+        #otp {
+            font-size: 24px;
+            letter-spacing: 10px;
+        }
+
+        .form-actions {
+            flex-direction: column-reverse;
+        }
+
+        .btn-cancel,
+        .btn-primary {
+            width: 100%;
+            margin: 0;
+            margin-bottom: 10px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block banner %}{% endblock %}
+
 {% block content %}
-<!-- Breadcrumb -->
-{% comment %} <nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'dummy_home' %}">Home</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'user_profile' %}">My Account</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Verify Email</li>
-    </ol>
-</nav> {% endcomment %}
+<div class="verify-container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dummy_home' %}">
+                    <i class="fas fa-home"></i>Home
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'user_profile' %}">
+                    <i class="fas fa-user"></i>My Account
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Verify Email</li>
+        </ol>
+    </nav>
 
-<!-- Main Content -->
-<div class="content-card">
-    <div class="email-icon">
-        <i class="fas fa-envelope"></i>
-        <h4 style="color: #db4444; margin: 0;">Verify Your New Email</h4>
-        <p style="color: #666; margin-top: 10px;">Enter the 6-digit OTP sent to your new email address.</p>
+    <!-- Main Content -->
+    <div class="content-card">
+        <div class="email-icon">
+            <div class="email-icon-circle">
+                <i class="fas fa-envelope-open"></i>
+            </div>
+            <h4>Verify Your New Email</h4>
+            <p>We've sent a 6-digit verification code to your new email address.<br>Please enter it below to complete the process.</p>
+        </div>
+
+        <form method="post" id="otpForm">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="otp">Enter Verification Code</label>
+                <input 
+                    type="text" 
+                    id="otp" 
+                    name="otp" 
+                    maxlength="6" 
+                    placeholder="000000" 
+                    required 
+                    pattern="[0-9]{6}" 
+                    title="Please enter a 6-digit number"
+                    autocomplete="off"
+                >
+            </div>
+
+            <!-- Timer Box -->
+            <div class="timer-box" id="timerBox">
+                <div class="timer-label">Time Remaining</div>
+                <div class="timer-value" id="timerDisplay">{{ remaining_time }}s</div>
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'user_profile' %}" class="btn-cancel">
+                    <i class="fas fa-times" style="margin-right: 8px;"></i>Cancel
+                </a>
+                <button type="submit" class="btn-primary" id="verifyBtn">
+                    <i class="fas fa-check-circle"></i>Verify Email
+                </button>
+            </div>
+        </form>
+
+        <!-- Info Notice -->
+        <div class="info-notice">
+            <p>
+                Didn't receive the code? Check your spam folder or 
+                <a href="{% url 'change_email' %}">request a new code</a>.
+            </p>
+        </div>
     </div>
-
-    <form method="post">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="otp">OTP</label>
-            <input type="text" id="otp" name="otp" maxlength="6" placeholder="Enter 6-digit OTP" required pattern="[0-9]{6}" title="Please enter a 6-digit number">
-        </div>
-
-        <div style="display: flex; justify-content: center; margin-top: 30px;">
-            <a href="{% url 'change_email' %}" class="btn-cancel">Cancel</a>
-            <button type="submit" class="btn-primary">
-                <i class="fas fa-check" style="margin-right: 8px;"></i>Verify
-            </button>
-        </div>
-    </form>
-
-    <p style="text-align: center; margin-top: 20px; color: #666;">Time remaining: {{ remaining_time }} seconds</p>
-    <p style="text-align: center; color: #666; font-size: 14px;">If you didn't receive the OTP or it expired, <a href="{% url 'change_email' %}">start over</a>.</p>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Basic OTP input validation (optional enhancement)
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-open the navbar on desktop
+        if (window.innerWidth > 768) {
+            const navbar = document.getElementById('leftNavbar');
+            const content = document.getElementById('mainContent');
+            const toggleBtn = document.querySelector('.navbar-toggle-btn');
+            
+            if (navbar && content && toggleBtn) {
+                navbar.classList.add('active');
+                content.classList.add('content-pushed');
+                toggleBtn.classList.add('active');
+            }
+        }
+    });
+
+    // OTP input validation and formatting
     const otpField = document.getElementById('otp');
     if (otpField) {
+        // Auto-focus on load
+        otpField.focus();
+
+        // Only allow numbers
         otpField.addEventListener('input', function() {
             this.value = this.value.replace(/[^0-9]/g, '');
-            if (this.value.length > 6) this.value = this.value.slice(0, 6);
+            if (this.value.length > 6) {
+                this.value = this.value.slice(0, 6);
+            }
+
+            // Visual feedback when complete
+            if (this.value.length === 6) {
+                this.style.borderColor = '#28a745';
+                this.style.background = '#f0fff4';
+            } else {
+                this.style.borderColor = '#e9ecef';
+                this.style.background = '#f8f9fa';
+            }
+        });
+
+        // Auto-submit when 6 digits entered (optional)
+        otpField.addEventListener('input', function() {
+            if (this.value.length === 6) {
+                // Optional: Auto-submit after 500ms
+                // setTimeout(() => document.getElementById('otpForm').submit(), 500);
+            }
         });
     }
+
+    // Countdown Timer
+    let remainingTime = {{ remaining_time|default:300 }};
+    const timerDisplay = document.getElementById('timerDisplay');
+    const timerBox = document.getElementById('timerBox');
+
+    function updateTimer() {
+        if (remainingTime > 0) {
+            remainingTime--;
+            const minutes = Math.floor(remainingTime / 60);
+            const seconds = remainingTime % 60;
+            timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        } else {
+            timerDisplay.textContent = 'EXPIRED';
+            timerBox.classList.add('expired');
+            clearInterval(timerInterval);
+            
+            // Disable form
+            otpField.disabled = true;
+            document.getElementById('verifyBtn').disabled = true;
+            document.getElementById('verifyBtn').innerHTML = '<i class="fas fa-times-circle"></i>Code Expired';
+            document.getElementById('verifyBtn').style.opacity = '0.6';
+        }
+    }
+
+    const timerInterval = setInterval(updateTimer, 1000);
+    updateTimer(); // Initial call
+
+    // Form submission with loading state
+    const form = document.getElementById('otpForm');
+    const verifyBtn = document.getElementById('verifyBtn');
+
+    if (form && verifyBtn) {
+        form.addEventListener('submit', function(e) {
+            const otp = otpField.value;
+
+            if (otp.length !== 6) {
+                e.preventDefault();
+                alert('Please enter the complete 6-digit code');
+                otpField.focus();
+                return;
+            }
+
+            // Show loading state
+            verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Verifying...';
+            verifyBtn.disabled = true;
+            verifyBtn.style.opacity = '0.7';
+        });
+    }
+
+    // Paste support (auto-fill from clipboard)
+    otpField.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pastedData = (e.clipboardData || window.clipboardData).getData('text');
+        const numbers = pastedData.replace(/[^0-9]/g, '').slice(0, 6);
+        this.value = numbers;
+        
+        // Trigger input event for validation
+        this.dispatchEvent(new Event('input'));
+    });
 </script>
 {% endblock %}

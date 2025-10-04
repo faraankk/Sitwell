@@ -4,120 +4,177 @@
 
 {% block title %}Login - Sitwell{% endblock %}
 
-{% block banner %}
-<!-- Remove the swim suits banner and use small furniture banner -->
-<div style="margin: 15px 20px; min-height: 120px; background: linear-gradient(135deg, #000 0%, #333 100%); border-radius: 8px; display: flex; justify-content: center; align-items: center; color: white; font-size: 18px; text-align: center; position: relative; overflow: hidden;">
-    <div style="white-space: nowrap; animation: scrollText 12s linear infinite; font-weight: bold;">
-        Up to 10% off Voucher - Discover Amazing Furniture Deals
-    </div>
-</div>
-
-<style>
-@keyframes scrollText {
-    0% { transform: translateX(100%); }
-    100% { transform: translateX(-100%); }
-}
-</style>
-{% endblock %}
-
-{% block content %}
+{% block extra_css %}
 <style>
     .main-content .container {
-        max-width: 1200px;
-        margin: 40px auto;
-        padding: 0 20px;
+        max-width: 1400px;
+        margin: 0 auto; /* REMOVED top margin */
+        padding: 40px 40px;
     }
     
     .content-grid {
         display: grid;
-        grid-template-columns: 1fr 400px;
-        gap: 40px;
+        grid-template-columns: 1fr 1fr;
+        gap: 60px;
         align-items: center;
     }
     
+    .product-image {
+        position: relative;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        width: 100%;
+    }
+
     .product-image img {
         width: 100%;
-        border-radius: 8px;
-        max-height: 600px;
+        border-radius: 15px;
+        height: 700px;
         object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .product-image:hover img {
+        transform: scale(1.05);
     }
 
     .login-section {
-        background: #fafafa;
-        padding: 40px;
-        border-radius: 8px;
+        background: white;
+        padding: 50px;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 2px solid #f0f0f0;
+        max-width: 550px;
+        width: 100%;
+        justify-self: center;
     }
     
     .login-section h2 { 
-        font-size: 24px; 
-        margin-bottom: 8px; 
+        font-size: 32px; 
+        margin-bottom: 10px; 
         color: #333;
+        font-weight: 700;
     }
     
     .login-section p { 
-        font-size: 14px; 
-        margin-bottom: 20px; 
+        font-size: 15px; 
+        margin-bottom: 30px; 
         color: #666; 
     }
     
     .form-group { 
-        margin-bottom: 20px; 
+        margin-bottom: 25px; 
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #333;
+        font-size: 14px;
+    }
+
+    .form-group label i {
+        margin-right: 6px;
+        color: #667eea;
     }
     
     .form-group input { 
         width: 100%; 
-        padding: 12px; 
-        border: 1px solid #ddd; 
-        border-radius: 4px;
-        font-size: 14px;
+        padding: 14px 16px; 
+        border: 2px solid #e9ecef; 
+        border-radius: 10px;
+        font-size: 15px;
+        background: #f8f9fa;
+        transition: all 0.3s ease;
     }
     
     .form-group input:focus {
         outline: none;
-        border-color: #db4444;
+        border-color: #667eea;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
     }
     
     .form-actions { 
         display: flex; 
         align-items: center; 
+        justify-content: space-between;
         gap: 20px; 
-        margin-bottom: 20px; 
+        margin-bottom: 30px; 
     }
     
     .login-btn {
-        background: #db4444;
-        color: #fff;
-        padding: 12px 30px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 14px 36px;
         border: none;
-        border-radius: 4px;
+        border-radius: 10px;
         cursor: pointer;
-        font-size: 14px;
-        font-weight: 500;
-        transition: background-color 0.3s ease;
+        font-size: 16px;
+        font-weight: 700;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
     
     .login-btn:hover {
-        background: #c13333;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
     }
     
     .forgot-password { 
         font-size: 14px; 
-        color: #db4444; 
-        text-decoration: none; 
+        color: #667eea; 
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s ease;
+    }
+
+    .forgot-password:hover {
+        color: #764ba2;
+        text-decoration: underline;
     }
 
     .form-errors { 
-        background: #ffe0e0; 
-        color: #b30000; 
-        padding: 10px; 
+        background: #fee2e2; 
+        color: #991b1b; 
+        padding: 12px 16px; 
         margin-bottom: 20px; 
-        border-radius: 4px; 
+        border-radius: 10px; 
         font-size: 14px;
+        border: 1px solid #fecaca;
+        font-weight: 600;
     }
     
     .form-errors ul { 
         margin: 0; 
         padding-left: 20px; 
+    }
+
+    .divider {
+        text-align: center;
+        margin: 30px 0;
+        position: relative;
+    }
+
+    .divider::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        width: 100%;
+        height: 1px;
+        background: #e9ecef;
+    }
+
+    .divider span {
+        background: white;
+        padding: 0 15px;
+        position: relative;
+        color: #999;
+        font-size: 14px;
+        font-weight: 600;
     }
 
     .google-login {
@@ -126,102 +183,124 @@
         justify-content: center;
         gap: 12px;
         width: 100%;
-        padding: 12px 15px;
-        border: 1px solid #db4444;
-        border-radius: 4px;
+        padding: 14px 20px;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
         text-decoration: none;
-        margin-bottom: 20px;
         transition: all 0.3s ease;
-        font-size: 14px;
-        font-weight: 500;
+        font-size: 15px;
+        font-weight: 700;
         color: #333;
         background: white;
     }
     
     .google-login:hover {
-        background: #f8f8f8;
-        border-color: #c13333;
+        background: #f8f9fa;
+        border-color: #667eea;
         color: #333;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
     .social-icon {
-        font-size: 16px;
+        font-size: 20px;
         color: #4285f4;
     }
 
     .signup-link {
         text-align: center;
-        margin-top: 20px;
+        margin-top: 30px;
+        padding-top: 25px;
+        border-top: 1px solid #e9ecef;
         color: #666;
-        font-size: 14px;
+        font-size: 15px;
     }
     
     .signup-link a {
-        color: #db4444;
+        color: #667eea;
         text-decoration: none;
-        font-weight: 500;
+        font-weight: 700;
     }
 
-    .search-container { 
-        display: flex; 
-        gap: 10px; 
-        align-items: center; 
-    }
-    
-    .search-input { 
-        padding: 8px 15px; 
-        border: 1px solid #ddd; 
-        border-radius: 4px; 
-        width: 200px; 
-    }
-    
-    .search-btn { 
-        background: none; 
-        border: none; 
-        cursor: pointer;
-        font-size: 16px;
+    .signup-link a:hover {
+        text-decoration: underline;
     }
 
-    @media (max-width: 768px) {
+    /* Banner Animation */
+    @keyframes scrollText {
+        0% { transform: translateX(100%); }
+        100% { transform: translateX(-100%); }
+    }
+
+    @media (max-width: 968px) {
         .content-grid { 
             grid-template-columns: 1fr; 
+            gap: 40px;
         }
+
+        .product-image img {
+            height: 400px;
+        }
+
         .login-section { 
-            padding: 30px 20px; 
+            padding: 40px 30px;
+            max-width: 100%;
         }
-        .search-container {
-            display: none;
+    }
+
+    @media (max-width: 480px) {
+        .main-content .container {
+            padding: 20px 15px;
+        }
+
+        .login-section {
+            padding: 30px 20px;
+        }
+
+        .login-section h2 {
+            font-size: 26px;
+        }
+
+        .form-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .login-btn {
+            width: 100%;
+        }
+
+        .forgot-password {
+            text-align: center;
+        }
+
+        .product-image img {
+            height: 300px;
         }
     }
 </style>
+{% endblock %}
 
-<!-- Search Bar -->
-<div style="background: #fff; padding: 15px 0; border-bottom: 1px solid #eee;">
-    <div style="max-width: 1200px; margin: 0 auto; padding: 0 20px; text-align: right;">
-        {% comment %} <div class="search-container" style="display: inline-flex;">
-            <input type="text" class="search-input" placeholder="What are you looking for?">
-            <button class="search-btn">🔍</button>
-        </div> {% endcomment %}
-    </div>
-</div>
 
+
+{% block content %}
 <!-- Main Content -->
 <div class="container">
     <div class="content-grid">
         <div class="product-section">
             <div class="product-image">
-                <img src="/media/carle.webp" alt="Modern Furniture Collection" width="500" height="600">
+                <img src="/media/carle.webp" alt="Modern Furniture Collection">
             </div>
         </div>
 
         <div class="login-section">
-            <h2>Log in to Sit Well</h2>
-            <p>Enter your details below</p>
+            <h2>Welcome Back!</h2>
+            <p>Log in to Sitwell and continue your furniture journey</p>
             
             {% if messages %}
                 {% for message in messages %}
                     <div class="form-errors">
-                        {{ message }}
+                        <i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>{{ message }}
                     </div>
                 {% endfor %}
             {% endif %}
@@ -240,6 +319,9 @@
                 {% endif %}
 
                 <div class="form-group">
+                    <label for="id_email">
+                        <i class="fas fa-envelope"></i>Email Address
+                    </label>
                     {{ form.email }}
                     {% if form.email.errors %}
                         <div class="form-errors">
@@ -253,6 +335,9 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="id_password">
+                        <i class="fas fa-lock"></i>Password
+                    </label>
                     {{ form.password }}
                     {% if form.password.errors %}
                         <div class="form-errors">
@@ -266,18 +351,26 @@
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="login-btn">Log In</button>
-                    <a href="{% url 'forgot_password' %}" class="forgot-password">Forget Password?</a>
+                    <button type="submit" class="login-btn">
+                        <i class="fas fa-sign-in-alt" style="margin-right: 8px;"></i>Log In
+                    </button>
+                    <a href="{% url 'forgot_password' %}" class="forgot-password">
+                        Forgot Password?
+                    </a>
                 </div>
             </form>
 
+            <div class="divider">
+                <span>OR</span>
+            </div>
+
             <a href="{% provider_login_url 'google' %}" class="google-login">
                 <i class="fab fa-google social-icon"></i>
-                Login with Google
+                Continue with Google
             </a>
 
             <div class="signup-link">
-                Don't have an account? <a href="{% url 'signup' %}">Sign up</a>
+                Don't have an account? <a href="{% url 'signup' %}">Create one now</a>
             </div>
         </div>
     </div>

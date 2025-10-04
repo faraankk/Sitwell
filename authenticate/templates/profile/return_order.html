@@ -1,4 +1,3 @@
-```html
 {% extends 'base.html' %}
 {% load static %}
 
@@ -6,56 +5,351 @@
 
 {% block extra_css %}
 <style>
+    .return-container {
+        max-width: 700px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    /* Beautiful Breadcrumbs */
+    .breadcrumb {
+        background: white;
+        padding: 15px 20px;
+        margin-bottom: 25px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        list-style: none;
+    }
+    
+    .breadcrumb-item {
+        display: flex;
+        align-items: center;
+        color: #666;
+        font-size: 14px;
+    }
+
+    .breadcrumb-item a {
+        color: #666;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .breadcrumb-item a:hover {
+        color: #667eea;
+    }
+    
+    .breadcrumb-item.active {
+        color: #667eea;
+        font-weight: 600;
+    }
+    
+    .breadcrumb-item::after {
+        content: '/';
+        margin: 0 10px;
+        color: #ddd;
+    }
+    
+    .breadcrumb-item:last-child::after {
+        content: '';
+        margin: 0;
+    }
+
+    .breadcrumb-item i {
+        margin-right: 6px;
+    }
+
     .content-card {
         background: white;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        padding: 40px;
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Return Header */
+    .return-header {
+        text-align: center;
+        margin-bottom: 35px;
+        padding-bottom: 25px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    .return-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    .return-icon i {
+        font-size: 2.5rem;
+        color: white;
+    }
+
+    .return-header h4 {
+        color: #333;
+        margin: 0 0 10px;
+        font-size: 26px;
+        font-weight: 700;
+    }
+
+    .return-header p {
+        color: #666;
+        margin: 0;
+        font-size: 15px;
+    }
+    
+    .order-info {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         padding: 25px;
-        margin: 20px auto;
-        max-width: 600px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        border-left: 4px solid #667eea;
+    }
+
+    .order-info h6 {
+        color: #333;
+        margin-bottom: 15px;
+        font-size: 16px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .order-info h6 i {
+        color: #667eea;
+    }
+
+    .order-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+
+    .order-info-item {
+        background: white;
+        padding: 12px;
+        border-radius: 8px;
+    }
+
+    .order-info-item strong {
+        display: block;
+        color: #6c757d;
+        font-size: 12px;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+        font-weight: 600;
+    }
+
+    .order-info-item p {
+        margin: 0;
+        color: #333;
+        font-size: 15px;
+        font-weight: 500;
     }
     
     .form-group {
-        margin-bottom: 20px;
+        margin-bottom: 30px;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 12px;
+        display: block;
+        font-size: 15px;
+    }
+
+    .form-group label i {
+        margin-right: 8px;
+        color: #667eea;
     }
     
     .form-control {
         width: 100%;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
+        padding: 14px 16px;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        font-size: 15px;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+        resize: vertical;
+        min-height: 150px;
+        font-family: inherit;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        background: white;
+    }
+
+    .form-control::placeholder {
+        color: #adb5bd;
+    }
+
+    .char-count {
+        text-align: right;
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 6px;
     }
     
     .btn-primary {
-        background-color: #db4444;
-        border-color: #db4444;
-        color: white;
-        padding: 10px 20px;
-        border-radius: 5px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: none;
+        color: white;
+        padding: 14px 36px;
+        border-radius: 10px;
         cursor: pointer;
+        font-weight: 600;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-primary:active {
+        transform: translateY(0);
     }
     
     .btn-secondary {
-        background-color: #6c757d;
-        border-color: #6c757d;
-        color: white;
-        padding: 10px 20px;
-        border-radius: 5px;
+        background-color: transparent;
+        border: 2px solid #6c757d;
+        color: #6c757d;
+        padding: 12px 34px;
+        border-radius: 10px;
         text-decoration: none;
-        margin-right: 10px;
+        margin-right: 15px;
+        display: inline-block;
+        font-weight: 600;
+        font-size: 16px;
+        transition: all 0.3s ease;
     }
-    
-    .order-info {
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 5px;
-        margin-bottom: 20px;
+
+    .btn-secondary:hover {
+        background-color: #6c757d;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
     }
     
     .error {
         color: #dc3545;
+        font-size: 13px;
+        margin-top: 8px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .error::before {
+        content: '⚠';
         font-size: 14px;
+    }
+
+    .info-notice {
+        background: linear-gradient(135deg, #e3f2fd 0%, #e8eaf6 100%);
+        border-left: 4px solid #2196f3;
+        padding: 16px 20px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .info-notice i {
+        color: #1976d2;
+        font-size: 20px;
+        margin-top: 2px;
+    }
+
+    .info-notice div {
+        flex: 1;
+    }
+
+    .info-notice strong {
+        display: block;
+        color: #1565c0;
+        margin-bottom: 5px;
+        font-size: 15px;
+    }
+
+    .info-notice p {
+        margin: 0;
+        color: #1565c0;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 35px;
+        padding-top: 25px;
+        border-top: 2px solid #f0f0f0;
+    }
+
+    @media (max-width: 768px) {
+        .content-card {
+            padding: 25px 20px;
+        }
+
+        .return-header h4 {
+            font-size: 22px;
+        }
+
+        .order-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions {
+            flex-direction: column-reverse;
+        }
+
+        .btn-secondary,
+        .btn-primary {
+            width: 100%;
+            margin: 0;
+            margin-bottom: 10px;
+        }
     }
 </style>
 {% endblock %}
@@ -63,32 +357,164 @@
 {% block banner %}{% endblock %}
 
 {% block content %}
-<div class="content-card">
-    <h4 style="color: #db4444; margin-bottom: 20px;">Return Order</h4>
-    
-    <div class="order-info">
-        <h6>Order Details:</h6>
-        <p><strong>Order Number:</strong> {{ order.order_number }}</p>
-        <p><strong>Order Date:</strong> {{ order.created_at|date:"F d, Y g:i A" }}</p>
-        <p><strong>Total Amount:</strong> ₹{{ order.total_amount }}</p>
-        <p><strong>Status:</strong> {{ order.get_status_display }}</p>
-    </div>
-    
-    <form method="post">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="{{ form.reason.id_for_label }}">{{ form.reason.label }}</label>
-            {{ form.reason }}
-            {% if form.reason.errors %}
-                <div class="error">{{ form.reason.errors.0 }}</div>
-            {% endif %}
+<div class="return-container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dummy_home' %}">
+                    <i class="fas fa-home"></i>Home
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'user_profile' %}">
+                    <i class="fas fa-user"></i>Profile
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'user_orders' %}">
+                    <i class="fas fa-shopping-bag"></i>My Orders
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Return Order</li>
+        </ol>
+    </nav>
+
+    <div class="content-card">
+        <!-- Return Header -->
+        <div class="return-header">
+            <div class="return-icon">
+                <i class="fas fa-undo-alt"></i>
+            </div>
+            <h4>Request Order Return</h4>
+            <p>Please provide a reason for returning this order</p>
+        </div>
+
+        <!-- Info Notice -->
+        <div class="info-notice">
+            <i class="fas fa-info-circle"></i>
+            <div>
+                <strong>Return Policy</strong>
+                <p>Returns are accepted within 7 days of delivery. Please ensure items are in original condition with tags attached.</p>
+            </div>
         </div>
         
-        <div style="display: flex; gap: 10px; margin-top: 30px;">
-            <a href="{% url 'user_orders' %}" class="btn-secondary">Go Back</a>
-            <button type="submit" class="btn-primary">Confirm Return</button>
+        <!-- Order Information -->
+        <div class="order-info">
+            <h6><i class="fas fa-receipt"></i>Order Details</h6>
+            <div class="order-info-grid">
+                <div class="order-info-item">
+                    <strong>Order Number</strong>
+                    <p>{{ order.order_number }}</p>
+                </div>
+                <div class="order-info-item">
+                    <strong>Order Date</strong>
+                    <p>{{ order.created_at|date:"F d, Y" }}</p>
+                </div>
+                <div class="order-info-item">
+                    <strong>Total Amount</strong>
+                    <p style="color: #667eea;">₹{{ order.total_amount|floatformat:2 }}</p>
+                </div>
+                <div class="order-info-item">
+                    <strong>Current Status</strong>
+                    <p>{{ order.get_status_display }}</p>
+                </div>
+            </div>
         </div>
-    </form>
+        
+        <!-- Return Form -->
+        <form method="post" id="returnForm">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="{{ form.reason.id_for_label }}">
+                    <i class="fas fa-comment-dots"></i>{{ form.reason.label }}
+                </label>
+                {{ form.reason }}
+                <div class="char-count">
+                    <span id="charCount">0</span>/500 characters
+                </div>
+                {% if form.reason.errors %}
+                    <div class="error">{{ form.reason.errors.0 }}</div>
+                {% endif %}
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <a href="{% url 'order_detail' order.order_number %}" class="btn-secondary">
+                    <i class="fas fa-arrow-left" style="margin-right: 8px;"></i>Go Back
+                </a>
+                <button type="submit" class="btn-primary" id="submit-btn">
+                    <i class="fas fa-check-circle" style="margin-right: 8px;"></i>Confirm Return Request
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}
-```
+
+{% block extra_js %}
+<script>
+    // Character counter for reason
+    const textarea = document.getElementById('{{ form.reason.id_for_label }}');
+    const charCount = document.getElementById('charCount');
+
+    if (textarea && charCount) {
+        textarea.addEventListener('input', function() {
+            const count = this.value.length;
+            charCount.textContent = count;
+            
+            if (count > 450) {
+                charCount.style.color = '#dc3545';
+            } else if (count > 400) {
+                charCount.style.color = '#ffc107';
+            } else {
+                charCount.style.color = '#6c757d';
+            }
+        });
+
+        // Initialize count
+        charCount.textContent = textarea.value.length;
+    }
+
+    // Form submission confirmation
+    const returnForm = document.getElementById('returnForm');
+    const submitBtn = document.getElementById('submit-btn');
+
+    if (returnForm && submitBtn) {
+        returnForm.addEventListener('submit', function(e) {
+            const reason = textarea.value.trim();
+            
+            if (!reason) {
+                e.preventDefault();
+                alert('Please provide a reason for the return');
+                textarea.focus();
+                return;
+            }
+
+            if (reason.length < 10) {
+                e.preventDefault();
+                alert('Please provide a more detailed reason (at least 10 characters)');
+                textarea.focus();
+                return;
+            }
+
+            // Confirmation dialog
+            if (!confirm('Are you sure you want to request a return for this order?')) {
+                e.preventDefault();
+                return;
+            }
+
+            // Show loading state
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Submitting...';
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.7';
+        });
+    }
+
+    // Smooth scroll to first error
+    const firstError = document.querySelector('.error');
+    if (firstError) {
+        firstError.closest('.form-group').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,435 @@
+{% extends 'authenticated_base.html' %}
+{% load static %}
+
+{% block title %}About Us - Sitwell{% endblock %}
+
+{% block banner %}
+<!-- Remove banner for about page -->
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Hero section */
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 6rem 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: rotate 20s linear infinite;
+    }
+    
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Fade in animation */
+    .fade-in {
+        animation: fadeInUp 1s ease-out;
+    }
+    
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Stats section */
+    .stats-card {
+        background: white;
+        border-radius: 1.5rem;
+        padding: 2rem;
+        text-align: center;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.2);
+        border-color: #667eea;
+    }
+    
+    .stats-number {
+        font-size: 3rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Team section */
+    .team-card {
+        background: white;
+        border-radius: 1.5rem;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .team-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.2);
+        border-color: #667eea;
+    }
+    
+    .team-image {
+        width: 100%;
+        height: 300px;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    
+    .team-card:hover .team-image {
+        transform: scale(1.1);
+    }
+    
+    .team-info {
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    /* Values section */
+    .value-card {
+        background: white;
+        border-radius: 1.5rem;
+        padding: 2rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .value-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.2);
+        border-color: #667eea;
+    }
+    
+    .value-icon {
+        width: 4rem;
+        height: 4rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .value-card:hover .value-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+    
+    /* Timeline section */
+    .timeline {
+        position: relative;
+        padding: 2rem 0;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        transform: translateX(-50%);
+    }
+    
+    .timeline-item {
+        margin-bottom: 4rem;
+        position: relative;
+    }
+    
+    .timeline-content {
+        background: white;
+        border-radius: 1.5rem;
+        padding: 2rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        width: 45%;
+        transition: all 0.3s ease;
+    }
+    
+    .timeline-item:nth-child(odd) .timeline-content {
+        margin-left: auto;
+    }
+    
+    .timeline-content:hover {
+        transform: scale(1.05);
+        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.2);
+    }
+    
+    .timeline-dot {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        width: 20px;
+        height: 20px;
+        background: white;
+        border: 4px solid #667eea;
+        border-radius: 50%;
+        transform: translateX(-50%);
+        z-index: 1;
+    }
+    
+    /* CTA section */
+    .cta-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 2rem;
+        padding: 4rem 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .cta-btn {
+        background: white;
+        color: #667eea;
+        padding: 1rem 3rem;
+        border-radius: 1rem;
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+    }
+    
+    .cta-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .timeline::before {
+            left: 0;
+        }
+        
+        .timeline-content {
+            width: 100%;
+            margin-left: 2rem !important;
+        }
+        
+        .timeline-dot {
+            left: 0;
+        }
+        
+        .hero-section {
+            padding: 4rem 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="max-w-6xl mx-auto text-center relative z-10 fade-in">
+        <h1 class="text-5xl md:text-7xl font-black text-white mb-6">
+            About <span class="text-yellow-300">Sitwell</span>
+        </h1>
+        <p class="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed">
+            Crafting beautiful furniture that transforms houses into homes since 2020. 
+            We believe every space deserves to be extraordinary.
+        </p>
+    </div>
+</section>
+
+<!-- Story Section -->
+<section style="padding: 5rem 2rem; background: #f9fafb;">
+    <div class="max-w-6xl mx-auto">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 4rem; align-items: center;">
+            <div class="fade-in">
+                <h2 style="font-size: 3rem; font-weight: 900; margin-bottom: 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                    Our Story
+                </h2>
+                <p style="color: #6b7280; font-size: 1.1rem; line-height: 1.8; margin-bottom: 1rem;">
+                    Founded in 2020, Sitwell began with a simple vision: to make premium, beautifully designed furniture accessible to everyone. What started as a small workshop has grown into a trusted brand serving thousands of happy customers.
+                </p>
+                <p style="color: #6b7280; font-size: 1.1rem; line-height: 1.8;">
+                    Every piece we create is thoughtfully designed, sustainably sourced, and built to last. We're not just selling furniture – we're helping you create spaces where memories are made and life is lived to the fullest.
+                </p>
+            </div>
+            <div class="fade-in" style="animation-delay: 0.2s;">
+                <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800" alt="Our Story" style="width: 100%; border-radius: 1.5rem; box-shadow: 0 20px 60px rgba(0,0,0,0.15);">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section style="padding: 5rem 2rem;">
+    <div class="max-w-6xl mx-auto">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">
+            <div class="stats-card fade-in" style="animation-delay: 0s;">
+                <div class="stats-number">5000+</div>
+                <h3 style="font-size: 1.2rem; font-weight: 700; color: #333;">Happy Customers</h3>
+            </div>
+            <div class="stats-card fade-in" style="animation-delay: 0.1s;">
+                <div class="stats-number">500+</div>
+                <h3 style="font-size: 1.2rem; font-weight: 700; color: #333;">Products</h3>
+            </div>
+            <div class="stats-card fade-in" style="animation-delay: 0.2s;">
+                <div class="stats-number">50+</div>
+                <h3 style="font-size: 1.2rem; font-weight: 700; color: #333;">Cities Served</h3>
+            </div>
+            <div class="stats-card fade-in" style="animation-delay: 0.3s;">
+                <div class="stats-number">4.9★</div>
+                <h3 style="font-size: 1.2rem; font-weight: 700; color: #333;">Average Rating</h3>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Values Section -->
+<section style="padding: 5rem 2rem; background: #f9fafb;">
+    <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-12 fade-in">
+            <h2 style="font-size: 3rem; font-weight: 900; margin-bottom: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                Our Values
+            </h2>
+            <p style="color: #6b7280; font-size: 1.2rem;">The principles that guide everything we do</p>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+            <div class="value-card fade-in" style="animation-delay: 0s;">
+                <div class="value-icon">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <h3 style="font-size: 1.5rem; font-weight: 700; color: #333; margin-bottom: 1rem;">Quality First</h3>
+                <p style="color: #6b7280; line-height: 1.7;">We never compromise on quality. Every piece is crafted with premium materials and attention to detail.</p>
+            </div>
+            
+            <div class="value-card fade-in" style="animation-delay: 0.1s;">
+                <div class="value-icon">
+                    <i class="fas fa-leaf"></i>
+                </div>
+                <h3 style="font-size: 1.5rem; font-weight: 700; color: #333; margin-bottom: 1rem;">Sustainable</h3>
+                <p style="color: #6b7280; line-height: 1.7;">We're committed to eco-friendly practices, from sourcing to production to delivery.</p>
+            </div>
+            
+            <div class="value-card fade-in" style="animation-delay: 0.2s;">
+                <div class="value-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3 style="font-size: 1.5rem; font-weight: 700; color: #333; margin-bottom: 1rem;">Customer Focused</h3>
+                <p style="color: #6b7280; line-height: 1.7;">Your satisfaction is our priority. We're here to help every step of the way.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Timeline Section -->
+<section style="padding: 5rem 2rem;">
+    <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-12 fade-in">
+            <h2 style="font-size: 3rem; font-weight: 900; margin-bottom: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                Our Journey
+            </h2>
+            <p style="color: #6b7280; font-size: 1.2rem;">Milestones that shaped Sitwell</p>
+        </div>
+        
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content fade-in">
+                    <h3 style="font-size: 1.8rem; font-weight: 700; color: #667eea; margin-bottom: 0.5rem;">2020</h3>
+                    <h4 style="font-size: 1.3rem; font-weight: 600; color: #333; margin-bottom: 1rem;">The Beginning</h4>
+                    <p style="color: #6b7280; line-height: 1.7;">Sitwell was founded with a vision to revolutionize the furniture industry with quality and affordability.</p>
+                </div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content fade-in" style="animation-delay: 0.2s;">
+                    <h3 style="font-size: 1.8rem; font-weight: 700; color: #667eea; margin-bottom: 0.5rem;">2021</h3>
+                    <h4 style="font-size: 1.3rem; font-weight: 600; color: #333; margin-bottom: 1rem;">First Showroom</h4>
+                    <p style="color: #6b7280; line-height: 1.7;">Opened our first flagship showroom in New York, bringing our designs closer to customers.</p>
+                </div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content fade-in" style="animation-delay: 0.4s;">
+                    <h3 style="font-size: 1.8rem; font-weight: 700; color: #667eea; margin-bottom: 0.5rem;">2023</h3>
+                    <h4 style="font-size: 1.3rem; font-weight: 600; color: #333; margin-bottom: 1rem;">Going Green</h4>
+                    <p style="color: #6b7280; line-height: 1.7;">Launched our sustainable furniture line, committed to eco-friendly materials and practices.</p>
+                </div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content fade-in" style="animation-delay: 0.6s;">
+                    <h3 style="font-size: 1.8rem; font-weight: 700; color: #667eea; margin-bottom: 0.5rem;">2025</h3>
+                    <h4 style="font-size: 1.3rem; font-weight: 600; color: #333; margin-bottom: 1rem;">National Expansion</h4>
+                    <p style="color: #6b7280; line-height: 1.7;">Now serving 50+ cities across the country with same-week delivery and installation.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+<!-- CTA Section -->
+<section style="padding: 5rem 2rem;">
+    <div class="max-w-4xl mx-auto">
+        <div class="cta-section fade-in">
+            <h2 style="font-size: 3rem; font-weight: 900; color: white; margin-bottom: 1.5rem;">
+                Ready to Transform Your Space?
+            </h2>
+            <p style="font-size: 1.2rem; color: white; opacity: 0.9; margin-bottom: 2rem;">
+                Explore our collection and find the perfect furniture for your home.
+            </p>
+            <a href="{% url 'product_list' %}" class="cta-btn">
+                <i class="fas fa-shopping-bag" style="margin-right: 0.5rem;"></i>
+                Shop Now
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Intersection Observer for fade-in animations
+document.addEventListener('DOMContentLoaded', function() {
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+    
+    document.querySelectorAll('.fade-in').forEach(element => {
+        element.style.opacity = '0';
+        element.style.transform = 'translateY(30px)';
+        element.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+        observer.observe(element);
+    });
+});
+</script>
+{% endblock %}

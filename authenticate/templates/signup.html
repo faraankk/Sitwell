@@ -4,26 +4,10 @@
 
 {% block title %}Create Account - Sitwell{% endblock %}
 
-{% block banner %}
-<!-- Small furniture banner instead of swim suits banner -->
-<div style="margin: 15px 20px; min-height: 80px; background: linear-gradient(135deg, #000 0%, #333 100%); border-radius: 8px; display: flex; justify-content: center; align-items: center; color: white; font-size: 18px; text-align: center; position: relative; overflow: hidden;">
-    <div style="white-space: nowrap; animation: scrollText 12s linear infinite; font-weight: bold;">
-        Up to 10% off Voucher - Discover Amazing Furniture Deals
-    </div>
-</div>
-
-<style>
-@keyframes scrollText {
-    0% { transform: translateX(100%); }
-    100% { transform: translateX(-100%); }
-}
-</style>
-{% endblock %}
-
-{% block content %}
+{% block extra_css %}
 <style>
     .signup-main {
-        max-width: 1200px;
+        max-width: 1400px; /* INCREASED from 1200px */
         margin: 0 auto;
         padding: 60px 20px;
     }
@@ -31,93 +15,116 @@
     .signup-container {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 60px;
+        gap: 60px; /* Reduced gap for better balance */
         align-items: center;
         min-height: 70vh;
     }
 
+    .sofa-image-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 100%; /* CHANGED from 550px */
+        justify-self: center;
+    }
+
     .sofa-image {
         width: 100%;
-        max-width: 600px;
-        height: 750px;
+        height: 850px; /* INCREASED to match card height */
         object-fit: cover;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        justify-self: center;
+        border-radius: 15px;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        transition: transform 0.3s ease;
+    }
+
+    .sofa-image:hover {
+        transform: scale(1.02);
     }
 
     .form-section {
-        max-width: 400px;
+        max-width: 550px; /* INCREASED from 450px */
+        width: 100%;
         justify-self: center;
+        background: white;
+        padding: 50px; /* Keep padding same */
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 2px solid #f0f0f0;
     }
 
     .form-section h2 {
-        font-size: 36px;
-        font-weight: 600;
-        margin-bottom: 8px;
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 10px;
         color: #333;
     }
 
-    .form-section p {
+    .form-section > p {
         color: #666;
-        margin-bottom: 40px;
-        font-size: 16px;
+        margin-bottom: 35px;
+        font-size: 15px;
     }
 
     .error {
-        background: #fee;
-        border: 1px solid #fcc;
-        border-radius: 4px;
+        background: #fee2e2;
+        border: 1px solid #fecaca;
+        border-radius: 10px;
         padding: 15px;
-        margin-bottom: 20px;
-        color: #c33;
+        margin-bottom: 25px;
+        color: #991b1b;
     }
 
     .error p {
         margin: 5px 0;
         font-size: 14px;
+        font-weight: 600;
     }
 
     .errorlist {
         list-style: none;
-        color: #db4444;
-        font-size: 14px;
-        margin-top: 5px;
+        color: #ef4444;
+        font-size: 13px;
+        margin-top: 8px;
+        padding-left: 0;
     }
 
     .errorlist li {
-        margin: 0;
+        margin: 5px 0;
+        font-weight: 600;
     }
 
     .form-field {
-        margin-bottom: 24px;
+        margin-bottom: 25px;
         position: relative;
     }
 
     .form-field label {
-        position: absolute;
-        top: -8px;
-        left: 0;
-        background: white;
-        padding: 0 5px;
-        font-size: 12px;
-        color: #666;
-        font-weight: 500;
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: #333;
+        font-weight: 700;
+    }
+
+    .form-field label i {
+        margin-right: 6px;
+        color: #667eea;
     }
 
     .form-field input {
         width: 100%;
-        padding: 15px;
-        border: none;
-        border-bottom: 2px solid #e0e0e0;
-        font-size: 16px;
-        transition: border-color 0.3s;
-        background: transparent;
+        padding: 14px 16px;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        font-size: 15px;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
     }
 
     .form-field input:focus {
         outline: none;
-        border-bottom-color: #db4444;
+        border-color: #667eea;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
     }
 
     .form-field input::placeholder {
@@ -125,34 +132,36 @@
     }
 
     .form-field input.error {
-        border-bottom-color: #db4444;
+        border-color: #ef4444;
     }
 
     .create-account {
         width: 100%;
-        background: #db4444;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border: none;
-        padding: 15px;
-        border-radius: 4px;
+        padding: 16px;
+        border-radius: 10px;
         font-size: 16px;
-        font-weight: 600;
+        font-weight: 700;
         cursor: pointer;
-        transition: background-color 0.3s;
-        margin-bottom: 20px;
+        transition: all 0.3s ease;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
 
     .create-account:hover {
-        background: #c13333;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
     }
 
     .social-login-section {
-        margin-bottom: 24px;
+        margin-bottom: 25px;
     }
 
     .or-divider {
         text-align: center;
-        margin: 25px 0;
+        margin: 30px 0;
         position: relative;
     }
     
@@ -163,14 +172,16 @@
         left: 0;
         right: 0;
         height: 1px;
-        background: #ddd;
+        background: #e9ecef;
     }
     
     .or-divider span {
         background: white;
         padding: 0 15px;
-        color: #666;
-        font-weight: 500;
+        color: #999;
+        font-weight: 700;
+        position: relative;
+        font-size: 14px;
     }
 
     .google-signup {
@@ -179,38 +190,42 @@
         justify-content: center;
         gap: 12px;
         width: 100%;
-        padding: 15px;
-        border: 1px solid #db4444;
-        border-radius: 4px;
+        padding: 14px;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
         text-decoration: none;
         transition: all 0.3s ease;
-        font-size: 16px;
-        font-weight: 500;
+        font-size: 15px;
+        font-weight: 700;
         color: #333;
         background: white;
-        margin-bottom: 20px;
     }
     
     .google-signup:hover {
-        background: #f8f8f8;
-        border-color: #c13333;
+        background: #f8f9fa;
+        border-color: #667eea;
         color: #333;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
     .social-icon {
-        font-size: 18px;
+        font-size: 20px;
         color: #4285f4;
     }
 
     .login-link {
         text-align: center;
         color: #666;
+        font-size: 15px;
+        padding-top: 20px;
+        border-top: 1px solid #e9ecef;
     }
 
     .login-link a {
-        color: #db4444;
+        color: #667eea;
         text-decoration: none;
-        font-weight: 500;
+        font-weight: 700;
     }
 
     .login-link a:hover {
@@ -223,8 +238,13 @@
             gap: 40px;
         }
 
-        .sofa-image {
+        .sofa-image-wrapper {
             order: 2;
+            max-width: 100%;
+        }
+
+        .sofa-image {
+            height: 500px;
         }
 
         .form-section {
@@ -238,12 +258,16 @@
             padding: 30px 15px;
         }
 
+        .form-section {
+            padding: 35px 25px;
+        }
+
         .signup-container {
             gap: 30px;
         }
 
         .form-section h2 {
-            font-size: 28px;
+            font-size: 26px;
         }
     }
 
@@ -252,29 +276,49 @@
             padding: 20px 10px;
         }
 
+        .form-section {
+            padding: 30px 20px;
+        }
+
         .form-section h2 {
             font-size: 24px;
         }
+
+        .sofa-image {
+            height: 400px;
+        }
+    }
+
+    /* Banner Animation */
+    @keyframes scrollText {
+        0% { transform: translateX(100%); }
+        100% { transform: translateX(-100%); }
     }
 </style>
+{% endblock %}
 
+
+
+{% block content %}
 <div class="signup-main">
     <div class="signup-container">
-        <img src="/media/sofa.webp" alt="Modern Furniture Collection" class="sofa-image" width="800" height="700">
+        <div class="sofa-image-wrapper">
+            <img src="/media/sofa.webp" alt="Modern Furniture Collection" class="sofa-image">
+        </div>
         
         <div class="form-section">
             <h2>Create an Account</h2>
-            <p>Enter your details below</p>
+            <p>Join Sitwell and start your furniture journey</p>
             
             {% if form.errors %}
                 <div class="error">
                     {% for field in form %}
                         {% for error in field.errors %}
-                            <p>{{ error }}</p>
+                            <p><i class="fas fa-exclamation-circle" style="margin-right: 6px;"></i>{{ error }}</p>
                         {% endfor %}
                     {% endfor %}
                     {% for error in form.non_field_errors %}
-                        <p>{{ error }}</p>
+                        <p><i class="fas fa-exclamation-circle" style="margin-right: 6px;"></i>{{ error }}</p>
                     {% endfor %}
                 </div>
             {% endif %}
@@ -283,7 +327,9 @@
                 {% csrf_token %}
                 
                 <div class="form-field">
-                    <label for="{{ form.first_name.id_for_label }}">First Name</label>
+                    <label for="{{ form.first_name.id_for_label }}">
+                        <i class="fas fa-user"></i>First Name
+                    </label>
                     {{ form.first_name }}
                     {% if form.first_name.errors %}
                         <ul class="errorlist">
@@ -295,7 +341,9 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="{{ form.last_name.id_for_label }}">Last Name</label>
+                    <label for="{{ form.last_name.id_for_label }}">
+                        <i class="fas fa-user"></i>Last Name
+                    </label>
                     {{ form.last_name }}
                     {% if form.last_name.errors %}
                         <ul class="errorlist">
@@ -307,7 +355,9 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="{{ form.email.id_for_label }}">Email</label>
+                    <label for="{{ form.email.id_for_label }}">
+                        <i class="fas fa-envelope"></i>Email Address
+                    </label>
                     {{ form.email }}
                     {% if form.email.errors %}
                         <ul class="errorlist">
@@ -319,7 +369,9 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="{{ form.phone_number.id_for_label }}">Phone Number</label>
+                    <label for="{{ form.phone_number.id_for_label }}">
+                        <i class="fas fa-phone"></i>Phone Number
+                    </label>
                     {{ form.phone_number }}
                     {% if form.phone_number.errors %}
                         <ul class="errorlist">
@@ -331,7 +383,9 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="{{ form.password1.id_for_label }}">Password</label>
+                    <label for="{{ form.password1.id_for_label }}">
+                        <i class="fas fa-lock"></i>Password
+                    </label>
                     {{ form.password1 }}
                     {% if form.password1.errors %}
                         <ul class="errorlist">
@@ -343,7 +397,9 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="{{ form.password2.id_for_label }}">Confirm Password</label>
+                    <label for="{{ form.password2.id_for_label }}">
+                        <i class="fas fa-lock"></i>Confirm Password
+                    </label>
                     {{ form.password2 }}
                     {% if form.password2.errors %}
                         <ul class="errorlist">
@@ -354,7 +410,9 @@
                     {% endif %}
                 </div>
 
-                <button type="submit" class="create-account">Create Account</button>
+                <button type="submit" class="create-account">
+                    <i class="fas fa-user-plus" style="margin-right: 8px;"></i>Create Account
+                </button>
             </form>
 
             <div class="social-login-section">
@@ -369,7 +427,7 @@
             </div>
 
             <p class="login-link">
-                Already have an account? <a href="{% url 'login' %}">Log in</a>
+                Already have an account? <a href="{% url 'login' %}">Log in now</a>
             </p>
         </div>
     </div>

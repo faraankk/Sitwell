@@ -4,121 +4,211 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Product - Admin Dashboard</title>
+    <title>Add Product - Sitwell Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .dashboard-bg {
+            background: linear-gradient(135deg, #f8f9ff 0%, #fff5f8 100%);
+        }
+        
+        .sidebar-gradient {
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .sidebar-item {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .sidebar-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: white;
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+        .sidebar-item:hover::before,
+        .sidebar-item.active::before {
+            transform: scaleY(1);
+        }
+        .sidebar-item.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
         .file-upload-area {
-            border: 2px dashed #d1d5db;
+            border: 3px dashed #d1d5db;
             transition: all 0.3s ease;
         }
         .file-upload-area:hover {
-            border-color: #3b82f6;
-            background-color: #f8fafc;
+            border-color: #667eea;
+            background: linear-gradient(135deg, #f8f9ff 0%, #fff5f8 100%);
         }
         .file-upload-area.dragover {
-            border-color: #3b82f6;
-            background-color: #eff6ff;
+            border-color: #667eea;
+            background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
+            transform: scale(1.02);
         }
+        
         .image-preview-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 1rem;
         }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
     </style>
 </head>
-<body class="bg-gray-50 font-sans">
-    <div class="flex min-h-screen">
-        <!-- Sidebar -->
-        <div class="w-64 bg-white shadow-sm border-r border-gray-200 hidden lg:block">
-            <!-- Logo -->
-            <div class="p-6 border-b border-gray-200">
-                <div class="border border-gray-300 px-3 py-2 rounded">
-                    <span class="text-sm font-medium text-gray-700">sit well</span>
+<body class="dashboard-bg min-h-screen">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Enhanced Sidebar -->
+        <aside class="w-72 sidebar-gradient shadow-2xl flex-shrink-0">
+            <div class="p-6 border-b border-white/20">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+                        <span class="text-2xl font-black" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">SW</span>
+                    </div>
+                    <div class="ml-3">
+                        <span class="text-xl font-black text-white">sitwell</span>
+                        <p class="text-xs text-white/70">Admin Portal</p>
+                    </div>
                 </div>
             </div>
             
-            <!-- Navigation -->
-            <nav class="mt-6">
-                <div class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">MENU</div>
-                <div class="space-y-1 px-4">
-                    <a href="{% url 'admin_dashboard' %}" class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">
-                        <i class="fas fa-th-large w-5 h-5 mr-3"></i> Dashboard
+            <nav class="mt-6 px-4 pb-6 overflow-y-auto" style="max-height: calc(100vh - 120px);">
+                <div class="text-xs font-bold text-white/50 uppercase tracking-wider mb-4 px-3">MAIN MENU</div>
+                
+                <div class="space-y-2">
+                    <a href="{% url 'admin_dashboard' %}" class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded-xl">
+                        <i class="fas fa-home w-5 text-center mr-3 text-lg"></i>
+                        <span>Dashboard</span>
                     </a>
-                    <a href="{% url 'product-list' %}" class="flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg">
-                        <i class="fas fa-box w-5 h-5 mr-3"></i> Products
+                    
+                    <a href="{% url 'product-list' %}" class="sidebar-item active flex items-center px-4 py-3 text-sm font-medium text-white rounded-xl">
+                        <i class="fas fa-box w-5 text-center mr-3 text-lg"></i>
+                        <span>Products</span>
                     </a>
-                    <a href="#" class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">
-                        <i class="fas fa-tags w-5 h-5 mr-3"></i> Category
+                    
+                    <a href="{% url 'category-list' %}" class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded-xl">
+                        <i class="fas fa-tags w-5 text-center mr-3 text-lg"></i>
+                        <span>Categories</span>
                     </a>
-                    <a href="{% url 'customer-list' %}" class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">
-                        <i class="fas fa-users w-5 h-5 mr-3"></i> Customers
+                    
+                    <a href="{% url 'user-management' %}" class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded-xl">
+                        <i class="fas fa-users-cog w-5 text-center mr-3 text-lg"></i>
+                        <span>User Management</span>
                     </a>
-                    <a href="{% url 'logout' %}" class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">
-                        <i class="fas fa-sign-out-alt w-5 h-5 mr-3"></i> Logout
+                    
+                    <a href="{% url 'customer-list' %}" class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded-xl">
+                        <i class="fas fa-users w-5 text-center mr-3 text-lg"></i>
+                        <span>Customers</span>
                     </a>
+                    
+                    <div class="mt-6 pt-6 border-t border-white/20">
+                        <form action="{% url 'admin_logout' %}" method="post" style="width: 100%;">
+                            {% csrf_token %}
+                            <button type="submit" class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded-xl w-full text-left border-none bg-transparent cursor-pointer">
+                                <i class="fas fa-sign-out-alt w-5 text-center mr-3 text-lg"></i>
+                                <span>Logout</span>
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </nav>
-        </div>
+        </aside>
 
         <!-- Main Content -->
-        <div class="flex-1">
-            <!-- Header -->
-            <header class="bg-white shadow-sm border-b border-gray-200 px-4 lg:px-6 py-4">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Enhanced Header -->
+            <header class="bg-white shadow-sm border-b border-gray-100 px-8 py-5 flex-shrink-0">
+                <div class="flex items-center justify-between">
                     <div>
-                        <h1 class="text-xl lg:text-2xl font-semibold text-gray-900">Add Product</h1>
-                        <nav class="text-sm text-gray-500 mt-1">
-                            <a href="{% url 'admin_dashboard' %}" class="hover:text-gray-700">Dashboard</a>
-                            <span class="mx-2">></span>
-                            <a href="{% url 'product-list' %}" class="hover:text-gray-700">Products</a>
-                            <span class="mx-2">></span>
-                            <span>Add Product</span>
+                        <h1 class="text-3xl font-black" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Add New Product</h1>
+                        <nav class="flex items-center space-x-2 text-sm text-gray-500 mt-2">
+                            <a href="{% url 'admin_dashboard' %}" class="text-purple-600 hover:text-purple-800 font-medium transition-colors">
+                                <i class="fas fa-home mr-1"></i>Dashboard
+                            </a>
+                            <i class="fas fa-chevron-right text-xs"></i>
+                            <a href="{% url 'product-list' %}" class="text-purple-600 hover:text-purple-800 font-medium transition-colors">Products</a>
+                            <i class="fas fa-chevron-right text-xs"></i>
+                            <span class="font-medium">Add Product</span>
                         </nav>
                     </div>
-                    <div class="flex items-center space-x-4">
-                        <span class="text-sm font-medium text-gray-700">Farhaan</span>
-                        <span class="text-xs text-gray-500">Admin</span>
+                    <div class="flex items-center space-x-3 bg-gradient-to-r from-blue-50 to-purple-50 px-4 py-2 rounded-xl">
+                        <div class="w-2 h-2 bg-green-500 rounded-full pulse"></div>
+                        <span class="text-sm font-bold text-gray-700">Farhaan</span>
+                        <span class="text-xs text-gray-500 font-medium">Admin</span>
                     </div>
                 </div>
             </header>
 
             <!-- Form Content -->
-            <main class="p-4 lg:p-6">
-                <!-- Display Messages -->
+            <main class="flex-1 overflow-auto p-8">
+                <!-- Messages -->
                 {% if messages %}
                     {% for message in messages %}
-                        <div class="mb-4 p-4 rounded-lg {% if message.tags == 'error' %}bg-red-50 text-red-800{% else %}bg-green-50 text-green-800{% endif %}">
-                            {{ message }}
+                        <div class="mb-6 p-4 rounded-xl fade-in {% if message.tags == 'error' %}bg-red-50 border-2 border-red-200 text-red-800{% else %}bg-green-50 border-2 border-green-200 text-green-800{% endif %}">
+                            <div class="flex items-center">
+                                <i class="fas {% if message.tags == 'error' %}fa-times-circle{% else %}fa-check-circle{% endif %} text-2xl mr-3"></i>
+                                <span class="font-semibold">{{ message }}</span>
+                            </div>
                         </div>
                     {% endfor %}
                 {% endif %}
 
-                <form method="POST" enctype="multipart/form-data" class="max-w-6xl mx-auto" id="product-form">
+                <form method="POST" enctype="multipart/form-data" class="max-w-7xl mx-auto" id="product-form">
                     {% csrf_token %}
                     
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <!-- Main Product Information -->
-                        <div class="lg:col-span-2 space-y-6">
+                        <div class="lg:col-span-2 space-y-8">
                             <!-- General Information -->
-                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
-                                <h2 class="text-lg font-semibold text-gray-900 mb-4">General Information</h2>
+                            <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-8 fade-in">
+                                <div class="flex items-center mb-6">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-4">
+                                        <i class="fas fa-info-circle text-white text-xl"></i>
+                                    </div>
+                                    <h2 class="text-2xl font-black text-gray-900">General Information</h2>
+                                </div>
                                 
-                                <div class="space-y-4">
+                                <div class="space-y-5">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Product Name *</label>
-                                        <input type="text" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Type product name here..." required>
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Product Name *</label>
+                                        <input type="text" name="name" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all" placeholder="Type product name here..." required>
                                     </div>
                                     
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">SKU *</label>
-                                        <input type="text" name="sku" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Product SKU..." required>
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">SKU *</label>
+                                        <input type="text" name="sku" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all" placeholder="Product SKU..." required>
                                     </div>
                                     
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Category *</label>
-                                            <select name="category" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                            <label class="block text-sm font-bold text-gray-700 mb-2">Category *</label>
+                                            <select name="category" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all" required>
                                                 <option value="">Select category</option>
                                                 <option value="sofa">Sofa</option>
                                                 <option value="chair">Chair</option>
@@ -129,75 +219,94 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Brand</label>
-                                            <input type="text" name="brand" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Product brand...">
+                                            <label class="block text-sm font-bold text-gray-700 mb-2">Brand</label>
+                                            <input type="text" name="brand" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all" placeholder="Product brand...">
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Description -->
-                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
-                                <h2 class="text-lg font-semibold text-gray-900 mb-4">Description</h2>
+                            <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-8 fade-in" style="animation-delay: 0.1s;">
+                                <div class="flex items-center mb-6">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mr-4">
+                                        <i class="fas fa-align-left text-white text-xl"></i>
+                                    </div>
+                                    <h2 class="text-2xl font-black text-gray-900">Description</h2>
+                                </div>
                                 
-                                <div class="space-y-4">
+                                <div class="space-y-5">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Short Description</label>
-                                        <textarea name="short_description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Brief product description..."></textarea>
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Short Description</label>
+                                        <textarea name="short_description" rows="3" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all" placeholder="Brief product description..."></textarea>
                                     </div>
                                     
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Detailed Description</label>
-                                        <textarea name="detailed_description" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Detailed product description, features, specifications..."></textarea>
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Detailed Description</label>
+                                        <textarea name="detailed_description" rows="6" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all" placeholder="Detailed product description, features, specifications..."></textarea>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- FIXED: Multiple Images Upload Section -->
-                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
-                                <h2 class="text-lg font-semibold text-gray-900 mb-4">Product Images</h2>
-                                <p class="text-sm text-gray-600 mb-4">Upload 3-6 high-quality images (JPG, PNG, GIF, WebP - Max 5MB each)</p>
-                                
-                                <!-- Simplified File Upload Area -->
-                                <div class="file-upload-area rounded-lg p-8 text-center cursor-pointer mb-4" id="upload-area">
-                                    <div class="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-4">
-                                        <i class="fas fa-cloud-upload-alt text-2xl"></i>
+                            <!-- Product Images -->
+                            <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-8 fade-in" style="animation-delay: 0.2s;">
+                                <div class="flex items-center mb-6">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-4">
+                                        <i class="fas fa-images text-white text-xl"></i>
                                     </div>
-                                    <p class="text-lg font-medium text-gray-700 mb-2">Drag and drop images here, or click to select</p>
-                                    <p class="text-sm text-gray-500 mb-4">Minimum 3 images required, Maximum 6 images</p>
-                                    <button type="button" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" onclick="document.getElementById('images-input').click()">
-                                        Select Images
+                                    <div>
+                                        <h2 class="text-2xl font-black text-gray-900">Product Images</h2>
+                                        <p class="text-sm text-gray-500 mt-1">Upload 3-6 high-quality images (JPG, PNG, GIF, WebP - Max 5MB each)</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- File Upload Area -->
+                                <div class="file-upload-area rounded-2xl p-10 text-center cursor-pointer mb-6" id="upload-area">
+                                    <div class="mx-auto w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg">
+                                        <i class="fas fa-cloud-upload-alt text-3xl"></i>
+                                    </div>
+                                    <p class="text-xl font-bold text-gray-700 mb-2">Drag and drop images here</p>
+                                    <p class="text-sm text-gray-500 mb-4">or click to browse from your device</p>
+                                    <button type="button" class="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:shadow-lg transition-all" onclick="document.getElementById('images-input').click()">
+                                        <i class="fas fa-folder-open mr-2"></i>Select Images
                                     </button>
-                                    <!-- FIXED: Removed class="hidden" and made it visible for better debugging -->
                                     <input type="file" id="images-input" name="images" accept="image/*" multiple style="position: absolute; left: -9999px; opacity: 0;">
                                 </div>
                                 
-                                <!-- Image Preview Area -->
+                                <!-- Image Preview -->
                                 <div id="image-preview-container" class="hidden">
-                                    <h3 class="text-md font-medium text-gray-700 mb-3">Selected Images (<span id="image-count">0</span>/6)</h3>
+                                    <div class="flex items-center justify-between mb-4">
+                                        <h3 class="text-lg font-bold text-gray-700">Selected Images (<span id="image-count">0</span>/6)</h3>
+                                        <span class="text-sm text-gray-500">Click image to remove</span>
+                                    </div>
                                     <div id="image-preview-grid" class="image-preview-grid"></div>
                                 </div>
                                 
                                 <!-- Validation Message -->
-                                <div id="validation-message" class="hidden mt-3 text-sm"></div>
+                                <div id="validation-message" class="hidden mt-4 text-sm font-semibold"></div>
                             </div>
                         </div>
 
                         <!-- Sidebar Forms -->
-                        <div class="space-y-6">
+                        <div class="space-y-8">
                             <!-- Pricing -->
-                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
-                                <h2 class="text-lg font-semibold text-gray-900 mb-4">Pricing</h2>
+                            <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 fade-in" style="animation-delay: 0.1s;">
+                                <div class="flex items-center mb-5">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center mr-3">
+                                        <i class="fas fa-dollar-sign text-white text-lg"></i>
+                                    </div>
+                                    <h2 class="text-xl font-black text-gray-900">Pricing</h2>
+                                </div>
                                 
                                 <div class="space-y-4">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Base Price (₹) *</label>
-                                        <input type="number" step="0.01" name="price" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Type base price here..." required>
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Base Price (₹) *</label>
+                                        <input type="number" step="0.01" name="price" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all" placeholder="0.00" required>
                                     </div>
                                     
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Discount Type</label>
-                                        <select name="discount_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Discount Type</label>
+                                        <select name="discount_type" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all">
                                             <option value="none">No Discount</option>
                                             <option value="percentage">Percentage</option>
                                             <option value="fixed">Fixed Amount</option>
@@ -205,36 +314,46 @@
                                     </div>
                                     
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Discount Value</label>
-                                        <input type="number" step="0.01" name="discount_value" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter discount value..." value="0">
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Discount Value</label>
+                                        <input type="number" step="0.01" name="discount_value" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all" placeholder="0.00" value="0">
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Inventory -->
-                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
-                                <h2 class="text-lg font-semibold text-gray-900 mb-4">Inventory</h2>
+                            <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 fade-in" style="animation-delay: 0.2s;">
+                                <div class="flex items-center mb-5">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center mr-3">
+                                        <i class="fas fa-warehouse text-white text-lg"></i>
+                                    </div>
+                                    <h2 class="text-xl font-black text-gray-900">Inventory</h2>
+                                </div>
                                 
                                 <div class="space-y-4">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Stock Quantity *</label>
-                                        <input type="number" name="stock_quantity" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Stock quantity..." required>
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Stock Quantity *</label>
+                                        <input type="number" name="stock_quantity" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all" placeholder="0" required>
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Low Stock Threshold</label>
-                                        <input type="number" name="low_stock_threshold" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Low stock threshold..." value="5">
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Low Stock Threshold</label>
+                                        <input type="number" name="low_stock_threshold" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all" placeholder="5" value="5">
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Product Status -->
-                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
-                                <h2 class="text-lg font-semibold text-gray-900 mb-4">Product Status</h2>
+                            <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 fade-in" style="animation-delay: 0.3s;">
+                                <div class="flex items-center mb-5">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-teal-600 rounded-xl flex items-center justify-center mr-3">
+                                        <i class="fas fa-toggle-on text-white text-lg"></i>
+                                    </div>
+                                    <h2 class="text-xl font-black text-gray-900">Status</h2>
+                                </div>
                                 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Status *</label>
-                                    <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                    <label class="block text-sm font-bold text-gray-700 mb-2">Product Status *</label>
+                                    <select name="status" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all" required>
                                         <option value="draft">Draft</option>
                                         <option value="published" selected>Published</option>
                                         <option value="out-of-stock">Out of Stock</option>
@@ -246,13 +365,13 @@
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="mt-8 flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0 sm:space-x-4">
-                        <a href="{% url 'product-list' %}" class="w-full sm:w-auto px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-center font-medium">
-                            <i class="fas fa-times mr-2"></i> Cancel
+                    <div class="mt-10 flex justify-between items-center fade-in" style="animation-delay: 0.4s;">
+                        <a href="{% url 'product-list' %}" class="px-8 py-4 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-bold">
+                            <i class="fas fa-times mr-2"></i>Cancel
                         </a>
                         
-                        <button type="submit" id="submit-btn" disabled class="w-full sm:w-auto px-6 py-3 bg-gray-400 text-white rounded-lg cursor-not-allowed font-medium">
-                            <i class="fas fa-plus mr-2"></i> Add Product
+                        <button type="submit" id="submit-btn" disabled class="px-10 py-4 bg-gray-400 text-white rounded-xl cursor-not-allowed font-bold text-lg">
+                            <i class="fas fa-plus-circle mr-2"></i>Add Product
                         </button>
                     </div>
                 </form>
@@ -260,7 +379,7 @@
         </div>
     </div>
 
-    <!-- FIXED: Completely Rewritten JavaScript -->
+    <!-- JavaScript (Same as before, kept intact) -->
     <script>
         const minFiles = 3;
         const maxFiles = 6;
@@ -274,13 +393,11 @@
         const submitBtn = document.getElementById('submit-btn');
         const validationMessage = document.getElementById('validation-message');
 
-        // File input change handler
         imagesInput.addEventListener('change', function(e) {
             console.log('File input changed, files count:', e.target.files.length);
             handleFiles(e.target.files);
         });
 
-        // Drag and drop handlers
         uploadArea.addEventListener('click', () => {
             console.log('Upload area clicked');
             imagesInput.click();
@@ -306,10 +423,8 @@
             const fileArray = Array.from(files);
             console.log('Handling files:', fileArray.length);
             
-            // Reset previous state
             selectedFiles = [];
             
-            // Validate file count
             if (fileArray.length < minFiles) {
                 showValidationMessage(`Please select at least ${minFiles} images.`, 'error');
                 updateSubmitButton(false);
@@ -324,9 +439,8 @@
                 return;
             }
 
-            // Validate file types and sizes
             const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-            const maxSize = 5 * 1024 * 1024; // 5MB
+            const maxSize = 5 * 1024 * 1024;
             
             for (let file of fileArray) {
                 if (!validTypes.includes(file.type)) {
@@ -343,29 +457,18 @@
                 }
             }
 
-            // All validations passed
             selectedFiles = fileArray;
             updateFileInput();
             displayPreviews();
             updateSubmitButton(true);
-            showValidationMessage(`${fileArray.length} images selected successfully!`, 'success');
+            showValidationMessage(`✅ ${fileArray.length} images selected successfully!`, 'success');
         }
 
         function updateFileInput() {
-            // Create new DataTransfer object
             const dt = new DataTransfer();
-            
-            // Add each file to DataTransfer
-            selectedFiles.forEach(file => {
-                dt.items.add(file);
-            });
-            
-            // Update the input's files
+            selectedFiles.forEach(file => dt.items.add(file));
             imagesInput.files = dt.files;
-            
-            // Debug logging
             console.log('Updated input files count:', imagesInput.files.length);
-            console.log('Selected files array count:', selectedFiles.length);
         }
 
         function displayPreviews() {
@@ -376,18 +479,18 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const div = document.createElement('div');
-                    div.className = 'relative group bg-gray-100 rounded-lg overflow-hidden';
+                    div.className = 'relative group bg-gray-100 rounded-xl overflow-hidden border-2 border-gray-200 hover:border-purple-500 transition-all';
                     div.innerHTML = `
-                        <img src="${e.target.result}" class="w-full h-32 object-cover" alt="Preview ${index + 1}">
-                        <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <button type="button" onclick="removeImage(${index})" class="bg-red-600 text-white p-2 rounded-full hover:bg-red-700">
-                                <i class="fas fa-trash text-sm"></i>
+                        <img src="${e.target.result}" class="w-full h-40 object-cover" alt="Preview ${index + 1}">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <button type="button" onclick="removeImage(${index})" class="bg-red-600 text-white px-4 py-2 rounded-xl hover:bg-red-700 font-bold">
+                                <i class="fas fa-trash mr-2"></i>Remove
                             </button>
                         </div>
-                        <div class="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">
-                            ${index + 1}
+                        <div class="absolute top-2 left-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs px-3 py-1 rounded-full font-bold">
+                            #${index + 1}
                         </div>
-                        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white text-xs p-1 truncate">
+                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent text-white text-xs p-2 truncate font-medium">
                             ${file.name}
                         </div>
                     `;
@@ -413,16 +516,15 @@
             if (selectedFiles.length === 0) {
                 hidePreview();
                 updateSubmitButton(false);
+                showValidationMessage('No images selected.', 'error');
             } else {
                 displayPreviews();
-                updateSubmitButton(selectedFiles.length >= minFiles && selectedFiles.length <= maxFiles);
-            }
-            
-            // Update validation message
-            if (selectedFiles.length < minFiles && selectedFiles.length > 0) {
-                showValidationMessage(`Please select at least ${minFiles} images. You have ${selectedFiles.length}.`, 'error');
-            } else if (selectedFiles.length === 0) {
-                showValidationMessage('No images selected.', 'error');
+                if (selectedFiles.length < minFiles) {
+                    updateSubmitButton(false);
+                    showValidationMessage(`Please select at least ${minFiles} images. You have ${selectedFiles.length}.`, 'error');
+                } else {
+                    updateSubmitButton(true);
+                }
             }
         }
 
@@ -431,49 +533,37 @@
             
             if (enable) {
                 submitBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-                submitBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                submitBtn.classList.add('bg-gradient-to-r', 'from-blue-600', 'to-purple-600', 'hover:shadow-2xl');
             } else {
                 submitBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
-                submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                submitBtn.classList.remove('bg-gradient-to-r', 'from-blue-600', 'to-purple-600', 'hover:shadow-2xl');
             }
         }
 
         function showValidationMessage(message, type) {
-            validationMessage.className = `mt-3 text-sm ${type === 'error' ? 'text-red-600' : 'text-green-600'}`;
+            validationMessage.className = `mt-4 px-5 py-3 rounded-xl text-sm font-bold ${type === 'error' ? 'bg-red-100 text-red-800 border-2 border-red-300' : 'bg-green-100 text-green-800 border-2 border-green-300'}`;
             validationMessage.textContent = message;
             validationMessage.classList.remove('hidden');
             
             if (type === 'success') {
-                setTimeout(() => {
-                    validationMessage.classList.add('hidden');
-                }, 3000);
+                setTimeout(() => validationMessage.classList.add('hidden'), 3000);
             }
         }
 
-        // Enhanced form submission validation
         document.getElementById('product-form').addEventListener('submit', function(e) {
             console.log('=== FORM SUBMISSION ===');
-            console.log('Selected files array:', selectedFiles.length);
+            console.log('Selected files:', selectedFiles.length);
             console.log('Input files:', imagesInput.files.length);
             
-            // Check both arrays for safety
             if (selectedFiles.length < minFiles || imagesInput.files.length < minFiles) {
                 e.preventDefault();
-                showValidationMessage(`Please upload at least ${minFiles} images before submitting.`, 'error');
-                console.log('Form submission prevented - insufficient images');
+                showValidationMessage(`⚠️ Please upload at least ${minFiles} images before submitting.`, 'error');
                 return false;
-            }
-            
-            // Log files being submitted for debugging
-            console.log('Submitting form with files:');
-            for (let i = 0; i < imagesInput.files.length; i++) {
-                console.log(`- ${imagesInput.files[i].name} (${imagesInput.files[i].size} bytes)`);
             }
             
             console.log('Form submission allowed');
         });
 
-        // Initialize submit button state
         updateSubmitButton(false);
     </script>
 </body>

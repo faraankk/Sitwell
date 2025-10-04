@@ -1,22 +1,330 @@
 {% extends 'base.html' %}
 {% load static %}
 
+
 {% block title %}Order Successful - Sitwell{% endblock %}
 
+
+{% block extra_css %}
+<style>
+    .success-container {
+        max-width: 700px;
+        margin: 50px auto;
+        padding: 40px 20px;
+    }
+
+    .success-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        padding: 50px 40px;
+        text-align: center;
+    }
+
+    .success-icon {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 30px;
+        animation: scaleIn 0.5s ease-out;
+    }
+
+    .success-icon i {
+        font-size: 50px;
+        color: white;
+    }
+
+    @keyframes scaleIn {
+        from {
+            transform: scale(0);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .success-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #28a745;
+        margin-bottom: 15px;
+        animation: fadeInUp 0.6s ease-out 0.2s both;
+    }
+
+    .success-subtitle {
+        font-size: 18px;
+        color: #6c757d;
+        margin-bottom: 30px;
+        animation: fadeInUp 0.6s ease-out 0.3s both;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .order-number-box {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 25px;
+        border-radius: 12px;
+        margin: 30px 0;
+        animation: fadeInUp 0.6s ease-out 0.4s both;
+    }
+
+    .order-label {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.9);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+    }
+
+    .order-number {
+        font-size: 28px;
+        font-weight: 700;
+        color: white;
+        font-family: 'Courier New', monospace;
+        letter-spacing: 2px;
+    }
+
+    .info-text {
+        font-size: 15px;
+        color: #495057;
+        line-height: 1.8;
+        margin: 25px 0;
+        animation: fadeInUp 0.6s ease-out 0.5s both;
+    }
+
+    .info-box {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 25px 0;
+        border-left: 4px solid #28a745;
+        animation: fadeInUp 0.6s ease-out 0.6s both;
+    }
+
+    .info-box i {
+        color: #28a745;
+        margin-right: 10px;
+        font-size: 18px;
+    }
+
+    .info-box p {
+        margin: 0;
+        color: #495057;
+        font-size: 14px;
+        text-align: left;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 35px;
+        flex-wrap: wrap;
+        animation: fadeInUp 0.6s ease-out 0.7s both;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        padding: 14px 30px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 15px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        color: white;
+    }
+
+    .btn-outline-secondary {
+        border: 2px solid #6c757d;
+        color: #6c757d;
+        background: transparent;
+        padding: 12px 28px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 15px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-outline-secondary:hover {
+        background: #6c757d;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(108, 117, 125, 0.3);
+    }
+
+    .order-details-preview {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 25px 0;
+        text-align: left;
+        animation: fadeInUp 0.6s ease-out 0.8s both;
+    }
+
+    .preview-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .preview-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        font-size: 14px;
+    }
+
+    .preview-label {
+        color: #6c757d;
+    }
+
+    .preview-value {
+        color: #333;
+        font-weight: 500;
+    }
+
+    .divider {
+        height: 1px;
+        background: linear-gradient(to right, transparent, #dee2e6, transparent);
+        margin: 30px 0;
+    }
+
+    @media (max-width: 768px) {
+        .success-card {
+            padding: 40px 20px;
+        }
+
+        .success-title {
+            font-size: 26px;
+        }
+
+        .order-number {
+            font-size: 22px;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn-primary,
+        .btn-outline-secondary {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+
+{% block banner %}{% endblock %}
+
+
 {% block content %}
-<div class="container text-center py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-6 col-md-8">
-            <img src="{% static 'images/order_placed_illustration.png' %}" alt="Order Successful" style="max-width: 280px; margin-bottom: 2rem;">
-            <h1 class="h2" style="color: #28a745;">Thank You For Your Order!</h1>
-            <p class="lead text-muted">Your order has been placed successfully.</p>
-            <p class="mt-4">Your Order ID is: <br><strong class="h5">{{ order.order_number }}</strong></p>
-            <p>An email confirmation has been sent to you. You can view your order details and track its status in your account.</p>
-            <div class="mt-4 d-flex justify-content-center gap-3">
-                <a href="{% url 'order_detail' order.order_number %}" class="btn btn-primary">View Order Details</a>
-                <a href="{% url 'product_list' %}" class="btn btn-outline-secondary">Continue Shopping</a>
+<div class="success-container">
+    <div class="success-card">
+        <!-- Success Icon -->
+        <div class="success-icon">
+            <i class="fas fa-check"></i>
+        </div>
+
+        <!-- Success Title -->
+        <h1 class="success-title">Thank You For Your Order!</h1>
+        <p class="success-subtitle">Your order has been placed successfully.</p>
+
+        <!-- Order Number Box -->
+        <div class="order-number-box">
+            <div class="order-label">Your Order ID</div>
+            <div class="order-number">{{ order.order_number }}</div>
+        </div>
+
+        <!-- Info Text -->
+        <div class="info-text">
+            <p>
+                <i class="fas fa-envelope" style="color: #667eea; margin-right: 8px;"></i>
+                An email confirmation has been sent to <strong>{{ order.user.email }}</strong>
+            </p>
+        </div>
+
+        <!-- Order Preview -->
+        <div class="order-details-preview">
+            <div class="preview-title">
+                <i class="fas fa-receipt" style="margin-right: 8px; color: #667eea;"></i>Order Summary
+            </div>
+            <div class="preview-item">
+                <span class="preview-label">Total Amount:</span>
+                <span class="preview-value">₹{{ order.total_amount|floatformat:2 }}</span>
+            </div>
+            <div class="preview-item">
+                <span class="preview-label">Payment Status:</span>
+                <span class="preview-value">{{ order.get_payment_status_display }}</span>
+            </div>
+            <div class="preview-item">
+                <span class="preview-label">Items:</span>
+                <span class="preview-value">{{ order.items.count }} item{{ order.items.count|pluralize }}</span>
+            </div>
+            <div class="preview-item">
+                <span class="preview-label">Order Date:</span>
+                <span class="preview-value">{{ order.created_at|date:"F d, Y g:i A" }}</span>
             </div>
         </div>
+
+        <!-- Info Box -->
+        <div class="info-box">
+            <p>
+                <i class="fas fa-info-circle"></i>
+                You can view your order details and track its status in your account under "My Orders".
+            </p>
+        </div>
+
+        <!-- Divider -->
+        <div class="divider"></div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="{% url 'order_detail' order.order_number %}" class="btn-primary">
+                <i class="fas fa-eye"></i>View Order Details
+            </a>
+            <a href="{% url 'product_list' %}" class="btn-outline-secondary">
+                <i class="fas fa-shopping-bag"></i>Continue Shopping
+            </a>
+        </div>
+
+        <!-- Additional Info -->
+        <p style="margin-top: 30px; font-size: 13px; color: #999;">
+            Need help? <a href="#" style="color: #667eea; text-decoration: none;">Contact Support</a>
+        </p>
     </div>
 </div>
 {% endblock %}

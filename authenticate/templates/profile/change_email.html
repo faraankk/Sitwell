@@ -1,213 +1,423 @@
-{% extends 'authenticated_base.html' %}
+{% extends 'left_navbar.html' %}
 {% load static %}
+
 
 {% block title %}Change Email - Sitwell{% endblock %}
 
+
 {% block show_navbar_toggle %}show{% endblock %}
+
 
 {% block extra_css %}
 <style>
     .content-card {
         background: white;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        padding: 40px;
         margin-bottom: 20px;
-        max-width: 600px;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Beautiful Breadcrumbs */
+    .breadcrumb {
+        background: white;
+        padding: 15px 20px;
+        margin-bottom: 25px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        list-style: none;
+        max-width: 700px;
         margin-left: auto;
         margin-right: auto;
     }
     
+    .breadcrumb-item {
+        display: flex;
+        align-items: center;
+        color: #666;
+        font-size: 14px;
+    }
+
+    .breadcrumb-item a {
+        color: #666;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .breadcrumb-item a:hover {
+        color: #667eea;
+    }
+    
+    .breadcrumb-item.active {
+        color: #667eea;
+        font-weight: 600;
+    }
+    
+    .breadcrumb-item::after {
+        content: '/';
+        margin: 0 10px;
+        color: #ddd;
+    }
+    
+    .breadcrumb-item:last-child::after {
+        content: '';
+        margin: 0;
+    }
+
+    .breadcrumb-item i {
+        margin-right: 6px;
+    }
+
+    /* Email Header */
+    .email-header {
+        text-align: center;
+        margin-bottom: 35px;
+        padding-bottom: 25px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    .email-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .email-icon i {
+        font-size: 2.5rem;
+        color: white;
+    }
+
+    .email-header h4 {
+        color: #333;
+        margin: 0 0 10px;
+        font-size: 26px;
+        font-weight: 700;
+    }
+
+    .email-header p {
+        color: #666;
+        margin: 0;
+        font-size: 15px;
+    }
+    
+    .alert-info {
+        background: linear-gradient(135deg, #e3f2fd 0%, #e8eaf6 100%);
+        border-left: 4px solid #2196f3;
+        padding: 16px 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .alert-info i {
+        color: #1976d2;
+        font-size: 20px;
+        margin-top: 2px;
+    }
+
+    .alert-info p {
+        margin: 0;
+        color: #1565c0;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    
     .form-group {
-        margin-bottom: 20px;
+        margin-bottom: 25px;
     }
     
     .form-group label {
-        font-weight: 500;
-        color: #555;
-        margin-bottom: 8px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 10px;
         display: block;
+        font-size: 14px;
     }
     
     .form-control {
         width: 100%;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 12px 15px;
-        font-size: 0.95rem;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 14px 16px;
+        font-size: 15px;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
     }
     
     .form-control:focus {
-        border-color: #db4444;
+        border-color: #667eea;
         outline: none;
-        box-shadow: 0 0 0 0.2rem rgba(219, 68, 68, 0.25);
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        background: white;
+    }
+
+    .form-control:hover {
+        border-color: #d4d8dd;
     }
     
     .form-control:disabled {
         background-color: #f8f9fa;
         color: #6c757d;
+        cursor: not-allowed;
+    }
+
+    small.form-hint {
+        display: block;
+        color: #6c757d;
+        font-size: 13px;
+        margin-top: 6px;
+        font-style: italic;
     }
     
     .btn-primary {
-        background-color: #db4444;
-        border-color: #db4444;
-        color: white;
-        padding: 12px 30px;
-        border-radius: 8px;
-        font-weight: 500;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: none;
+        color: white;
+        padding: 14px 36px;
+        border-radius: 10px;
+        font-weight: 600;
         cursor: pointer;
         font-size: 16px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
     
     .btn-primary:hover {
-        background-color: #c13333;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-primary:active {
+        transform: translateY(0);
     }
     
     .btn-cancel {
         background-color: transparent;
-        border: 1px solid #6c757d;
+        border: 2px solid #6c757d;
         color: #6c757d;
-        padding: 12px 30px;
-        border-radius: 8px;
+        padding: 12px 34px;
+        border-radius: 10px;
         margin-right: 15px;
         text-decoration: none;
         display: inline-block;
         font-size: 16px;
+        font-weight: 600;
+        transition: all 0.3s ease;
     }
     
     .btn-cancel:hover {
         background-color: #6c757d;
         color: white;
-    }
-    
-    .alert-info {
-        background-color: #d1ecf1;
-        border: 1px solid #bee5eb;
-        color: #0c5460;
-        padding: 12px 16px;
-        border-radius: 8px;
-        margin-bottom: 20px;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
     }
     
     .error {
         color: #dc3545;
+        font-size: 13px;
+        margin-top: 8px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .error::before {
+        content: '⚠';
         font-size: 14px;
-        margin-top: 5px;
-    }
-    
-    .breadcrumb {
-        background: none;
-        padding: 0;
-        margin: 20px 0;
-    }
-    
-    .breadcrumb-item {
-        color: #666;
-    }
-    
-    .breadcrumb-item a {
-        color: #333;
-        text-decoration: none;
-    }
-    
-    .breadcrumb-item.active {
-        color: #db4444;
-    }
-
-    /* Email icon */
-    .email-icon {
-        text-align: center;
-        margin-bottom: 20px;
-    }
-
-    .email-icon i {
-        font-size: 4rem;
-        color: #db4444;
-        margin-bottom: 10px;
     }
 
     /* Current email display */
     .current-email-display {
-        background: #f8f9fa;
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        padding: 12px 15px;
-        color: #6c757d;
-        font-size: 0.95rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 14px 16px;
+        color: #495057;
+        font-size: 15px;
         display: flex;
         align-items: center;
+        font-weight: 500;
     }
 
     .current-email-display i {
-        margin-right: 8px;
-        color: #6c757d;
+        margin-right: 10px;
+        color: #667eea;
+        font-size: 18px;
     }
 
     /* Email validation */
     .email-valid {
         border-color: #28a745 !important;
+        background-color: #f0fff4 !important;
     }
 
     .email-invalid {
         border-color: #dc3545 !important;
+        background-color: #fff5f5 !important;
     }
 
     .validation-message {
-        font-size: 12px;
-        margin-top: 5px;
+        font-size: 13px;
+        margin-top: 8px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
 
     .validation-message.valid {
         color: #28a745;
     }
 
+    .validation-message.valid::before {
+        content: '✓';
+        font-weight: bold;
+    }
+
     .validation-message.invalid {
         color: #dc3545;
+    }
+
+    .validation-message.invalid::before {
+        content: '✗';
+        font-weight: bold;
+    }
+
+    /* Security Notice */
+    .security-notice {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffe9a6 100%);
+        border-left: 4px solid #ffc107;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 25px 0;
+    }
+
+    .security-notice-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 12px;
+        gap: 10px;
+    }
+
+    .security-notice-header i {
+        color: #856404;
+        font-size: 20px;
+    }
+
+    .security-notice-header strong {
+        color: #856404;
+        font-size: 16px;
+    }
+
+    .security-notice ul {
+        margin: 0;
+        padding-left: 30px;
+        color: #856404;
+    }
+
+    .security-notice li {
+        margin-bottom: 8px;
+        line-height: 1.5;
+        font-size: 14px;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 35px;
+        padding-top: 25px;
+        border-top: 2px solid #f0f0f0;
     }
     
     @media (max-width: 768px) {
         .content-card {
-            padding: 20px 15px;
+            padding: 25px 20px;
+        }
+
+        .email-header h4 {
+            font-size: 22px;
+        }
+
+        .form-actions {
+            flex-direction: column-reverse;
+        }
+
+        .btn-cancel,
+        .btn-primary {
+            width: 100%;
+            margin: 0;
+            margin-bottom: 10px;
         }
     }
 </style>
 {% endblock %}
 
+
 {% block banner %}
 <!-- Remove banner for profile pages -->
 {% endblock %}
 
+
 {% block content %}
-<!-- Breadcrumb -->
+<!-- Beautiful Breadcrumb -->
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'dummy_home' %}">Home</a></li>
-        <li class="breadcrumb-item"><a href="/profile/">My Account</a></li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'dummy_home' %}">
+                <i class="fas fa-home"></i>Home
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'user_profile' %}">
+                <i class="fas fa-user"></i>My Account
+            </a>
+        </li>
         <li class="breadcrumb-item active" aria-current="page">Change Email</li>
     </ol>
 </nav>
 
+
 {% if user.first_name %}
-    <p style="text-align: right; color: #666; margin-bottom: 30px;">
-        Welcome! <span style="color: #db4444; font-weight: 500;">{{ user.first_name }}</span>
+    <p style="text-align: right; color: #666; margin-bottom: 30px; max-width: 700px; margin-left: auto; margin-right: auto;">
+        Welcome! <span style="color: #667eea; font-weight: 600;">{{ user.first_name }}</span>
     </p>
 {% endif %}
 
+
 <!-- Main Content -->
 <div class="content-card">
-    <div class="email-icon">
-        <i class="fas fa-envelope"></i>
-        <h4 style="color: #db4444; margin: 0;">Change Email Address</h4>
-        <p style="color: #666; margin-top: 10px;">Update your account email address</p>
+    <!-- Header -->
+    <div class="email-header">
+        <div class="email-icon">
+            <i class="fas fa-envelope"></i>
+        </div>
+        <h4>Change Email Address</h4>
+        <p>Update the email address associated with your account</p>
     </div>
     
+    <!-- Info Alert -->
     <div class="alert-info">
-        <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
-        A verification email will be sent to your new email address before the change takes effect.
+        <i class="fas fa-info-circle"></i>
+        <p>A verification email will be sent to your new email address. You must verify it before the change takes effect.</p>
     </div>
     
-    <form method="post">
+    <form method="post" id="emailChangeForm">
         {% csrf_token %}
         
         <div class="form-group">
@@ -219,7 +429,7 @@
         </div>
         
         <div class="form-group">
-            <label for="{{ form.new_email.id_for_label }}">New Email Address</label>
+            <label for="{{ form.new_email.id_for_label }}">New Email Address <span style="color: #dc3545;">*</span></label>
             {{ form.new_email }}
             <div id="email-validation" class="validation-message"></div>
             {% if form.new_email.errors %}
@@ -228,41 +438,46 @@
         </div>
         
         <div class="form-group">
-            <label for="{{ form.password.id_for_label }}">Current Password</label>
+            <label for="{{ form.password.id_for_label }}">Current Password <span style="color: #dc3545;">*</span></label>
             {{ form.password }}
-            <small style="color: #666; font-size: 12px;">Enter your current password to confirm this change</small>
+            <small class="form-hint">
+                <i class="fas fa-lock" style="margin-right: 5px;"></i>Enter your current password to confirm this change
+            </small>
             {% if form.password.errors %}
                 <div class="error">{{ form.password.errors.0 }}</div>
             {% endif %}
         </div>
 
         <!-- Security Notice -->
-        <div style="background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 15px; border-radius: 8px; margin: 20px 0; font-size: 14px;">
-            <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                <i class="fas fa-exclamation-triangle" style="margin-right: 8px; color: #856404;"></i>
+        <div class="security-notice">
+            <div class="security-notice-header">
+                <i class="fas fa-shield-alt"></i>
                 <strong>Security Notice</strong>
             </div>
-            <ul style="margin: 0; padding-left: 20px;">
+            <ul>
                 <li>You will need to verify your new email address before it becomes active</li>
                 <li>Your current email will remain active until verification is complete</li>
                 <li>Make sure you have access to the new email address</li>
+                <li>The verification link will expire in 24 hours</li>
             </ul>
         </div>
         
-        <div style="display: flex; justify-content: center; margin-top: 30px;">
-            <a href="/profile/" class="btn-cancel">Cancel</a>
+        <!-- Form Actions -->
+        <div class="form-actions">
+            <a href="{% url 'user_profile' %}" class="btn-cancel">
+                <i class="fas fa-times" style="margin-right: 8px;"></i>Cancel
+            </a>
             <button type="submit" class="btn-primary" id="submit-btn">
-                <i class="fas fa-paper-plane" style="margin-right: 8px;"></i>
-                Send Verification Email
+                <i class="fas fa-paper-plane" style="margin-right: 8px;"></i>Send Verification Email
             </button>
         </div>
     </form>
 </div>
 {% endblock %}
 
+
 {% block extra_js %}
 <script>
-    // Show navbar on page load and set active state
     document.addEventListener('DOMContentLoaded', function() {
         // Auto-open the navbar on desktop
         if (window.innerWidth > 768) {
@@ -277,30 +492,15 @@
             }
         }
         
-        // Set security tab as active in sidebar (since change email is part of security)
+        // Set security tab as active in sidebar
         const sidebarLinks = document.querySelectorAll('.profile-sidebar-nav .nav-link');
         sidebarLinks.forEach(link => link.classList.remove('active'));
         
-        // Find the security link and set it as active
-        const securityLink = document.querySelector('.profile-sidebar-nav .nav-link[onclick*="security"]');
+        const securityLink = document.querySelector('.profile-sidebar-nav .nav-link[href*="security"]');
         if (securityLink) {
             securityLink.classList.add('active');
         }
     });
-
-    // Override tab switching for change email
-    function showTabFromSidebar(tabId) {
-        // For navigation from change email, redirect to appropriate pages
-        if (tabId === 'profile-details') {
-            window.location.href = '/profile/';
-        } else if (tabId === 'addresses') {
-            window.location.href = '/profile/addresses/';
-        } else if (tabId === 'orders') {
-            window.location.href = '/profile/#orders';
-        } else if (tabId === 'security') {
-            window.location.href = '/profile/#security';
-        }
-    }
 
     // Email validation
     const emailField = document.getElementById('id_new_email');
@@ -312,22 +512,25 @@
             const email = this.value.trim();
             
             if (!email) {
-                this.className = this.className.replace(/email-(valid|invalid)/g, '');
+                this.classList.remove('email-valid', 'email-invalid');
                 validationMessage.textContent = '';
                 validationMessage.className = 'validation-message';
                 return;
             }
             
             if (email === currentEmail) {
-                this.className = this.className.replace(/email-(valid|invalid)/g, '') + ' email-invalid';
+                this.classList.remove('email-valid');
+                this.classList.add('email-invalid');
                 validationMessage.textContent = 'New email must be different from current email';
                 validationMessage.className = 'validation-message invalid';
             } else if (validateEmail(email)) {
-                this.className = this.className.replace(/email-(valid|invalid)/g, '') + ' email-valid';
+                this.classList.remove('email-invalid');
+                this.classList.add('email-valid');
                 validationMessage.textContent = 'Valid email address';
                 validationMessage.className = 'validation-message valid';
             } else {
-                this.className = this.className.replace(/email-(valid|invalid)/g, '') + ' email-invalid';
+                this.classList.remove('email-valid');
+                this.classList.add('email-invalid');
                 validationMessage.textContent = 'Please enter a valid email address';
                 validationMessage.className = 'validation-message invalid';
             }
@@ -340,14 +543,46 @@
     }
 
     // Form submission with loading state
-    const form = document.querySelector('form');
+    const form = document.getElementById('emailChangeForm');
     const submitBtn = document.getElementById('submit-btn');
     
     if (form && submitBtn) {
-        form.addEventListener('submit', function() {
+        form.addEventListener('submit', function(e) {
+            // Validate before submitting
+            const newEmail = emailField.value.trim();
+            const password = document.getElementById('id_password').value;
+
+            if (!newEmail || !password) {
+                e.preventDefault();
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            if (newEmail === currentEmail) {
+                e.preventDefault();
+                alert('New email must be different from current email');
+                emailField.focus();
+                return;
+            }
+
+            if (!validateEmail(newEmail)) {
+                e.preventDefault();
+                alert('Please enter a valid email address');
+                emailField.focus();
+                return;
+            }
+
+            // Show loading state
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Sending...';
             submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.7';
         });
+    }
+
+    // Smooth scroll to first error
+    const firstError = document.querySelector('.error');
+    if (firstError) {
+        firstError.closest('.form-group').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 </script>
 {% endblock %}

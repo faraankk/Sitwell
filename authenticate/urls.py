@@ -15,6 +15,10 @@ urlpatterns = [
     path('product/<int:pk>/', views.product_detail_view, name='product_detail'),
     path('logout/', views.logout_view, name='logout'),
     path('verify-reset-otp/', views.verify_reset_otp_view, name='verify_reset_otp'),
+
+    path('contact/', views.contact, name='contact'),
+    path('contact/submit/', views.contact_submit, name='contact_submit'),
+    path('about/', views.about, name='about'),
     
     # Profile URLs
     path('profile/', views.user_profile_view, name='user_profile'),

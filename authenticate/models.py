@@ -5,6 +5,8 @@ from django.utils import timezone
 from customeradmin.models import Product
 import random
 import string 
+from decimal import Decimal
+
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -66,7 +68,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         return f"{self.first_name} {self.last_name}"
     
     def block_user(self, blocked_by=None):
-        from django.utils import timezone
         self.is_blocked = True
         self.blocked_at = timezone.now()
         self.blocked_by = blocked_by or 'Admin'
@@ -81,11 +82,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def clean_phone_number(self):
         """Remove all non-digit characters from phone number"""
         if self.phone_number:
-            from .utils import clean_phone_number
-            self.phone_number = clean_phone_number(self.phone_number)
+            self.phone_number = re.sub(r'[^\d]', '', self.phone_number)
     
     def save(self, *args, **kwargs):
-        # Clean phone number before saving
         self.clean_phone_number()
         super().save(*args, **kwargs)
 
@@ -119,11 +118,9 @@ class UserAddress(models.Model):
     
     def clean_phone_number(self):
         if self.phone_number:
-            # Fixed regex - removed double backslash
             self.phone_number = re.sub(r'[^\d]', '', self.phone_number)
 
     def save(self, *args, **kwargs):
-        # Clean phone number before saving
         self.clean_phone_number()
         super().save(*args, **kwargs)
 
@@ -157,7 +154,14 @@ class Order(models.Model):
     status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default='pending')
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
     payment_method = models.CharField(max_length=50, choices=PAYMENT_METHOD_CHOICES, default='cod')
+    
+    # ✅ PRICING BREAKDOWN FIELDS - ADD THESE
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    shipping_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    
     shipping_address = models.ForeignKey('UserAddress', on_delete=models.SET_NULL, null=True, blank=True)
     
     # Order tracking
@@ -192,6 +196,39 @@ class Order(models.Model):
             self.order_number = 'ORD' + ''.join(random.choices(string.digits, k=8))
         super().save(*args, **kwargs)
     
+    # ✅ ADD THIS METHOD
+    def calculate_totals(self):
+        """Calculate subtotal, discount, tax, shipping, and total"""
+        self.subtotal = Decimal('0.00')
+        original_total = Decimal('0.00')
+        
+        for item in self.items.all():
+            self.subtotal += item.total_price
+            
+            if item.product:
+                original_price = item.product.price
+                original_total += original_price * item.quantity
+        
+        self.discount_amount = original_total - self.subtotal
+        self.tax_amount = self.subtotal * Decimal('0.18')
+        
+        if self.subtotal >= Decimal('500.00'):
+            self.shipping_charge = Decimal('0.00')
+        else:
+            self.shipping_charge = Decimal('50.00')
+        
+        self.total_amount = self.subtotal + self.tax_amount + self.shipping_charge
+        
+        self.save(update_fields=['subtotal', 'discount_amount', 'tax_amount', 'shipping_charge', 'total_amount'])
+        
+        return {
+            'subtotal': self.subtotal,
+            'discount_amount': self.discount_amount,
+            'tax_amount': self.tax_amount,
+            'shipping_charge': self.shipping_charge,
+            'total_amount': self.total_amount
+        }
+    
     @property
     def can_be_cancelled(self):
         """Check if order can be cancelled"""
@@ -213,7 +250,6 @@ class Order(models.Model):
             self.cancelled_by = cancelled_by
             self.save()
             
-            # Increment stock for all items
             for item in self.items.all():
                 if item.product:
                     item.product.stock_quantity += item.quantity
@@ -230,13 +266,13 @@ class Order(models.Model):
             self.returned_by = returned_by
             self.save()
             
-            # Increment stock for all items on return
             for item in self.items.all():
                 if item.product:
                     item.product.stock_quantity += item.quantity
                     item.product.save()
             return True
         return False
+
 
 class OrderItem(models.Model):
     ITEM_STATUS_CHOICES = [
@@ -251,10 +287,8 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField()
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     
-    # Optional: Link to actual product
     product = models.ForeignKey('customeradmin.Product', on_delete=models.SET_NULL, null=True, blank=True)
     
-    # For partial cancellation/return
     status = models.CharField(max_length=20, choices=ITEM_STATUS_CHOICES, default='pending')
     is_cancelled = models.BooleanField(default=False)
     
@@ -273,8 +307,6 @@ class OrderItem(models.Model):
             self.is_cancelled = True
             self.status = 'cancelled'
             self.save()
-            
-            # Increment stock for this item
             self.increment_stock()
             return True
         return False
@@ -284,6 +316,7 @@ class OrderItem(models.Model):
         if self.product:
             self.product.stock_quantity += self.quantity
             self.product.save()
+
 
 class OrderStatusHistory(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='status_history')
@@ -345,8 +378,8 @@ class CartItem(models.Model):
     
     @property
     def subtotal(self):
-        """Calculate subtotal for this cart item"""
-        return self.quantity * self.product.price
+        """Calculate subtotal for this cart item (using discounted price)"""
+        return self.quantity * self.product.get_discounted_price()
     
     @property
     def is_available(self):
@@ -360,7 +393,7 @@ class CartItem(models.Model):
     @property
     def max_quantity_allowed(self):
         """Maximum quantity that can be ordered"""
-        MAX_CART_QUANTITY = 10  # You can make this configurable
+        MAX_CART_QUANTITY = 10
         return min(self.product.stock_quantity, MAX_CART_QUANTITY)
     
     def clean(self):
@@ -393,134 +426,3 @@ class WishlistItem(models.Model):
     
     def __str__(self):
         return f"{self.product.name} in {self.wishlist.user.email}'s wishlist"
-
-
-
-
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-from django.http import HttpResponse
-from django.contrib.auth.decorators import login_required
-from django.db import transaction
-from django.db.models import Q
-from .models import Order, OrderItem, OrderStatusHistory
-from .forms import OrderCancellationForm, OrderReturnForm
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-from io import BytesIO
-from django.views.decorators.cache import cache_control
-
-@login_required
-@cache_control(no_store=True)
-def user_orders_view(request):
-    query = request.GET.get('q', '')  # Search query
-    orders = Order.objects.filter(user=request.user)
-    if query:
-        orders = orders.filter(Q(order_number__icontains=query) | Q(status__icontains=query))
-    orders = orders.order_by('-created_at')
-    
-    context = {'orders': orders, 'query': query}
-    return render(request, 'profile/user_orders.html', context)
-
-@login_required
-@cache_control(no_store=True)
-def order_detail_view(request, order_id):
-    order = get_object_or_404(Order, order_number=order_id, user=request.user)  # Use order_number for URL
-    items = order.items.all()
-    history = order.status_history.all()
-    
-    context = {'order': order, 'items': items, 'history': history}
-    return render(request, 'profile/order_detail.html', context)
-
-@login_required
-@transaction.atomic
-@cache_control(no_store=True)
-def cancel_order_view(request, order_id, item_id=None):
-    order = get_object_or_404(Order, order_number=order_id, user=request.user)
-    if not order.can_be_cancelled():
-        messages.error(request, "This order cannot be cancelled.")
-        return redirect('order_detail', order_id=order.order_number)
-    
-    if request.method == 'POST':
-        form = OrderCancellationForm(request.POST)
-        if form.is_valid():
-            reason = form.cleaned_data['reason']
-            notes = form.cleaned_data['additional_notes']
-            full_reason = reason + (f" - {notes}" if notes else "")
-            
-            if item_id:  # Cancel specific item
-                item = get_object_or_404(OrderItem, id=item_id, order=order)
-                item.status = 'cancelled'
-                item.save()
-                item.increment_stock()
-                OrderStatusHistory.objects.create(order=order, old_status=item.status, new_status='cancelled', notes=full_reason)
-                messages.success(request, f"Item cancelled successfully. Stock updated.")
-            else:  # Cancel entire order
-                order.status = 'cancelled'
-                order.cancellation_reason = full_reason
-                order.save()
-                for item in order.items.all():
-                    item.status = 'cancelled'
-                    item.save()
-                    item.increment_stock()
-                OrderStatusHistory.objects.create(order=order, old_status=order.status, new_status='cancelled', notes=full_reason)
-                messages.success(request, "Order cancelled successfully. Stock updated.")
-            
-            return redirect('order_detail', order_id=order.order_number)
-    else:
-        form = OrderCancellationForm()
-    
-    context = {'form': form, 'order': order, 'item_id': item_id}
-    return render(request, 'profile/cancel_order.html', context)
-
-@login_required
-@transaction.atomic
-@cache_control(no_store=True)
-def return_order_view(request, order_id):
-    order = get_object_or_404(Order, order_number=order_id, user=request.user)
-    if not order.can_be_returned():
-        messages.error(request, "This order cannot be returned.")
-        return redirect('order_detail', order_id=order.order_number)
-    
-    if request.method == 'POST':
-        form = OrderReturnForm(request.POST)
-        if form.is_valid():
-            reason = form.cleaned_data['reason']
-            order.status = 'returned'
-            order.return_reason = reason
-            order.save()
-            for item in order.items.all():
-                item.status = 'returned'
-                item.save()
-                item.increment_stock()  # Increment stock on return
-            OrderStatusHistory.objects.create(order=order, old_status='delivered', new_status='returned', notes=reason)
-            messages.success(request, "Order returned successfully. Stock updated.")
-            return redirect('order_detail', order_id=order.order_number)
-    else:
-        form = OrderReturnForm()
-    
-    context = {'form': form, 'order': order}
-    return render(request, 'profile/return_order.html', context)
-
-@login_required
-@cache_control(no_store=True)
-def download_invoice_view(request, order_id):
-    order = get_object_or_404(Order, order_number=order_id, user=request.user)
-    
-    buffer = BytesIO()
-    p = canvas.Canvas(buffer, pagesize=letter)
-    p.drawString(100, 750, f"Invoice for Order: {order.order_number}")
-    p.drawString(100, 730, f"Date: {order.created_at.strftime('%Y-%m-%d')}")
-    p.drawString(100, 710, f"Status: {order.status}")
-    p.drawString(100, 690, f"Total: ${order.total_amount}")
-    
-    y = 660
-    for item in order.items.all():
-        p.drawString(100, y, f"{item.product.name} x {item.quantity} - ${item.price}")
-        y -= 20
-    
-    p.save()
-    buffer.seek(0)
-    response = HttpResponse(buffer, content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename=invoice_{order.order_number}.pdf'
-    return response

@@ -1,1422 +1,472 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Product - {{ product.name }} | sit well</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Edit Product - {{ product.name }} - Sitwell Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f5f6fa;
-            color: #2c3e50;
-            line-height: 1.6;
-            font-size: 14px;
+            font-family: 'Inter', sans-serif;
         }
-
-        .dashboard-container {
-            display: flex;
-            min-height: 100vh;
-            background: #f5f6fa;
+        
+        .dashboard-bg {
+            background: linear-gradient(135deg, #f8f9ff 0%, #fff5f8 100%);
         }
-
-        /* Sidebar Styling */
-        .sidebar {
-            width: 250px;
-            background: #ffffff;
-            border-right: 1px solid #e1e8ed;
-            padding: 0;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        
+        .sidebar-gradient {
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .sidebar-item {
             position: relative;
-        }
-
-        .logo {
-            padding: 20px 24px 16px;
-            border-bottom: 1px solid #f1f3f4;
-            margin-bottom: 8px;
-        }
-
-        .logo h2 {
-            font-size: 18px;
-            font-weight: 600;
-            color: #1a202c;
-            display: flex;
-            align-items: center;
-            margin: 0;
-        }
-
-        .logo h2::before {
-            content: "";
-            width: 8px;
-            height: 8px;
-            background: #3b82f6;
-            border-radius: 2px;
-            margin-right: 8px;
-        }
-
-        .nav-menu {
-            list-style: none;
-            padding: 8px 0;
-            margin: 0;
-        }
-
-        .nav-item {
-            margin-bottom: 2px;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            padding: 12px 24px;
-            color: #64748b;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            font-size: 14px;
-            font-weight: 500;
-            border-radius: 0;
-        }
-
-        .nav-link:hover {
-            background-color: #f8fafc;
-            color: #334155;
-        }
-
-        .nav-link.active {
-            background-color: #3b82f6;
-            color: white;
-            border-radius: 8px;
-            margin: 0 12px;
-            font-weight: 600;
-        }
-
-        .nav-link i {
-            width: 20px;
-            margin-right: 12px;
-            font-size: 16px;
-            text-align: center;
-        }
-
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: #f5f6fa;
-            min-height: 100vh;
-        }
-
-        .header {
-            background: #ffffff;
-            border-bottom: 1px solid #e1e8ed;
-            padding: 16px 32px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-            min-height: 72px;
-        }
-
-        .search-container {
-            flex: 1;
-            max-width: 400px;
-            margin: 0 32px;
-            position: relative;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 10px 16px 10px 40px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 14px;
-            background: #f9fafb;
-            transition: all 0.2s ease;
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: #3b82f6;
-            background: white;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #9ca3af;
-            font-size: 16px;
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .notification-icon {
-            position: relative;
-            color: #64748b;
-            font-size: 18px;
-            cursor: pointer;
-        }
-
-        .notification-badge {
-            position: absolute;
-            top: -4px;
-            right: -4px;
-            background: #3b82f6;
-            color: white;
-            border-radius: 50%;
-            width: 16px;
-            height: 16px;
-            font-size: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .user-name {
-            font-weight: 600;
-            font-size: 14px;
-            color: #1a202c;
-        }
-
-        .user-role {
-            font-size: 12px;
-            color: #64748b;
-        }
-
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            background: #10b981;
-            border-radius: 50%;
-            margin-left: 8px;
-        }
-
-        /* Content Area */
-        .content {
-            padding: 32px;
-            flex: 1;
-            display: flex;
-            gap: 24px;
-        }
-
-        .main-form {
-            flex: 1;
-        }
-
-        .sidebar-form {
-            width: 300px;
-        }
-
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 24px;
-        }
-
-        .breadcrumb {
-            color: #64748b;
-            font-size: 14px;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-
-        .breadcrumb a {
-            color: #3b82f6;
-            text-decoration: none;
-        }
-
-        .breadcrumb a:hover {
-            text-decoration: underline;
-        }
-
-        .page-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: #1a202c;
-            margin: 0;
-        }
-
-        .page-actions {
-            display: flex;
-            gap: 12px;
-        }
-
-        .btn {
-            padding: 10px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn-primary {
-            background: #3b82f6;
-            color: white;
-            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
-        }
-
-        .btn-primary:hover {
-            background: #2563eb;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-
-        .btn-secondary {
-            background: white;
-            color: #374151;
-            border: 1px solid #d1d5db;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        }
-
-        .btn-secondary:hover {
-            background: #f9fafb;
-            border-color: #9ca3af;
-        }
-
-        /* Form Sections */
-        .form-section {
-            background: white;
-            border-radius: 12px;
-            border: 1px solid #e5e7eb;
-            margin-bottom: 24px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
             overflow: hidden;
+            transition: all 0.3s ease;
         }
-
-        .section-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid #e5e7eb;
-            background: #fafbfc;
-        }
-
-        .section-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1a202c;
-            margin: 0;
-        }
-
-        .section-content {
-            padding: 24px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group:last-child {
-            margin-bottom: 0;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-            color: #374151;
-            font-size: 14px;
-        }
-
-        /* Django form fields styling */
-        input[type="text"], input[type="number"], input[type="email"],
-        select, textarea, input[type="file"] {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: all 0.2s ease;
-            font-family: inherit;
-        }
-
-        input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus,
-        select:focus, textarea:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        textarea {
-            min-height: 120px;
-            resize: vertical;
-            line-height: 1.5;
-        }
-
-        select {
-            cursor: pointer;
+        .sidebar-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
             background: white;
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
         }
-
-        /* Pricing grid */
-        .pricing-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
+        .sidebar-item:hover::before,
+        .sidebar-item.active::before {
+            transform: scaleY(1);
         }
-
-        .pricing-full {
-            grid-column: 1 / -1;
+        .sidebar-item.active {
+            background: rgba(255, 255, 255, 0.2);
         }
-
-        /* Messages */
-        .success-message {
-            background: #dcfce7;
-            color: #166534;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            border: 1px solid #bbf7d0;
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
         }
-
-        .error-message {
-            background: #fef2f2;
-            color: #dc2626;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            border: 1px solid #fecaca;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        .field-error {
-            color: #dc2626;
-            font-size: 12px;
-            margin-top: 4px;
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
-
-        /* Image Management Styles */
-        .images-grid {
+        .pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .image-preview-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 16px;
+            gap: 1rem;
         }
-
-        .image-item {
-            position: relative;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid #e5e7eb;
-            background: white;
+        
+        .file-upload-area {
+            border: 3px dashed #d1d5db;
+            transition: all 0.3s ease;
         }
-
-        .image-item img {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
+        .file-upload-area:hover {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #f8f9ff 0%, #fff5f8 100%);
         }
-
-        .image-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
-
-        .image-item:hover .image-overlay {
-            opacity: 1;
-        }
-
-        .image-badge {
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            background: #3b82f6;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .image-badge.primary {
-            background: #10b981;
-        }
-
-        .image-badge.warning {
-            background: #f59e0b;
-        }
-
-        .delete-btn {
-            background: #dc2626;
-            color: white;
-            border: none;
-            padding: 8px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: background 0.2s ease;
-        }
-
-        .delete-btn:hover {
-            background: #b91c1c;
-        }
-
-        .delete-btn:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
-        }
-
-        .upload-area {
-            border: 2px dashed #d1d5db;
-            border-radius: 8px;
-            padding: 24px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .upload-area:hover {
-            border-color: #3b82f6;
-            background: #f8fafc;
-        }
-
-        .upload-area.dragover {
-            border-color: #3b82f6;
-            background: #eff6ff;
-        }
-
-        .upload-icon {
-            width: 48px;
-            height: 48px;
-            background: #eff6ff;
-            color: #3b82f6;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 12px;
-            font-size: 20px;
-        }
-
-        /* Status badge */
-        .status-badge {
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: capitalize;
-            letter-spacing: 0.025em;
-            background: #dcfce7;
-            color: #166534;
-            display: inline-block;
-        }
-
-        /* Price calculation display */
-        .price-calculation {
-            background: #f8fafc;
-            padding: 16px;
-            border-radius: 8px;
-            margin-top: 16px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .price-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-
-        .price-row.total {
-            font-weight: 600;
-            color: #1a202c;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 8px;
-            margin-top: 8px;
-        }
-
-        /* Validation messages */
-        .validation-message {
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            margin-top: 8px;
-        }
-
-        .validation-message.success {
-            background: #dcfce7;
-            color: #166534;
-            border: 1px solid #bbf7d0;
-        }
-
-        .validation-message.error {
-            background: #fef2f2;
-            color: #dc2626;
-            border: 1px solid #fecaca;
-        }
-
-        .validation-message.warning {
-            background: #fef3c7;
-            color: #92400e;
-            border: 1px solid #fed7aa;
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .content {
-                flex-direction: column;
-            }
-
-            .sidebar-form {
-                width: 100%;
-            }
-
-            .pricing-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .dashboard-container {
-                flex-direction: column;
-            }
-
-            .sidebar {
-                width: 100%;
-                height: auto;
-            }
-
-            .content {
-                padding: 16px;
-            }
-
-            .page-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 16px;
-            }
-
-            .page-actions {
-                width: 100%;
-                justify-content: flex-end;
-            }
-
-            .images-grid {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-                gap: 12px;
-            }
+        .file-upload-area.dragover {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
+            transform: scale(1.02);
         }
     </style>
 </head>
-<body>
-    <div class="dashboard-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="logo">
-                <h2>sit well</h2>
+<body class="dashboard-bg min-h-screen">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Enhanced Sidebar -->
+        <aside class="w-72 sidebar-gradient shadow-2xl flex-shrink-0">
+            <div class="p-6 border-b border-white/20">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+                        <span class="text-2xl font-black" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">SW</span>
+                    </div>
+                    <div class="ml-3">
+                        <span class="text-xl font-black text-white">sitwell</span>
+                        <p class="text-xs text-white/70">Admin Portal</p>
+                    </div>
+                </div>
             </div>
-            <nav>
-                <ul class="nav-menu">
-                    <li class="nav-item">
-                        <a href="{% url 'admin_dashboard' %}" class="nav-link">
-                            <i class="fas fa-chart-bar"></i>
-                            Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{% url 'product-list' %}" class="nav-link active">
-                            <i class="fas fa-box"></i>
-                            Products
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <i class="fas fa-tags"></i>
-                            Category
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <i class="fas fa-shopping-cart"></i>
-                            Orders
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <i class="fas fa-ticket-alt"></i>
-                            Coupon
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <i class="fas fa-image"></i>
-                            Banner
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <i class="fas fa-exchange-alt"></i>
-                            Transaction
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{% url 'customer-list' %}" class="nav-link">
-                            <i class="fas fa-users"></i>
-                            Customers
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{% url 'logout' %}" class="nav-link">
-                            <i class="fas fa-sign-out-alt"></i>
-                            Logout
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="#" class="nav-link">
-                            <i class="fas fa-chart-line"></i>
-                            Sales Report
-                        </a>
-                    </li>
-                </ul>
+            
+            <nav class="mt-6 px-4 pb-6 overflow-y-auto" style="max-height: calc(100vh - 120px);">
+                <div class="text-xs font-bold text-white/50 uppercase tracking-wider mb-4 px-3">MAIN MENU</div>
+                
+                <div class="space-y-2">
+                    <a href="{% url 'admin_dashboard' %}" class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded-xl">
+                        <i class="fas fa-home w-5 text-center mr-3 text-lg"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    
+                    <a href="{% url 'product-list' %}" class="sidebar-item active flex items-center px-4 py-3 text-sm font-medium text-white rounded-xl">
+                        <i class="fas fa-box w-5 text-center mr-3 text-lg"></i>
+                        <span>Products</span>
+                    </a>
+                    
+                    <a href="{% url 'category-list' %}" class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded-xl">
+                        <i class="fas fa-tags w-5 text-center mr-3 text-lg"></i>
+                        <span>Categories</span>
+                    </a>
+                    
+                    <a href="{% url 'user-management' %}" class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded-xl">
+                        <i class="fas fa-users-cog w-5 text-center mr-3 text-lg"></i>
+                        <span>User Management</span>
+                    </a>
+                    
+                    <a href="{% url 'customer-list' %}" class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded-xl">
+                        <i class="fas fa-users w-5 text-center mr-3 text-lg"></i>
+                        <span>Customers</span>
+                    </a>
+                    
+                    <div class="mt-6 pt-6 border-t border-white/20">
+                        <form action="{% url 'admin_logout' %}" method="post" style="width: 100%;">
+                            {% csrf_token %}
+                            <button type="submit" class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded-xl w-full text-left border-none bg-transparent cursor-pointer">
+                                <i class="fas fa-sign-out-alt w-5 text-center mr-3 text-lg"></i>
+                                <span>Logout</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </nav>
         </aside>
 
         <!-- Main Content -->
-        <main class="main-content">
-            <!-- Header -->
-            <header class="header">
-                <div class="search-container">
-                    <i class="fas fa-search search-icon"></i>
-                    <input type="text" class="search-input" placeholder="Search...">
-                </div>
-                <div class="user-profile">
-                    <div class="notification-icon">
-                        <i class="fas fa-bell"></i>
-                        <span class="notification-badge">2</span>
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Enhanced Header -->
+            <header class="bg-white shadow-sm border-b border-gray-100 px-8 py-5 flex-shrink-0">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-black" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Edit Product</h1>
+                        <nav class="flex items-center space-x-2 text-sm text-gray-500 mt-2">
+                            <a href="{% url 'admin_dashboard' %}" class="text-purple-600 hover:text-purple-800 font-medium transition-colors">
+                                <i class="fas fa-home mr-1"></i>Dashboard
+                            </a>
+                            <i class="fas fa-chevron-right text-xs"></i>
+                            <a href="{% url 'product-list' %}" class="text-purple-600 hover:text-purple-800 font-medium transition-colors">Products</a>
+                            <i class="fas fa-chevron-right text-xs"></i>
+                            <span class="font-medium">Edit Product</span>
+                        </nav>
                     </div>
-                    <div class="user-info">
-                        <div>
-                            <div class="user-name">Farhaan</div>
-                            <div class="user-role">Admin</div>
-                        </div>
-                        <div class="user-avatar"></div>
+                    <div class="flex items-center space-x-3 bg-gradient-to-r from-blue-50 to-purple-50 px-4 py-2 rounded-xl">
+                        <div class="w-2 h-2 bg-green-500 rounded-full pulse"></div>
+                        <span class="text-sm font-bold text-gray-700">Farhaan</span>
+                        <span class="text-xs text-gray-500 font-medium">Admin</span>
                     </div>
                 </div>
             </header>
 
-            <!-- Content -->
-            <div class="content">
-                <!-- FORM STARTS HERE -->
-                <form method="POST" enctype="multipart/form-data" style="display: contents;" id="product-form">
+            <!-- Form Content -->
+            <main class="flex-1 overflow-auto p-8">
+                <!-- Messages -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="mb-6 p-4 rounded-xl fade-in {% if message.tags == 'error' %}bg-red-50 border-2 border-red-200 text-red-800{% else %}bg-green-50 border-2 border-green-200 text-green-800{% endif %}">
+                            <div class="flex items-center">
+                                <i class="fas {% if message.tags == 'error' %}fa-times-circle{% else %}fa-check-circle{% endif %} text-2xl mr-3"></i>
+                                <span class="font-semibold">{{ message }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="POST" enctype="multipart/form-data" class="max-w-7xl mx-auto" id="product-form">
                     {% csrf_token %}
                     
-                    <div class="main-form">
-                        <!-- Page Header -->
-                        <div class="page-header">
-                            <div>
-                                <div class="breadcrumb">
-                                    <a href="{% url 'admin_dashboard' %}">Dashboard</a> > 
-                                    <a href="{% url 'product-list' %}">Product List</a> > 
-                                    Edit Product
-                                </div>
-                                <h1 class="page-title">Edit: {{ product.name|default:"Product" }}</h1>
-                            </div>
-                            <div class="page-actions">
-                                <a href="{% url 'product-list' %}" class="btn btn-secondary">
-                                    <i class="fas fa-times"></i>
-                                    Cancel
-                                </a>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save"></i>
-                                    Save Product
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Success/Error Messages -->
-                        {% if messages %}
-                            {% for message in messages %}
-                                <div class="{% if message.tags == 'error' %}error-message{% else %}success-message{% endif %}">
-                                    {{ message }}
-                                </div>
-                            {% endfor %}
-                        {% endif %}
-
-                        <!-- Current Images Management -->
-                        <div class="form-section">
-                            <div class="section-header">
-                                <h2 class="section-title">
-                                    Current Images ({{ existing_images|length }} of 6)
-                                    {% if existing_images|length < 3 %}
-                                        <span style="color: #dc2626; font-weight: normal; font-size: 14px;">- Need at least 3 images total</span>
-                                    {% endif %}
-                                </h2>
-                            </div>
-                            <div class="section-content">
-                                {% if existing_images %}
-                                    <div class="images-grid" id="existing-images-grid">
-                                        {% for image in existing_images %}
-                                            <div class="image-item" data-image-id="{{ image.id }}">
-                                                <img src="{{ image.image.url }}" alt="Product Image {{ forloop.counter }}">
-                                                
-                                                <div class="image-overlay">
-                                                    {% if existing_images|length > 3 %}
-                                                        <button type="button" class="delete-btn" onclick="deleteExistingImage('{{ image.id}}', this)">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    {% else %}
-                                                        <span style="color: white; font-size: 12px; background: rgba(0,0,0,0.7); padding: 4px 8px; border-radius: 4px;">
-                                                            Min Required
-                                                        </span>
-                                                    {% endif %}
-                                                </div>
-                                                
-                                                <div class="image-badge {% if image.is_primary %}primary{% endif %}">
-                                                    {% if image.is_primary %}Primary{% else %}{{ forloop.counter }}{% endif %}
-                                                </div>
-                                            </div>
-                                        {% endfor %}
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Main Product Information -->
+                        <div class="lg:col-span-2 space-y-8">
+                            <!-- General Information -->
+                            <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-8 fade-in">
+                                <div class="flex items-center mb-6">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-4">
+                                        <i class="fas fa-info-circle text-white text-xl"></i>
                                     </div>
-                                {% else %}
-                                    <div class="validation-message error">
-                                        <strong>No images found!</strong> This product needs at least 3 images. Please add images below.
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Add More Images Section -->
-                        {% if existing_images|length < 6 %}
-                            <div class="form-section">
-                                <div class="section-header">
-                                    <h2 class="section-title">
-                                        Add More Images 
-                                        <span style="font-weight: normal; font-size: 14px; color: #64748b;">
-                                            (Can add up to {% widthratio 6 existing_images|length 1 %} more)
-                                        </span>
-                                    </h2>
-                                </div>
-                                <div class="section-content">
-                                    <div class="upload-area" id="upload-area" onclick="document.getElementById('new-images-input').click()">
-                                        <div class="upload-icon">
-                                            <i class="fas fa-cloud-upload-alt"></i>
-                                        </div>
-                                        <p style="font-weight: 600; margin-bottom: 8px;">Click to upload additional images</p>
-                                        <p style="color: #64748b; font-size: 13px;">Or drag and drop files here</p>
-                                        <p style="color: #64748b; font-size: 12px; margin-top: 8px;">JPG, PNG, GIF, WebP (Max 5MB each)</p>
-                                    </div>
-                                    
-                                    <input type="file" id="new-images-input" name="images" accept="image/*" multiple class="hidden" style="display: none;">
-                                    
-                                    <!-- New Images Preview -->
-                                    <div id="new-images-preview" style="margin-top: 16px; display: none;">
-                                        <h4 style="margin-bottom: 12px; color: #374151;">New Images to Add:</h4>
-                                        <div id="new-images-grid" class="images-grid"></div>
-                                    </div>
-                                    
-                                    <div id="validation-message" class="validation-message" style="display: none;"></div>
-                                </div>
-                            </div>
-                        {% endif %}
-
-                        <!-- General Information -->
-                        <div class="form-section">
-                            <div class="section-header">
-                                <h2 class="section-title">General Information</h2>
-                            </div>
-                            <div class="section-content">
-                                <div class="form-group">
-                                    <label class="form-label" for="{{ form.name.id_for_label }}">Product Name</label>
-                                    {{ form.name }}
-                                    {% if form.name.errors %}
-                                        <div class="field-error">{{ form.name.errors.0 }}</div>
-                                    {% endif %}
+                                    <h2 class="text-2xl font-black text-gray-900">General Information</h2>
                                 </div>
                                 
-                                <div class="form-group">
-                                    <label class="form-label" for="{{ form.sku.id_for_label }}">SKU</label>
-                                    {{ form.sku }}
-                                    {% if form.sku.errors %}
-                                        <div class="field-error">{{ form.sku.errors.0 }}</div>
-                                    {% endif %}
+                                <div class="space-y-5">
+                                    <div>
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Product Name *</label>
+                                        <input type="text" name="name" value="{{ product.name }}" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all" required>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">SKU *</label>
+                                        <input type="text" name="sku" value="{{ product.sku }}" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all" required>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                        <div>
+                                            <label class="block text-sm font-bold text-gray-700 mb-2">Category *</label>
+                                            <select name="category" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all" required>
+                                                <option value="">Select category</option>
+                                                <option value="sofa" {% if product.category == "sofa" %}selected{% endif %}>Sofa</option>
+                                                <option value="chair" {% if product.category == "chair" %}selected{% endif %}>Chair</option>
+                                                <option value="table" {% if product.category == "table" %}selected{% endif %}>Table</option>
+                                                <option value="bed" {% if product.category == "bed" %}selected{% endif %}>Bed</option>
+                                                <option value="storage" {% if product.category == "storage" %}selected{% endif %}>Storage</option>
+                                                <option value="accessories" {% if product.category == "accessories" %}selected{% endif %}>Accessories</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-bold text-gray-700 mb-2">Brand</label>
+                                            <input type="text" name="brand" value="{{ product.brand }}" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all">
+                                        </div>
+                                    </div>
                                 </div>
+                            </div>
 
-                                <div class="form-group">
-                                    <label class="form-label" for="{{ form.brand.id_for_label }}">Brand</label>
-                                    {{ form.brand }}
-                                    {% if form.brand.errors %}
-                                        <div class="field-error">{{ form.brand.errors.0 }}</div>
-                                    {% endif %}
+                            <!-- Description -->
+                            <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-8 fade-in" style="animation-delay: 0.1s;">
+                                <div class="flex items-center mb-6">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mr-4">
+                                        <i class="fas fa-align-left text-white text-xl"></i>
+                                    </div>
+                                    <h2 class="text-2xl font-black text-gray-900">Description</h2>
                                 </div>
-
-                                <div class="form-group">
-                                    <label class="form-label" for="{{ form.short_description.id_for_label }}">Short Description</label>
-                                    {{ form.short_description }}
-                                    {% if form.short_description.errors %}
-                                        <div class="field-error">{{ form.short_description.errors.0 }}</div>
-                                    {% endif %}
+                                
+                                <div class="space-y-5">
+                                    <div>
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Short Description</label>
+                                        <textarea name="short_description" rows="3" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all">{{ product.short_description }}</textarea>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Detailed Description</label>
+                                        <textarea name="detailed_description" rows="6" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all">{{ product.detailed_description }}</textarea>
+                                    </div>
                                 </div>
+                            </div>
 
-                                <div class="form-group">
-                                    <label class="form-label" for="{{ form.detailed_description.id_for_label }}">Detailed Description</label>
-                                    {{ form.detailed_description }}
-                                    {% if form.detailed_description.errors %}
-                                        <div class="field-error">{{ form.detailed_description.errors.0 }}</div>
-                                    {% endif %}
+                            <!-- Current Images -->
+                            <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-8 fade-in" style="animation-delay: 0.2s;">
+                                <div class="flex items-center mb-6">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-4">
+                                        <i class="fas fa-images text-white text-xl"></i>
+                                    </div>
+                                    <h2 class="text-2xl font-black text-gray-900">Current Images</h2>
+                                </div>
+                                
+                                <div class="image-preview-grid">
+                                    {% for image in product.images.all %}
+                                    <div class="relative group bg-gray-100 rounded-xl overflow-hidden border-2 border-gray-200">
+                                        <img src="{{ image.image.url }}" alt="Product Image" class="w-full h-40 object-cover">
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <button type="button" onclick="deleteImage({{ image.id }})" class="bg-red-600 text-white px-4 py-2 rounded-xl hover:bg-red-700 font-bold">
+                                                <i class="fas fa-trash mr-2"></i>Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <div class="col-span-full text-center py-8 text-gray-500">
+                                        No images uploaded yet
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Upload New Images -->
+                            <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-8 fade-in" style="animation-delay: 0.3s;">
+                                <div class="flex items-center mb-6">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center mr-4">
+                                        <i class="fas fa-cloud-upload-alt text-white text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h2 class="text-2xl font-black text-gray-900">Add New Images</h2>
+                                        <p class="text-sm text-gray-500 mt-1">Upload additional images (JPG, PNG, GIF, WebP - Max 5MB each)</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="file-upload-area rounded-2xl p-10 text-center cursor-pointer" onclick="document.getElementById('new-images').click()">
+                                    <div class="mx-auto w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg">
+                                        <i class="fas fa-folder-open text-3xl"></i>
+                                    </div>
+                                    <p class="text-xl font-bold text-gray-700 mb-2">Click to upload new images</p>
+                                    <p class="text-sm text-gray-500">or drag and drop files here</p>
+                                    <input type="file" id="new-images" name="new_images" accept="image/*" multiple style="position: absolute; left: -9999px; opacity: 0;">
+                                </div>
+                                
+                                <div id="new-preview-container" class="hidden mt-6">
+                                    <h3 class="text-lg font-bold text-gray-700 mb-4">New Images Selected (<span id="new-image-count">0</span>)</h3>
+                                    <div id="new-preview-grid" class="image-preview-grid"></div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Pricing -->
-                        <div class="form-section">
-                            <div class="section-header">
-                                <h2 class="section-title">Pricing</h2>
+                        <!-- Sidebar Forms -->
+                        <div class="space-y-8">
+                            <!-- Pricing -->
+                            <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 fade-in" style="animation-delay: 0.1s;">
+                                <div class="flex items-center mb-5">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center mr-3">
+                                        <i class="fas fa-dollar-sign text-white text-lg"></i>
+                                    </div>
+                                    <h2 class="text-xl font-black text-gray-900">Pricing</h2>
+                                </div>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Base Price (₹) *</label>
+                                        <input type="number" step="0.01" name="price" value="{{ product.price }}" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all" required>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Discount Type</label>
+                                        <select name="discount_type" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all">
+                                            <option value="none" {% if product.discount_type == "none" %}selected{% endif %}>No Discount</option>
+                                            <option value="percentage" {% if product.discount_type == "percentage" %}selected{% endif %}>Percentage</option>
+                                            <option value="fixed" {% if product.discount_type == "fixed" %}selected{% endif %}>Fixed Amount</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Discount Value</label>
+                                        <input type="number" step="0.01" name="discount_value" value="{{ product.discount_value }}" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all">
+                                    </div>
+                                </div>
                             </div>
-                            <div class="section-content">
-                                <div class="form-group pricing-full">
-                                    <label class="form-label" for="{{ form.price.id_for_label }}">Base Price (₹)</label>
-                                    {{ form.price }}
-                                    {% if form.price.errors %}
-                                        <div class="field-error">{{ form.price.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
 
-                                <div class="pricing-grid">
-                                    <div class="form-group">
-                                        <label class="form-label" for="{{ form.discount_type.id_for_label }}">Discount Type</label>
-                                        {{ form.discount_type }}
-                                        {% if form.discount_type.errors %}
-                                            <div class="field-error">{{ form.discount_type.errors.0 }}</div>
-                                        {% endif %}
+                            <!-- Inventory -->
+                            <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 fade-in" style="animation-delay: 0.2s;">
+                                <div class="flex items-center mb-5">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center mr-3">
+                                        <i class="fas fa-warehouse text-white text-lg"></i>
+                                    </div>
+                                    <h2 class="text-xl font-black text-gray-900">Inventory</h2>
+                                </div>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Stock Quantity *</label>
+                                        <input type="number" name="stock_quantity" value="{{ product.stock_quantity }}" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all" required>
                                     </div>
 
-                                    <div class="form-group">
-                                        <label class="form-label" for="{{ form.discount_value.id_for_label }}">Discount Value</label>
-                                        {{ form.discount_value }}
-                                        {% if form.discount_value.errors %}
-                                            <div class="field-error">{{ form.discount_value.errors.0 }}</div>
-                                        {% endif %}
-                                        <small style="color: #64748b; display: block; margin-top: 4px;">
-                                            Enter percentage (e.g., 10) or fixed amount (e.g., 50)
-                                        </small>
+                                    <div>
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Low Stock Threshold</label>
+                                        <input type="number" name="low_stock_threshold" value="{{ product.low_stock_threshold }}" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all">
                                     </div>
                                 </div>
-
-                                <div class="pricing-grid">
-                                    <div class="form-group">
-                                        <label class="form-label" for="{{ form.tax_type.id_for_label }}">Tax Class</label>
-                                        {{ form.tax_type }}
-                                        {% if form.tax_type.errors %}
-                                            <div class="field-error">{{ form.tax_type.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="form-label" for="{{ form.vat_percentage.id_for_label }}">VAT Amount (%)</label>
-                                        {{ form.vat_percentage }}
-                                        {% if form.vat_percentage.errors %}
-                                            <div class="field-error">{{ form.vat_percentage.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-
-                                {% if product.price %}
-                                <div class="price-calculation">
-                                    <div class="price-row">
-                                        <span>Base Price:</span>
-                                        <span>₹{{ product.price }}</span>
-                                    </div>
-                                    {% if product.get_discount_amount > 0 %}
-                                    <div class="price-row" style="color: #dc2626;">
-                                        <span>Discount ({{ product.discount_type|capfirst }}):</span>
-                                        <span>-₹{{ product.get_discount_amount }}</span>
-                                    </div>
-                                    {% endif %}
-                                    <div class="price-row">
-                                        <span>Price After Discount:</span>
-                                        <span>₹{{ product.get_discounted_price }}</span>
-                                    </div>
-                                    {% if product.tax_type == 'taxable' and product.vat_percentage > 0 %}
-                                    <div class="price-row">
-                                        <span>Tax ({{ product.vat_percentage }}%):</span>
-                                        <span>+₹{% widthratio product.get_discounted_price product.vat_percentage 100 %}</span>
-                                    </div>
-                                    {% endif %}
-                                    <div class="price-row total">
-                                        <span>Final Price:</span>
-                                        <span>₹{{ product.get_final_price_with_tax }}</span>
-                                    </div>
-                                </div>
-                                {% endif %}
                             </div>
-                        </div>
 
-                        <!-- Inventory -->
-                        <div class="form-section">
-                            <div class="section-header">
-                                <h2 class="section-title">Inventory</h2>
-                            </div>
-                            <div class="section-content">
-                                <div class="pricing-grid">
-                                    <div class="form-group">
-                                        <label class="form-label" for="{{ form.stock_quantity.id_for_label }}">Stock Quantity</label>
-                                        {{ form.stock_quantity }}
-                                        {% if form.stock_quantity.errors %}
-                                            <div class="field-error">{{ form.stock_quantity.errors.0 }}</div>
-                                        {% endif %}
+                            <!-- Product Status -->
+                            <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 fade-in" style="animation-delay: 0.3s;">
+                                <div class="flex items-center mb-5">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-teal-600 rounded-xl flex items-center justify-center mr-3">
+                                        <i class="fas fa-toggle-on text-white text-lg"></i>
                                     </div>
-
-                                    <div class="form-group">
-                                        <label class="form-label" for="{{ form.low_stock_threshold.id_for_label }}">Low Stock Alert</label>
-                                        {{ form.low_stock_threshold }}
-                                        {% if form.low_stock_threshold.errors %}
-                                            <div class="field-error">{{ form.low_stock_threshold.errors.0 }}</div>
-                                        {% endif %}
-                                        <small style="color: #64748b; display: block; margin-top: 4px;">
-                                            Alert when stock falls below this number
-                                        </small>
-                                    </div>
+                                    <h2 class="text-xl font-black text-gray-900">Status</h2>
                                 </div>
-
-                                <div class="form-group">
-                                    <label style="display: flex; align-items: center; gap: 8px;">
-                                        {{ form.manage_stock }}
-                                        <span class="form-label" style="margin: 0;">Manage Stock</span>
-                                    </label>
-                                    {% if form.manage_stock.errors %}
-                                        <div class="field-error">{{ form.manage_stock.errors.0 }}</div>
-                                    {% endif %}
+                                
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-2">Product Status *</label>
+                                    <select name="status" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all" required>
+                                        <option value="draft" {% if product.status == "draft" %}selected{% endif %}>Draft</option>
+                                        <option value="published" {% if product.status == "published" %}selected{% endif %}>Published</option>
+                                        <option value="out-of-stock" {% if product.status == "out-of-stock" %}selected{% endif %}>Out of Stock</option>
+                                        <option value="low-stock" {% if product.status == "low-stock" %}selected{% endif %}>Low Stock</option>
+                                    </select>
                                 </div>
-
-                                {% if product.stock_quantity and product.is_low_stock %}
-                                <div style="background: #fef3c7; color: #92400e; padding: 12px; border-radius: 8px; margin-top: 16px;">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                    <strong>Low Stock Warning:</strong> Current stock ({{ product.stock_quantity }}) is below threshold ({{ product.low_stock_threshold }}).
-                                </div>
-                                {% endif %}
                             </div>
                         </div>
                     </div>
 
-                    <!-- Sidebar Form -->
-                    <div class="sidebar-form">
-                        <!-- Category -->
-                        <div class="form-section">
-                            <div class="section-header">
-                                <h2 class="section-title">Category</h2>
-                            </div>
-                            <div class="section-content">
-                                <div class="form-group">
-                                    <label class="form-label" for="{{ form.category.id_for_label }}">Product Category</label>
-                                    {{ form.category }}
-                                    {% if form.category.errors %}
-                                        <div class="field-error">{{ form.category.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Status -->
-                        <div class="form-section">
-                            <div class="section-header">
-                                <h2 class="section-title">Status</h2>
-                            </div>
-                            <div class="section-content">
-                                <div class="form-group">
-                                    <label class="form-label" for="{{ form.status.id_for_label }}">Product Status</label>
-                                    {{ form.status }}
-                                    {% if form.status.errors %}
-                                        <div class="field-error">{{ form.status.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                                
-                                {% if product.status %}
-                                    <div style="margin-top: 12px;">
-                                        <span class="status-badge">{{ product.get_status_display }}</span>
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Product Info -->
-                        {% if product %}
-                            <div class="form-section">
-                                <div class="section-header">
-                                    <h2 class="section-title">Product Info</h2>
-                                </div>
-                                <div class="section-content">
-                                    <p style="margin-bottom: 8px;"><strong>Created:</strong> {{ product.created_at|date:"M d, Y" }}</p>
-                                    <p style="margin-bottom: 8px;"><strong>Last Updated:</strong> {{ product.updated_at|date:"M d, Y H:i" }}</p>
-                                    {% if product.stock_quantity %}
-                                        <p style="margin-bottom: 8px;"><strong>Current Stock:</strong> {{ product.stock_quantity }} units</p>
-                                    {% endif %}
-                                    <p style="margin-bottom: 8px;"><strong>Total Images:</strong> {{ existing_images|length }}</p>
-                                </div>
-                            </div>
-                        {% endif %}
+                    <!-- Action Buttons -->
+                    <div class="mt-10 flex justify-between items-center fade-in" style="animation-delay: 0.4s;">
+                        <a href="{% url 'product-list' %}" class="px-8 py-4 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-bold">
+                            <i class="fas fa-times mr-2"></i>Cancel
+                        </a>
+                        
+                        <button type="submit" class="px-10 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold text-lg hover:shadow-2xl transition-all">
+                            <i class="fas fa-save mr-2"></i>Update Product
+                        </button>
                     </div>
                 </form>
-            </div>
-        </main>
-    </div>
-
-    <!-- Toasts -->
-    <div id="toast-container" style="position:fixed; top:16px; right:16px; z-index:9999; display:flex; flex-direction:column; gap:8px;"></div>
-
-    <!-- Confirm Dialog -->
-    <div id="confirm-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.35); display:none; align-items:center; justify-content:center; z-index:9998;">
-      <div style="background:#fff; width:360px; max-width:92vw; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.15); overflow:hidden;">
-        <div style="padding:16px 20px; border-bottom:1px solid #e5e7eb;">
-          <h3 style="margin:0; font-size:16px; font-weight:700; color:#1a202c;">Confirm action</h3>
+            </main>
         </div>
-        <div id="confirm-message" style="padding:16px 20px; color:#374151; font-size:14px;">
-          Are you sure?
-        </div>
-        <div style="display:flex; gap:8px; justify-content:flex-end; padding:12px 16px; background:#fafbfc; border-top:1px solid #e5e7eb;">
-          <button id="confirm-cancel" class="btn btn-secondary" type="button">Cancel</button>
-          <button id="confirm-ok" class="btn btn-primary" type="button">Yes</button>
-        </div>
-      </div>
     </div>
 
     <script>
-        let newSelectedFiles = [];
-        const existingImagesCount = parseInt('{{ existing_images|length|default:"0" }}');
-        const maxFiles = 6;
-        const minFiles = 3;
-
-        // Toast helper
-        function showToast(message, type='info', timeout=3000) {
-          const container = document.getElementById('toast-container');
-          if (!container) return;
-
-          const el = document.createElement('div');
-          el.style.padding = '10px 12px';
-          el.style.borderRadius = '8px';
-          el.style.fontSize = '13px';
-          el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.12)';
-          el.style.border = '1px solid';
-          el.style.color = '#1f2937';
-          el.style.background = '#ffffff';
-          el.style.display = 'flex';
-          el.style.alignItems = 'center';
-          el.style.gap = '8px';
-          el.style.transition = 'transform .2s ease, opacity .2s ease';
-          el.style.transform = 'translateY(-6px)';
-          el.style.opacity = '0';
-
-          const types = {
-            success: { b:'#bbf7d0', bg:'#dcfce7', c:'#166534' },
-            error:   { b:'#fecaca', bg:'#fef2f2', c:'#b91c1c' },
-            info:    { b:'#dbeafe', bg:'#eff6ff', c:'#1d4ed8' },
-            warning: { b:'#fed7aa', bg:'#fef3c7', c:'#92400e' },
-          };
-          const t = types[type] || types.info;
-          el.style.borderColor = t.b;
-          el.style.background = t.bg;
-          el.style.color = t.c;
-
-          const icon = document.createElement('i');
-          icon.className = 'fas ' + (type==='success' ? 'fa-check-circle'
-                                  : type==='error' ? 'fa-times-circle'
-                                  : type==='warning' ? 'fa-exclamation-triangle'
-                                  : 'fa-info-circle');
-          icon.style.minWidth = '16px';
-
-          const text = document.createElement('div');
-          text.textContent = message;
-
-          const close = document.createElement('button');
-          close.type = 'button';
-          close.innerHTML = '<i class="fas fa-times"></i>';
-          close.style.border = 'none';
-          close.style.background = 'transparent';
-          close.style.cursor = 'pointer';
-          close.style.color = t.c;
-
-          close.onclick = () => {
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(-6px)';
-            setTimeout(() => el.remove(), 200);
-          };
-
-          el.appendChild(icon);
-          el.appendChild(text);
-          el.appendChild(close);
-          container.appendChild(el);
-
-          requestAnimationFrame(() => {
-            el.style.opacity = '1';
-            el.style.transform = 'translateY(0)';
-          });
-
-          if (timeout) setTimeout(() => close.onclick(), timeout);
-        }
-
-        // Confirm helper (Promise-based)
-        function confirmDialog(message) {
-          return new Promise((resolve) => {
-            const overlay = document.getElementById('confirm-overlay');
-            const msg = document.getElementById('confirm-message');
-            const ok = document.getElementById('confirm-ok');
-            const cancel = document.getElementById('confirm-cancel');
-            msg.textContent = message;
-            overlay.style.display = 'flex';
-
-            const cleanup = () => {
-              overlay.style.display = 'none';
-              ok.onclick = null;
-              cancel.onclick = null;
-              overlay.onclick = null;
-            };
-
-            ok.onclick = () => { cleanup(); resolve(true); };
-            cancel.onclick = () => { cleanup(); resolve(false); };
-            overlay.onclick = (e) => {
-              if (e.target === overlay) { cleanup(); resolve(false); }
-            };
-          });
-        }
-
-        // New images input handler
-        const newImagesInput = document.getElementById('new-images-input');
-        const uploadArea = document.getElementById('upload-area');
-        const validationMessage = document.getElementById('validation-message');
-
-        if (newImagesInput) {
-            newImagesInput.addEventListener('change', function(e) {
-                handleNewImages(e.target.files);
-            });
-        }
-
-        // Drag and drop handlers
-        if (uploadArea) {
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.classList.add('dragover');
-            });
-            
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.classList.remove('dragover');
-            });
-            
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('dragover');
-                handleNewImages(e.dataTransfer.files);
-            });
-        }
-
-        function handleNewImages(files) {
-            const fileArray = Array.from(files);
-            const totalImages = existingImagesCount + fileArray.length;
-            
-            // Validate total count
-            if (totalImages > maxFiles) {
-                showValidation(`Maximum ${maxFiles} images allowed total. You can add ${maxFiles - existingImagesCount} more images.`, 'error');
-                showToast(`Maximum ${maxFiles} images allowed.`, 'error');
-                return;
-            }
-            
-            // Validate file types and sizes
-            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-            const maxSize = 5 * 1024 * 1024; // 5MB
-            
-            for (let file of fileArray) {
-                if (!validTypes.includes(file.type)) {
-                    showValidation(`Invalid file type: ${file.name}. Please use JPG, PNG, GIF, or WebP.`, 'error');
-                    showToast('Invalid file type selected.', 'error');
-                    return;
-                }
-                if (file.size > maxSize) {
-                    showValidation(`File too large: ${file.name}. Maximum size is 5MB.`, 'error');
-                    showToast('File too large (max 5MB).', 'error');
-                    return;
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
                 }
             }
-            
-            newSelectedFiles = fileArray;
-            displayNewImagePreviews();
-            showValidation(`${fileArray.length} new images selected. Total: ${totalImages} images.`, 'success');
-            showToast(`${fileArray.length} new images selected.`, 'success');
+            return cookieValue;
         }
 
-        function displayNewImagePreviews() {
-            const previewContainer = document.getElementById('new-images-preview');
-            const gridContainer = document.getElementById('new-images-grid');
+        function deleteImage(imageId) {
+            if (!confirm('Are you sure you want to delete this image?')) return;
             
-            if (!previewContainer || !gridContainer) return;
-            
-            gridContainer.innerHTML = '';
-            previewContainer.style.display = newSelectedFiles.length > 0 ? 'block' : 'none';
-            
-            newSelectedFiles.forEach((file, index) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const div = document.createElement('div');
-                    div.className = 'image-item';
-                    div.innerHTML = `
-                        <img src="${e.target.result}" alt="New Image ${index + 1}">
-                        <div class="image-overlay">
-                            <button type="button" class="delete-btn" onclick="removeNewImage(${index})">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                        <div class="image-badge">New ${index + 1}</div>
-                    `;
-                    gridContainer.appendChild(div);
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-
-        function removeNewImage(index) {
-            newSelectedFiles.splice(index, 1);
-            
-            // Update file input
-            const dt = new DataTransfer();
-            newSelectedFiles.forEach(file => dt.items.add(file));
-            newImagesInput.files = dt.files;
-            
-            displayNewImagePreviews();
-            
-            if (newSelectedFiles.length === 0) {
-                showValidation('', '');
-                showToast('All pending images removed.', 'info');
-            } else {
-                showValidation(`${newSelectedFiles.length} new images selected.`, 'success');
-                showToast(`${newSelectedFiles.length} images selected.`, 'info');
-            }
-        }
-
-        function showValidation(message, type) {
-            if (!validationMessage) return;
-            
-            validationMessage.textContent = message;
-            validationMessage.className = `validation-message ${type}`;
-            validationMessage.style.display = message ? 'block' : 'none';
-            
-            if (type === 'success' && message) {
-                setTimeout(() => {
-                    validationMessage.style.display = 'none';
-                }, 4000);
-            }
-        }
-
-        // Delete existing image function (uses confirmDialog + toasts)
-        async function deleteExistingImage(imageId, buttonElement) {
-            const confirmed = await confirmDialog('Are you sure you want to delete this image?');
-            if (!confirmed) return;
-
-            const imageElement = buttonElement.closest('[data-image-id]');
-            const currentCount = document.querySelectorAll('[data-image-id]').length;
-            
-            if (currentCount <= minFiles) {
-                showToast('Cannot delete. Need at least 3 images.', 'warning');
-                return;
-            }
-            
-            fetch(`/staff/products/delete-single-image/${imageId}/`, {
+            fetch(`/staff/products/delete-image/${imageId}/`, {
                 method: 'POST',
                 headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                    'Content-Type': 'application/json',
-                },
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    if (imageElement) {
-                        imageElement.remove();
-                    }
-                    showValidation('Image deleted successfully.', 'success');
-                    showToast('Image deleted.', 'success');
-                    setTimeout(() => location.reload(), 800);
+                    location.reload();
                 } else {
-                    showValidation('Error: ' + (data.error || 'Delete failed.'), 'error');
-                    showToast(data.error || 'Delete failed.', 'error');
+                    alert('Error deleting image: ' + data.error);
                 }
             })
             .catch(error => {
+                alert('Error deleting image');
                 console.error('Error:', error);
-                showValidation('An error occurred while deleting the image.', 'error');
-                showToast('Network error while deleting.', 'error');
             });
         }
 
-        // Form validation before submission
-        document.getElementById('product-form').addEventListener('submit', function(e) {
-            const totalImages = document.querySelectorAll('#existing-images-grid .image-item').length + newSelectedFiles.length;
-            
-            if (totalImages < minFiles) {
-                e.preventDefault();
-                showValidation(`Product must have at least ${minFiles} images. Currently has ${totalImages} images.`, 'error');
-                showToast(`Need at least ${minFiles} images.`, 'error');
-                return false;
-            }
+        // New images preview
+        const newImagesInput = document.getElementById('new-images');
+        const newPreviewContainer = document.getElementById('new-preview-container');
+        const newPreviewGrid = document.getElementById('new-preview-grid');
+        const newImageCount = document.getElementById('new-image-count');
 
-            showToast('Saving product...', 'info', 2000);
-        });
+        newImagesInput.addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
 
-        // Auto-resize textareas and add interactivity
-        document.addEventListener('DOMContentLoaded', function() {
-            // Auto-resize textareas
-            const textareas = document.querySelectorAll('textarea');
-            textareas.forEach(function(textarea) {
-                textarea.addEventListener('input', function() {
-                    this.style.height = 'auto';
-                    this.style.height = (this.scrollHeight) + 'px';
-                });
+            newPreviewGrid.innerHTML = '';
+            newPreviewContainer.classList.remove('hidden');
+            newImageCount.textContent = files.length;
+
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const div = document.createElement('div');
+                    div.className = 'relative group bg-gray-100 rounded-xl overflow-hidden border-2 border-gray-200 hover:border-purple-500 transition-all';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-40 object-cover" alt="New Image ${index + 1}">
+                        <div class="absolute top-2 left-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs px-3 py-1 rounded-full font-bold">
+                            New #${index + 1}
+                        </div>
+                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent text-white text-xs p-2 truncate font-medium">
+                            ${file.name}
+                        </div>
+                    `;
+                    newPreviewGrid.appendChild(div);
+                };
+                reader.readAsDataURL(file);
             });
-
-            // Form submission loading state
-            const form = document.getElementById('product-form');
-            if (form) {
-                form.addEventListener('submit', function(e) {
-                    const submitBtn = document.querySelector('.btn-primary');
-                    if (submitBtn && !e.defaultPrevented) {
-                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-                        submitBtn.disabled = true;
-                    }
-                });
-            }
-
-            // Mirror Django messages as toasts
-            {% if messages %}
-              {% for message in messages %}
-                showToast('{{ message|escapejs }}', '{{ message.tags|default:"info" }}');
-              {% endfor %}
-            {% endif %}
-
-            // Price calculation updates (placeholder)
-            const priceField = document.querySelector('input[name="price"]');
-            const discountTypeField = document.querySelector('select[name="discount_type"]');
-            const discountValueField = document.querySelector('input[name="discount_value"]');
-            
-            function updatePriceCalculation() {
-                // implement live calc if needed
-            }
-
-            if (priceField) priceField.addEventListener('input', updatePriceCalculation);
-            if (discountTypeField) discountTypeField.addEventListener('change', updatePriceCalculation);
-            if (discountValueField) discountValueField.addEventListener('input', updatePriceCalculation);
         });
     </script>
 </body>

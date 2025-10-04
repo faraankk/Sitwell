@@ -1,75 +1,301 @@
-{# templates/orders/order_detail.html #}
 {% extends "admin/base_admin.html" %}
+{% block title %}Order Details - {{ order.order_number }} - Sitwell Admin{% endblock %}
+
 {% block body %}
-<div class="mb-4">
-  <a href="{% url 'order-list' %}" class="text-blue-600">← Back to Orders</a>
-</div>
-
-<div class="bg-white border rounded p-4 mb-4">
-  <div class="flex items-center justify-between">
-    <h1 class="text-xl font-semibold">Order {{ order.order_number }}</h1>
-    <form method="post" action="{% url 'order-update-status' order.id %}" class="flex gap-2">
-      {% csrf_token %}
-      {{ statusform.status }}
-      <button class="px-4 py-2 bg-blue-600 text-white rounded" type="submit">Update</button>
-    </form>
-  </div>
-
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3 text-sm">
-    <div>
-      <span class="text-gray-500">Placed</span>
-      <div>{{ order.created_at|date:"Y-m-d H:i" }}</div>
-    </div>
-    <div>
-      <span class="text-gray-500">User</span>
+  <!-- Enhanced Header -->
+  <header class="bg-white shadow-sm border-b border-gray-100 px-8 py-5 flex-shrink-0">
+    <div class="flex items-center justify-between">
       <div>
-        {% if order.user.first_name %}{{ order.user.first_name }} {{ order.user.last_name }}{% else %}{{ order.user.username }}{% endif %}
-        <div class="text-gray-500 text-xs">{{ order.user.email }}</div>
+        <h1 class="text-3xl font-black" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Order Details</h1>
+        <nav class="flex items-center space-x-2 text-sm text-gray-500 mt-2">
+          <a href="{% url 'admin_dashboard' %}" class="text-purple-600 hover:text-purple-800 font-medium transition-colors">
+            <i class="fas fa-home mr-1"></i>Dashboard
+          </a>
+          <i class="fas fa-chevron-right text-xs"></i>
+          <a href="{% url 'order-list' %}" class="text-purple-600 hover:text-purple-800 font-medium transition-colors">Orders</a>
+          <i class="fas fa-chevron-right text-xs"></i>
+          <span class="font-medium">{{ order.order_number }}</span>
+        </nav>
+      </div>
+      <div class="flex items-center space-x-3">
+        <a href="{% url 'order-list' %}" class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-bold transition-all">
+          <i class="fas fa-arrow-left mr-2"></i>Back to Orders
+        </a>
+        <div class="flex items-center space-x-3 bg-gradient-to-r from-blue-50 to-purple-50 px-4 py-2 rounded-xl">
+          <div class="w-2 h-2 bg-green-500 rounded-full pulse"></div>
+          <span class="text-sm font-bold text-gray-700">Farhaan</span>
+          <span class="text-xs text-gray-500 font-medium">Admin</span>
+        </div>
       </div>
     </div>
-    <div>
-      <span class="text-gray-500">Status</span>
-      <div>{{ order.get_status_display }}</div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 overflow-auto p-8">
+    <!-- Order Header Card -->
+    <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-8 mb-8 fade-in">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-2xl font-black text-gray-900">Order #{{ order.order_number }}</h2>
+          <p class="text-sm text-gray-500 mt-1">Placed on {{ order.created_at|date:"F d, Y at h:i A" }}</p>
+        </div>
+        <form method="post" action="{% url 'order-update-status' order.id %}" class="flex items-center gap-3">
+          {% csrf_token %}
+          <button type="submit" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:shadow-lg transition-all">
+            <i class="fas fa-save mr-2"></i>Update Status
+          </button>
+        </form>
+      </div>
+
+      <!-- Order Info Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-4">
+          <p class="text-sm font-bold text-gray-500 uppercase mb-2">Customer</p>
+          <p class="text-lg font-bold text-gray-900">
+            {% if order.user.first_name %}
+              {{ order.user.first_name }} {{ order.user.last_name }}
+            {% else %}
+              {{ order.user.email }}
+            {% endif %}
+          </p>
+          <p class="text-sm text-gray-600 mt-1">{{ order.user.email }}</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4">
+          <p class="text-sm font-bold text-gray-500 uppercase mb-2">Order Status</p>
+          {% if order.status == 'pending' %}
+            <span class="inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-bold rounded-full">
+              <i class="fas fa-clock mr-2"></i>Pending
+            </span>
+          {% elif order.status == 'confirmed' %}
+            <span class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-bold rounded-full">
+              <i class="fas fa-check mr-2"></i>Confirmed
+            </span>
+          {% elif order.status == 'processing' %}
+            <span class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm font-bold rounded-full">
+              <i class="fas fa-spinner mr-2"></i>Processing
+            </span>
+          {% elif order.status == 'shipped' %}
+            <span class="inline-flex items-center px-3 py-1 bg-indigo-100 text-indigo-800 text-sm font-bold rounded-full">
+              <i class="fas fa-shipping-fast mr-2"></i>Shipped
+            </span>
+          {% elif order.status == 'delivered' %}
+            <span class="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 text-sm font-bold rounded-full">
+              <i class="fas fa-check-circle mr-2"></i>Delivered
+            </span>
+          {% elif order.status == 'cancelled' %}
+            <span class="inline-flex items-center px-3 py-1 bg-red-100 text-red-800 text-sm font-bold rounded-full">
+              <i class="fas fa-times-circle mr-2"></i>Cancelled
+            </span>
+          {% elif order.status == 'refunded' %}
+            <span class="inline-flex items-center px-3 py-1 bg-purple-100 text-purple-800 text-sm font-bold rounded-full">
+              <i class="fas fa-undo mr-2"></i>Refunded
+            </span>
+          {% else %}
+            <span class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-800 text-sm font-bold rounded-full">
+              {{ order.status|title }}
+            </span>
+          {% endif %}
+        </div>
+
+        <div class="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-4">
+          <p class="text-sm font-bold text-gray-500 uppercase mb-2">Order Date</p>
+          <p class="text-lg font-bold text-gray-900">{{ order.created_at|date:"d M Y" }}</p>
+          <p class="text-sm text-gray-600 mt-1">{{ order.created_at|date:"h:i A" }}</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4">
+          <p class="text-sm font-bold text-gray-500 uppercase mb-2">Total Amount</p>
+          <p class="text-2xl font-black text-purple-600">₹{{ order.total_amount|floatformat:2 }}</p>
+        </div>
+      </div>
     </div>
-    {# Optional totals block #}
-    {# <div><span class="text-gray-500">Subtotal</span><div>{{ order.subtotal }}</div></div>
-    <div><span class="text-gray-500">Tax</span><div>{{ order.tax }}</div></div>
-    <div><span class="text-gray-500">Shipping</span><div>{{ order.shipping }}</div></div>
-    <div><span class="text-gray-500">Discount</span><div>- {{ order.discount }}</div></div> #}
-    <div class="text-gray-500 font-medium">Total</div>
-    <div>{{ order.total_amount }}</div>
+
+    <!-- Order Items Table -->
+    <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden fade-in" style="animation-delay: 0.2s;">
+      <div class="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-black text-gray-900">Order Items</h2>
+            <p class="text-sm text-gray-500 mt-1">Products in this order</p>
+          </div>
+          <div class="text-sm text-gray-600">
+            <span class="font-bold">{{ items|length }}</span> item{{ items|length|pluralize }}
+          </div>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50 border-b-2 border-gray-200">
+            <tr>
+              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Product</th>
+              <th class="px-6 py-4 text-right text-xs font-black text-gray-700 uppercase tracking-wider">Unit Price</th>
+              <th class="px-6 py-4 text-right text-xs font-black text-gray-700 uppercase tracking-wider">Quantity</th>
+              <th class="px-6 py-4 text-right text-xs font-black text-gray-700 uppercase tracking-wider">Line Total</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for item in items %}
+            <tr class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all">
+              <td class="px-6 py-4">
+                <div class="flex items-center">
+                  <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold mr-3">
+                    <i class="fas fa-box"></i>
+                  </div>
+                  <span class="font-bold text-gray-900">{{ item.product_name }}</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 text-right text-sm font-bold text-gray-700">₹{{ item.product_price|floatformat:2 }}</td>
+              <td class="px-6 py-4 text-right">
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-bold rounded-full">
+                  {{ item.quantity }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-right text-lg font-black text-purple-600">₹{{ item.total_price|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="px-6 py-20 text-center">
+                <div class="inline-flex items-center justify-center w-24 h-24 bg-gray-100 rounded-full mb-6">
+                  <i class="fas fa-shopping-bag text-4xl text-gray-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">No Items</h3>
+                <p class="text-gray-500">This order has no items.</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          
+          <!-- ✅ PRICING BREAKDOWN FOOTER -->
+          <tfoot class="bg-gradient-to-r from-gray-50 to-white border-t-2 border-gray-200">
+            <!-- Subtotal -->
+            <tr class="border-b border-gray-100">
+              <td colspan="3" class="px-6 py-3 text-right text-sm font-bold text-gray-700">Subtotal:</td>
+              <td class="px-6 py-3 text-right text-sm font-bold text-gray-900">₹{{ order.subtotal|floatformat:2 }}</td>
+            </tr>
+            
+            <!-- Discount -->
+            {% if order.discount_amount > 0 %}
+            <tr class="border-b border-gray-100">
+              <td colspan="3" class="px-6 py-3 text-right text-sm font-bold text-green-600">Discount:</td>
+              <td class="px-6 py-3 text-right text-sm font-bold text-green-600">- ₹{{ order.discount_amount|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            
+            <!-- Tax/GST -->
+            {% if order.tax_amount > 0 %}
+            <tr class="border-b border-gray-100">
+              <td colspan="3" class="px-6 py-3 text-right text-sm font-bold text-gray-700">Tax (18% GST):</td>
+              <td class="px-6 py-3 text-right text-sm font-bold text-gray-900">₹{{ order.tax_amount|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            
+            <!-- Shipping -->
+            <tr class="border-b border-gray-100">
+              <td colspan="3" class="px-6 py-3 text-right text-sm font-bold text-gray-700">Shipping:</td>
+              <td class="px-6 py-3 text-right text-sm font-bold text-gray-900">
+                {% if order.shipping_charge == 0 %}
+                  <span class="text-green-600">FREE</span>
+                {% else %}
+                  ₹{{ order.shipping_charge|floatformat:2 }}
+                {% endif %}
+              </td>
+            </tr>
+            
+            <!-- Grand Total -->
+            <tr class="bg-gradient-to-r from-purple-50 to-pink-50">
+              <td colspan="3" class="px-6 py-4 text-right text-xl font-black text-gray-900">Grand Total:</td>
+              <td class="px-6 py-4 text-right text-2xl font-black text-purple-600">₹{{ order.total_amount|floatformat:2 }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    {% if order.status != 'delivered' and order.status != 'cancelled' %}
+    <div class="mt-8 flex justify-between items-center fade-in" style="animation-delay: 0.4s;">
+      <div class="text-sm text-gray-500">
+        <i class="fas fa-info-circle mr-2"></i>You can cancel this order before it's delivered
+      </div>
+      <button type="button" onclick="showCancelDialog()" class="px-8 py-4 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-bold hover:shadow-2xl transition-all">
+        <i class="fas fa-times-circle mr-2"></i>Cancel Order
+      </button>
+    </div>
+    {% endif %}
+  </main>
+
+  <!-- Custom Cancel Confirmation Dialog -->
+  <div id="cancel-dialog" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50" onclick="if(event.target === this) hideCancelDialog()">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all">
+      <div class="px-8 py-6 border-b-2 border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+        <div class="flex items-center">
+          <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center mr-4">
+            <i class="fas fa-exclamation-triangle text-white text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-xl font-black text-gray-900">Confirm Cancellation</h3>
+            <p class="text-sm text-gray-500 mt-1">This action cannot be undone</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="px-8 py-6">
+        <p class="text-gray-700 font-medium mb-4">
+          ⚠️ Are you sure you want to cancel this order? This action cannot be undone.
+        </p>
+        <div class="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-4">
+          <p class="text-sm text-gray-700"><strong>Order:</strong> #{{ order.order_number }}</p>
+          <p class="text-sm text-gray-700"><strong>Total:</strong> ₹{{ order.total_amount|floatformat:2 }}</p>
+          <p class="text-sm text-gray-700"><strong>Status:</strong> {{ order.get_status_display }}</p>
+        </div>
+      </div>
+      
+      <div class="px-8 py-6 bg-gray-50 border-t-2 border-gray-100 flex justify-end gap-3">
+        <button type="button" onclick="hideCancelDialog()" class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 font-bold transition-all">
+          <i class="fas fa-times mr-2"></i>No, Keep Order
+        </button>
+        <form method="post" action="{% url 'order-cancel' order.id %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-bold hover:shadow-lg transition-all">
+            <i class="fas fa-check mr-2"></i>Yes, Cancel Order
+          </button>
+        </form>
+      </div>
+    </div>
   </div>
-</div>
 
-<div class="bg-white border rounded">
-  <table class="min-w-full text-sm">
-    <thead class="bg-gray-100">
-      <tr>
-        <th class="text-left px-4 py-2">Product</th>
-        <th class="text-right px-4 py-2">Price</th>
-        <th class="text-right px-4 py-2">Qty</th>
-        <th class="text-right px-4 py-2">Line Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for it in items %}
-      <tr class="border-t">
-        <td class="px-4 py-2">{{ it.name_snapshot|default:it.product.name }}</td>
-        <td class="px-4 py-2 text-right">{{ it.price_snapshot }}</td>
-        <td class="px-4 py-2 text-right">{{ it.quantity }}</td>
-        <td class="px-4 py-2 text-right">{{ it.line_total }}</td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="4" class="px-4 py-6 text-center text-gray-500">No items.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+  <style>
+    .fade-in {
+      animation: fadeIn 0.6s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .pulse {
+      animation: pulse 2s ease-in-out infinite;
+    }
+  </style>
 
-{% if order.status != 'delivered' and order.status != 'cancelled' %}
-<form method="post" action="{% url 'order-cancel' order.id %}" class="mt-4">
-  {% csrf_token %}
-  <button class="px-4 py-2 bg-red-600 text-white rounded" type="submit">Cancel Order</button>
-</form>
-{% endif %}
+  <script>
+    function showCancelDialog() {
+      document.getElementById('cancel-dialog').classList.remove('hidden');
+      document.getElementById('cancel-dialog').classList.add('flex');
+    }
+
+    function hideCancelDialog() {
+      document.getElementById('cancel-dialog').classList.add('hidden');
+      document.getElementById('cancel-dialog').classList.remove('flex');
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') hideCancelDialog();
+    });
+  </script>
 {% endblock %}

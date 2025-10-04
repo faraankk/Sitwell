@@ -4,10 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OTP Verification - Sit Well</title>
-    <!-- Your existing CSS styles -->
+    <title>OTP Verification - Sitwell</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Your existing styles */
         * {
             margin: 0;
             padding: 0;
@@ -15,80 +14,77 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
-        /* Add this for messages */
-        .messages {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-        }
-
-        .alert {
-            padding: 10px 15px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            font-weight: 500;
-        }
-
-        .alert-success {
-            background-color: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-        }
-
-        .alert-error {
-            background-color: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-        }
-
-        /* Your existing styles continue here... */
+        /* Header */
         .header {
-            background-color: white;
-            border-bottom: 1px solid #e0e0e0;
-            padding: 15px 0;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 20px 0;
         }
 
         .header-container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 20px;
+            padding: 0 40px;
         }
 
         .logo {
-            border: 2px solid #333;
-            padding: 8px 12px;
-            font-weight: bold;
-            color: #333;
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             text-decoration: none;
+            text-transform: lowercase;
         }
 
         .nav-menu {
             display: flex;
             list-style: none;
-            gap: 30px;
+            gap: 35px;
         }
 
         .nav-menu a {
             text-decoration: none;
             color: #333;
-            font-weight: 500;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-menu a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        .nav-menu a:hover::after {
+            width: 100%;
+        }
+
+        .nav-menu a:hover {
+            color: #667eea;
         }
 
         .header-right {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 20px;
         }
 
         .search-container {
@@ -96,11 +92,18 @@
         }
 
         .search-input {
-            padding: 8px 40px 8px 15px;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            background-color: #f5f5f5;
+            padding: 10px 40px 10px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            background: #f8f9fa;
             width: 250px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
         }
 
         .search-btn {
@@ -111,6 +114,8 @@
             background: none;
             border: none;
             cursor: pointer;
+            font-size: 18px;
+            color: #667eea;
         }
 
         .header-icons {
@@ -122,9 +127,65 @@
             background: none;
             border: none;
             cursor: pointer;
+            font-size: 22px;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        .icon-btn:hover {
+            color: #667eea;
+            transform: scale(1.1);
+        }
+
+        /* Messages */
+        .messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+
+        .alert {
+            padding: 14px 20px;
+            margin-bottom: 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .alert i {
             font-size: 18px;
         }
 
+        /* Main Content */
         .main-content {
             flex: 1;
             display: flex;
@@ -135,112 +196,176 @@
 
         .otp-container {
             background: white;
-            padding: 60px 40px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 60px 50px;
+            border-radius: 15px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.12);
             text-align: center;
-            max-width: 700px;
+            max-width: 600px;
             width: 100%;
+            border: 2px solid #f0f0f0;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .otp-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .otp-icon i {
+            font-size: 3rem;
+            color: white;
         }
 
         .otp-title {
-            font-size: 24px;
-            font-weight: bold;
+            font-size: 32px;
+            font-weight: 700;
             color: #333;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
 
         .otp-subtitle {
             color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
+            margin-bottom: 40px;
+            font-size: 16px;
+            line-height: 1.6;
         }
 
         .otp-inputs {
             display: flex;
             justify-content: center;
             gap: 15px;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
 
         .otp-input {
-            width: 50px;
-            height: 50px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
+            width: 60px;
+            height: 60px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
             text-align: center;
-            font-size: 20px;
-            font-weight: bold;
-            background-color: #f8f9fa;
+            font-size: 24px;
+            font-weight: 700;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            color: #333;
         }
 
         .otp-input:focus {
             outline: none;
-            border-color: #e74c3c;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            transform: scale(1.05);
+        }
+
+        .timer-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9ff 0%, #fff5f8 100%);
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
         }
 
         .timer {
-            color: #666;
-            margin-bottom: 10px;
-            font-size: 14px;
+            color: #667eea;
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .timer i {
+            font-size: 20px;
         }
 
         .resend-link {
             color: #666;
-            font-size: 14px;
-            margin-bottom: 30px;
+            font-size: 15px;
         }
 
         .resend-link a {
-            color: #333;
+            color: #667eea;
             text-decoration: none;
-            font-weight: 500;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+
+        .resend-link a:hover {
+            color: #764ba2;
+            text-decoration: underline;
         }
 
         .submit-btn {
-            background-color: #e74c3c;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 12px 40px;
-            border-radius: 5px;
+            padding: 16px 40px;
+            border-radius: 10px;
             font-size: 16px;
-            font-weight: 500;
+            font-weight: 700;
             cursor: pointer;
             width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
 
-        .submit-btn:hover {
-            background-color: #c0392b;
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
 
         .submit-btn:disabled {
-            background-color: #ccc;
+            background: #e9ecef;
             cursor: not-allowed;
+            box-shadow: none;
+            opacity: 0.6;
         }
 
-        /* Your footer styles continue... */
+        /* Footer */
         .footer {
-            background-color: #1a1a1a;
+            background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
             color: white;
-            padding: 40px 0 20px;
+            padding: 60px 0 30px;
         }
 
         .footer-container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 0 40px;
         }
 
         .footer-content {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 40px;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
         }
 
         .footer-section h3 {
-            margin-bottom: 15px;
-            font-size: 16px;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: 700;
         }
 
         .footer-section ul {
@@ -248,38 +373,46 @@
         }
 
         .footer-section ul li {
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
         .footer-section ul li a {
-            color: #ccc;
+            color: #999;
             text-decoration: none;
             font-size: 14px;
+            transition: color 0.3s ease;
         }
 
         .footer-section ul li a:hover {
-            color: white;
+            color: #667eea;
         }
 
         .newsletter-form {
             display: flex;
-            margin-top: 15px;
+            margin-top: 20px;
         }
 
         .newsletter-input {
             flex: 1;
-            padding: 10px;
-            border: 1px solid #444;
-            background-color: #333;
+            padding: 12px 16px;
+            border: 2px solid #333;
+            background: #222;
             color: white;
+            border-radius: 8px 0 0 8px;
         }
 
         .newsletter-btn {
-            background-color: #e74c3c;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 10px 15px;
+            padding: 12px 20px;
             cursor: pointer;
+            border-radius: 0 8px 8px 0;
+            transition: all 0.3s ease;
+        }
+
+        .newsletter-btn:hover {
+            transform: scale(1.05);
         }
 
         .app-downloads {
@@ -288,15 +421,28 @@
             margin-top: 15px;
         }
 
-        .app-downloads img {
-            height: 40px;
+        .app-btn {
+            background: #333;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .app-btn:hover {
+            background: #444;
+            transform: translateY(-2px);
         }
 
         .qr-code {
             width: 80px;
             height: 80px;
-            background-color: white;
-            margin-bottom: 10px;
+            background: white;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .social-icons {
@@ -306,23 +452,36 @@
         }
 
         .social-icons a {
-            color: #ccc;
-            font-size: 18px;
+            width: 40px;
+            height: 40px;
+            background: #333;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
             text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .social-icons a:hover {
+            background: #667eea;
+            transform: translateY(-3px);
         }
 
         .footer-bottom {
             border-top: 1px solid #333;
-            padding-top: 20px;
+            padding-top: 25px;
             text-align: center;
             color: #666;
-            font-size: 12px;
+            font-size: 14px;
         }
 
         @media (max-width: 768px) {
             .header-container {
                 flex-direction: column;
-                gap: 15px;
+                gap: 20px;
+                padding: 0 20px;
             }
 
             .nav-menu {
@@ -334,7 +493,21 @@
             }
 
             .otp-container {
-                padding: 40px 20px;
+                padding: 40px 25px;
+                margin: 0 10px;
+            }
+
+            .otp-icon {
+                width: 80px;
+                height: 80px;
+            }
+
+            .otp-icon i {
+                font-size: 2.5rem;
+            }
+
+            .otp-title {
+                font-size: 26px;
             }
 
             .otp-inputs {
@@ -342,8 +515,9 @@
             }
 
             .otp-input {
-                width: 45px;
-                height: 45px;
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
             }
 
             .footer-content {
@@ -357,24 +531,24 @@
     <!-- Header -->
     <header class="header">
         <div class="header-container">
-            <a href="#" class="logo">sit well</a>
+            <a href="{% url 'dummy_home' %}" class="logo">sitwell</a>
             
             <nav>
                 <ul class="nav-menu">
-                    <li><a href="#">Home</a></li>
-                    <li><a href="#">Contact</a></li>
-                    <li><a href="#">About</a></li>
+                    <li><a href="{% url 'dummy_home' %}"><i class="fas fa-home" style="margin-right: 6px;"></i>Home</a></li>
+                    <li><a href="#"><i class="fas fa-envelope" style="margin-right: 6px;"></i>Contact</a></li>
+                    <li><a href="#"><i class="fas fa-info-circle" style="margin-right: 6px;"></i>About</a></li>
                 </ul>
             </nav>
             
             <div class="header-right">
                 <div class="search-container">
                     <input type="text" class="search-input" placeholder="What are you looking for?">
-                    <button class="search-btn">🔍</button>
+                    <button class="search-btn"><i class="fas fa-search"></i></button>
                 </div>
                 <div class="header-icons">
-                    <button class="icon-btn">♡</button>
-                    <button class="icon-btn">🛒</button>
+                    <button class="icon-btn"><i class="fas fa-heart"></i></button>
+                    <button class="icon-btn"><i class="fas fa-shopping-cart"></i></button>
                 </div>
             </div>
         </div>
@@ -384,7 +558,10 @@
     {% if messages %}
         <div class="messages">
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                <div class="alert alert-{{ message.tags }}">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+                    {{ message }}
+                </div>
             {% endfor %}
         </div>
     {% endif %}
@@ -392,7 +569,10 @@
     <!-- Main Content -->
     <main class="main-content">
         <div class="otp-container">
-            <h1 class="otp-title">OTP VERIFICATION</h1>
+            <div class="otp-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h1 class="otp-title">OTP Verification</h1>
             <p class="otp-subtitle">Enter the 6-digit OTP sent to your email</p>
             
             <form method="post" id="otpForm">
@@ -407,42 +587,48 @@
                     <input type="text" class="otp-input" maxlength="1" id="otp6" autocomplete="off">
                 </div>
                 
-                <!-- Hidden field to store the combined 6-digit OTP -->
                 <input type="hidden" name="otp" id="combined-otp">
                 
-                <div class="timer">01:59 Sec</div>
-                <div class="resend-link">
-                    Didn't receive code? 
-                    <a href="?resend={{ user_id_for_resend }}">Re-send</a>
+                <div class="timer-section">
+                    <div class="timer">
+                        <i class="fas fa-clock"></i>
+                        <span id="timer-text">01:59</span>
+                    </div>
+                    <div class="resend-link">
+                        Didn't receive code? 
+                        <a href="?resend={{ user_id_for_resend }}">Re-send</a>
+                    </div>
                 </div>
                 
-                <button type="submit" class="submit-btn" id="submitBtn">Submit</button>
+                <button type="submit" class="submit-btn" id="submitBtn" disabled>
+                    <i class="fas fa-check-circle" style="margin-right: 8px;"></i>Verify OTP
+                </button>
             </form>
         </div>
     </main>
 
-    <!-- Your existing footer -->
+    <!-- Footer -->
     <footer class="footer">
         <div class="footer-container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3>Exclusive</h3>
+                    <h3>Sitwell</h3>
                     <ul>
                         <li><a href="#">Subscribe</a></li>
                         <li><a href="#">Get 10% off your first order</a></li>
                     </ul>
                     <form class="newsletter-form">
                         <input type="email" class="newsletter-input" placeholder="Enter your email">
-                        <button type="submit" class="newsletter-btn">></button>
+                        <button type="submit" class="newsletter-btn"><i class="fas fa-arrow-right"></i></button>
                     </form>
                 </div>
                 
                 <div class="footer-section">
                     <h3>Support</h3>
                     <ul>
-                        <li><a href="#">111 Bijoy sarani, Dhaka, DH 1515, Bangladesh</a></li>
-                        <li><a href="#">exclusive@gmail.com</a></li>
-                        <li><a href="#">+88015-88888-9999</a></li>
+                        <li><a href="#"><i class="fas fa-map-marker-alt" style="margin-right: 6px;"></i>111 Bijoy sarani, Dhaka</a></li>
+                        <li><a href="#"><i class="fas fa-envelope" style="margin-right: 6px;"></i>sitwell@gmail.com</a></li>
+                        <li><a href="#"><i class="fas fa-phone" style="margin-right: 6px;"></i>+88015-88888-9999</a></li>
                     </ul>
                 </div>
                 
@@ -450,7 +636,7 @@
                     <h3>Account</h3>
                     <ul>
                         <li><a href="#">My Account</a></li>
-                        <li><a href="#">Login / Register</a></li>
+                        <li><a href="{% url 'login' %}">Login</a> / <a href="{% url 'signup' %}">Register</a></li>
                         <li><a href="#">Cart</a></li>
                         <li><a href="#">Wishlist</a></li>
                         <li><a href="#">Shop</a></li>
@@ -469,71 +655,54 @@
                 
                 <div class="footer-section">
                     <h3>Download App</h3>
-                    <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Save $3 with App New User Only</p>
-                    <div class="qr-code"></div>
+                    <p style="font-size: 13px; color: #999; margin-bottom: 15px;">Save $3 with App New User Only</p>
+                    <div class="qr-code">
+                        <i class="fas fa-qrcode" style="font-size: 2.5rem; color: #333;"></i>
+                    </div>
                     <div class="app-downloads">
-                        <div style="background: #333; padding: 5px 10px; border-radius: 3px; font-size: 10px;">Google Play</div>
-                        <div style="background: #333; padding: 5px 10px; border-radius: 3px; font-size: 10px;">App Store</div>
+                        <div class="app-btn"><i class="fab fa-google-play"></i> Google Play</div>
+                        <div class="app-btn"><i class="fab fa-apple"></i> App Store</div>
                     </div>
                     <div class="social-icons">
-                        <a href="#">f</a>
-                        <a href="#">t</a>
-                        <a href="#">in</a>
-                        <a href="#">ig</a>
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
                     </div>
                 </div>
             </div>
             
             <div class="footer-bottom">
-                <p>© Copyright Rimel 2022. All right reserved</p>
+                <p>© Copyright Sitwell 2025. All rights reserved</p>
             </div>
         </div>
     </footer>
 
     <script>
-        // Get all OTP input elements
         const otpInputs = document.querySelectorAll('.otp-input');
         const combinedOtpField = document.getElementById('combined-otp');
         const submitBtn = document.getElementById('submitBtn');
         const otpForm = document.getElementById('otpForm');
 
-        // Function to update the hidden combined OTP field
         function updateCombinedOTP() {
             const otpValues = Array.from(otpInputs).map(input => input.value).join('');
             combinedOtpField.value = otpValues;
-            
-            // Enable/disable submit button based on OTP completion
-            if (otpValues.length === 6) {
-                submitBtn.disabled = false;
-                submitBtn.style.backgroundColor = '#e74c3c';
-            } else {
-                submitBtn.disabled = true;
-                submitBtn.style.backgroundColor = '#ccc';
-            }
+            submitBtn.disabled = otpValues.length !== 6;
         }
 
-        // Add event listeners to each OTP input
         otpInputs.forEach((input, index) => {
-            // Handle input - move to next field and update combined OTP
             input.addEventListener('input', (e) => {
                 const value = e.target.value;
-                
-                // Only allow numbers
                 if (!/^\d*$/.test(value)) {
                     e.target.value = '';
                     return;
                 }
-                
-                // Move to next input if current is filled and not the last input
                 if (value.length === 1 && index < otpInputs.length - 1) {
                     otpInputs[index + 1].focus();
                 }
-                
-                // Update the combined OTP
                 updateCombinedOTP();
             });
             
-            // Handle backspace - move to previous field
             input.addEventListener('keydown', (e) => {
                 if (e.key === 'Backspace') {
                     if (e.target.value === '' && index > 0) {
@@ -543,40 +712,23 @@
                         updateCombinedOTP();
                     }
                 }
-                
-                // Handle arrow keys for navigation
-                if (e.key === 'ArrowLeft' && index > 0) {
-                    otpInputs[index - 1].focus();
-                }
-                if (e.key === 'ArrowRight' && index < otpInputs.length - 1) {
-                    otpInputs[index + 1].focus();
-                }
             });
 
-            // Handle paste - distribute pasted digits across inputs
             input.addEventListener('paste', (e) => {
                 e.preventDefault();
                 const pastedData = e.clipboardData.getData('text');
                 const digits = pastedData.replace(/\D/g, '').split('').slice(0, 6);
-                
                 digits.forEach((digit, i) => {
                     if (index + i < otpInputs.length) {
                         otpInputs[index + i].value = digit;
                     }
                 });
-                
                 updateCombinedOTP();
-                
-                // Focus on the next empty field or the last field
-                const nextEmptyIndex = Math.min(index + digits.length, otpInputs.length - 1);
-                otpInputs[nextEmptyIndex].focus();
             });
         });
 
-        // Form submission handler
         otpForm.addEventListener('submit', function(e) {
             updateCombinedOTP();
-            
             if (combinedOtpField.value.length !== 6) {
                 e.preventDefault();
                 alert('Please enter the complete 6-digit OTP');
@@ -584,35 +736,36 @@
             }
         });
 
-        // Initialize the form - disable submit button initially
         updateCombinedOTP();
 
-        // Timer countdown functionality
-        let timeLeft = 119; // 1:59 in seconds
-        const timerElement = document.querySelector('.timer');
-        
+        // Timer
+        let timeLeft = 119;
+        const timerElement = document.getElementById('timer-text');
         const countdown = setInterval(() => {
             timeLeft--;
             const minutes = Math.floor(timeLeft / 60);
             const seconds = timeLeft % 60;
-            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} Sec`;
-            
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             if (timeLeft <= 0) {
                 clearInterval(countdown);
-                timerElement.textContent = '00:00 Sec';
-                // Optionally disable the form when timer expires
+                timerElement.textContent = '00:00';
                 otpInputs.forEach(input => input.disabled = true);
                 submitBtn.disabled = true;
             }
         }, 1000);
 
-        // Auto-hide messages after 5 seconds
+        // Auto-hide messages
         setTimeout(() => {
             const messages = document.querySelector('.messages');
             if (messages) {
-                messages.style.display = 'none';
+                messages.style.opacity = '0';
+                messages.style.transition = 'opacity 0.5s';
+                setTimeout(() => messages.style.display = 'none', 500);
             }
         }, 5000);
+
+        // Focus first input
+        otpInputs[0].focus();
     </script>
 </body>
 </html>

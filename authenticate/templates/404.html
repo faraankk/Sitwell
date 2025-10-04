@@ -3,290 +3,552 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Page Not Found</title>
+    <title>404 - Page Not Found | Sitwell</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         
         body {
             font-family: 'Inter', sans-serif;
-            background: #000000;
-            color: #ffffff;
-            margin: 0;
-            padding: 0;
+            background: #000;
+            color: #fff;
             overflow-x: hidden;
+            position: relative;
         }
         
-        /* Enhanced walking animation with more realistic movement */
-        .walking-person {
-            animation: walk 6s ease-in-out infinite;
+        /* Animated starfield background */
+        .starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
         }
         
-        @keyframes walk {
-            0% { transform: translateX(-150px) scaleX(1); }
-            25% { transform: translateX(-50px) scaleX(1); }
-            50% { transform: translateX(100px) scaleX(-1); }
-            75% { transform: translateX(50px) scaleX(-1); }
-            100% { transform: translateX(-150px) scaleX(1); }
-        }
-        
-        /* More natural sitting animation with breathing effect */
-        .sitting-person {
-            animation: breathe 3s ease-in-out infinite;
-        }
-        
-        @keyframes breathe {
-            0%, 100% { transform: translateY(0px) scale(1); }
-            50% { transform: translateY(-3px) scale(1.02); }
-        }
-        
-        /* Enhanced floating sofa with rotation */
-        .floating-sofa {
-            animation: sofaFloat 4s ease-in-out infinite;
-        }
-        
-        @keyframes sofaFloat {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            25% { transform: translateY(-8px) rotate(0.5deg); }
-            50% { transform: translateY(-12px) rotate(0deg); }
-            75% { transform: translateY(-8px) rotate(-0.5deg); }
-        }
-        
-        /* Added leg movement animation for walking person */
-        .walking-legs {
-            animation: legMove 1.5s ease-in-out infinite;
-        }
-        
-        @keyframes legMove {
-            0%, 100% { transform: rotate(0deg); }
-            25% { transform: rotate(15deg); }
-            50% { transform: rotate(0deg); }
-            75% { transform: rotate(-15deg); }
-        }
-        
-        /* Added arm swing animation */
-        .walking-arms {
-            animation: armSwing 1.5s ease-in-out infinite;
-        }
-        
-        @keyframes armSwing {
-            0%, 100% { transform: rotate(0deg); }
-            25% { transform: rotate(-10deg); }
-            50% { transform: rotate(0deg); }
-            75% { transform: rotate(10deg); }
-        }
-        
-        /* Added blinking animation for sitting person */
-        .blinking-eyes {
-            animation: blink 4s ease-in-out infinite;
-        }
-        
-        @keyframes blink {
-            0%, 90%, 100% { opacity: 1; }
-            95% { opacity: 0; }
-        }
-        
-        /* Added subtle shadow animation */
-        .person-shadow {
-            animation: shadowMove 6s ease-in-out infinite;
-        }
-        
-        @keyframes shadowMove {
-            0% { transform: translateX(-150px) scaleX(0.8); opacity: 0.3; }
-            25% { transform: translateX(-50px) scaleX(1); opacity: 0.5; }
-            50% { transform: translateX(100px) scaleX(1); opacity: 0.5; }
-            75% { transform: translateX(50px) scaleX(1); opacity: 0.5; }
-            100% { transform: translateX(-150px) scaleX(0.8); opacity: 0.3; }
-        }
-        
-        .gradient-text {
-            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        /* Added particle effect background */
-        .particles {
+        .star {
             position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s ease-in-out infinite;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        
+        /* Aurora borealis effect */
+        .aurora {
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at 30% 50%, rgba(96, 165, 250, 0.15) 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 30%, rgba(167, 139, 250, 0.15) 0%, transparent 50%),
+                        radial-gradient(ellipse at 50% 70%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
+            animation: auroraMove 20s ease-in-out infinite;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        @keyframes auroraMove {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-5%, 5%) rotate(5deg); }
+            66% { transform: translate(5%, -5%) rotate(-5deg); }
+        }
+        
+        /* Enhanced floating particles */
+        .particles {
+            position: fixed;
             width: 100%;
             height: 100%;
             overflow: hidden;
             pointer-events: none;
+            z-index: 2;
         }
         
         .particle {
             position: absolute;
-            width: 2px;
-            height: 2px;
-            background: #374151;
             border-radius: 50%;
-            animation: float-particles 8s linear infinite;
+            background: radial-gradient(circle, rgba(96, 165, 250, 0.8) 0%, transparent 70%);
+            animation: float-particles 15s ease-in-out infinite;
+            filter: blur(1px);
         }
         
         @keyframes float-particles {
-            0% { transform: translateY(100vh) translateX(0px); opacity: 0; }
+            0% { transform: translateY(100vh) translateX(0) rotate(0deg); opacity: 0; }
             10% { opacity: 1; }
             90% { opacity: 1; }
-            100% { transform: translateY(-100px) translateX(50px); opacity: 0; }
+            100% { transform: translateY(-10vh) translateX(100px) rotate(360deg); opacity: 0; }
+        }
+        
+        /* Walking animation with realistic movement */
+        .walking-person {
+            animation: walk 10s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            filter: drop-shadow(0 20px 40px rgba(96, 165, 250, 0.4));
+        }
+        
+        @keyframes walk {
+            0% { transform: translateX(-200px) scaleX(1); }
+            20% { transform: translateX(-50px) scaleX(1); }
+            25% { transform: translateX(-20px) scaleX(1); }
+            45% { transform: translateX(180px) scaleX(-1); }
+            50% { transform: translateX(200px) scaleX(-1); }
+            70% { transform: translateX(50px) scaleX(-1); }
+            75% { transform: translateX(20px) scaleX(-1); }
+            100% { transform: translateX(-200px) scaleX(1); }
+        }
+        
+        /* Breathing person */
+        .sitting-person {
+            animation: breathe 5s ease-in-out infinite;
+            filter: drop-shadow(0 20px 40px rgba(167, 139, 250, 0.4));
+        }
+        
+        @keyframes breathe {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-8px) scale(1.04); }
+        }
+        
+        /* 3D floating sofa */
+        .floating-sofa {
+            animation: sofaFloat 6s ease-in-out infinite;
+            filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.8));
+            transform-style: preserve-3d;
+        }
+        
+        @keyframes sofaFloat {
+            0%, 100% { transform: translateY(0) rotateX(0deg) rotateY(0deg); }
+            25% { transform: translateY(-20px) rotateX(3deg) rotateY(3deg); }
+            50% { transform: translateY(-30px) rotateX(0deg) rotateY(0deg); }
+            75% { transform: translateY(-20px) rotateX(-3deg) rotateY(-3deg); }
+        }
+        
+        /* Realistic leg movement */
+        .walking-legs {
+            animation: legMove 1s ease-in-out infinite;
+            transform-origin: center top;
+        }
+        
+        @keyframes legMove {
+            0%, 100% { transform: rotate(0deg) translateY(0); }
+            25% { transform: rotate(30deg) translateY(-2px); }
+            50% { transform: rotate(0deg) translateY(0); }
+            75% { transform: rotate(-30deg) translateY(-2px); }
+        }
+        
+        /* Arm swing */
+        .walking-arms {
+            animation: armSwing 1s ease-in-out infinite;
+            transform-origin: center;
+        }
+        
+        @keyframes armSwing {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-25deg); }
+            50% { transform: rotate(0deg); }
+            75% { transform: rotate(25deg); }
+        }
+        
+        /* Blinking eyes */
+        .blinking-eyes {
+            animation: blink 6s ease-in-out infinite;
+        }
+        
+        @keyframes blink {
+            0%, 94%, 100% { opacity: 1; }
+            97% { opacity: 0; }
+        }
+        
+        /* Dynamic shadow */
+        .person-shadow {
+            animation: shadowMove 10s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            filter: blur(8px);
+        }
+        
+        @keyframes shadowMove {
+            0% { transform: translateX(-200px) scaleX(0.5); opacity: 0.2; }
+            20% { transform: translateX(-50px) scaleX(1); opacity: 0.5; }
+            45% { transform: translateX(180px) scaleX(1); opacity: 0.5; }
+            70% { transform: translateX(50px) scaleX(1); opacity: 0.5; }
+            100% { transform: translateX(-200px) scaleX(0.5); opacity: 0.2; }
+        }
+        
+        /* Glowing gradient text */
+        .gradient-text {
+            background: linear-gradient(45deg, #60a5fa, #a78bfa, #ec4899, #f59e0b);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 4s ease infinite;
+            filter: drop-shadow(0 0 20px rgba(96, 165, 250, 0.5));
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        /* Glowing orbs around scene */
+        .glow-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(40px);
+            animation: orbFloat 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+            50% { transform: translate(50px, -50px) scale(1.5); opacity: 0.6; }
+        }
+        
+        /* Ripple button effect */
+        .btn-ripple {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .btn-ripple::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn-ripple:hover::before {
+            width: 400px;
+            height: 400px;
+        }
+        
+        .btn-ripple:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(96, 165, 250, 0.6);
+        }
+        
+        /* 404 pulse glow */
+        .glow-404 {
+            animation: glow404 3s ease-in-out infinite;
+            filter: drop-shadow(0 0 10px #60a5fa) drop-shadow(0 0 20px #60a5fa) drop-shadow(0 0 30px #60a5fa);
+        }
+        
+        @keyframes glow404 {
+            0%, 100% { filter: drop-shadow(0 0 10px #60a5fa) drop-shadow(0 0 20px #60a5fa); }
+            50% { filter: drop-shadow(0 0 20px #60a5fa) drop-shadow(0 0 40px #60a5fa) drop-shadow(0 0 60px #60a5fa); }
+        }
+        
+        /* Fade in animation */
+        .fade-in {
+            animation: fadeIn 1.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Sparkles */
+        .sparkle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #fff, 0 0 20px #60a5fa, 0 0 30px #60a5fa;
+            animation: sparkleAnim 2s ease-in-out infinite;
+        }
+        
+        @keyframes sparkleAnim {
+            0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+            50% { opacity: 1; transform: scale(1.5) rotate(180deg); }
+        }
+        
+        /* Glowing navigation */
+        nav {
+            backdrop-filter: blur(20px);
+            background: rgba(0, 0, 0, 0.5);
+            border-bottom: 1px solid rgba(96, 165, 250, 0.2);
+        }
+        
+        .logo-box {
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            box-shadow: 0 0 30px rgba(96, 165, 250, 0.6);
+            transition: all 0.3s ease;
+            animation: logoGlow 3s ease-in-out infinite;
+        }
+        
+        @keyframes logoGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(96, 165, 250, 0.4); }
+            50% { box-shadow: 0 0 40px rgba(96, 165, 250, 0.8), 0 0 60px rgba(96, 165, 250, 0.4); }
+        }
+        
+        .logo-box:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 0 50px rgba(96, 165, 250, 1);
+        }
+        
+        /* Link hover effect */
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        .nav-link:hover {
+            color: #60a5fa;
+            transform: translateY(-2px);
+        }
+        
+        /* Scene atmosphere */
+        .scene-atmosphere {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(96, 165, 250, 0.2) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: atmospherePulse 5s ease-in-out infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes atmospherePulse {
+            0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.3); }
         }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
-    <!-- Added floating particles background -->
+    <!-- Starfield background -->
+    <div class="starfield">
+        <div class="star" style="top: 10%; left: 20%; width: 2px; height: 2px; animation-delay: 0s;"></div>
+        <div class="star" style="top: 20%; left: 80%; width: 3px; height: 3px; animation-delay: 0.5s;"></div>
+        <div class="star" style="top: 30%; left: 50%; width: 2px; height: 2px; animation-delay: 1s;"></div>
+        <div class="star" style="top: 40%; left: 10%; width: 1px; height: 1px; animation-delay: 1.5s;"></div>
+        <div class="star" style="top: 50%; left: 70%; width: 2px; height: 2px; animation-delay: 2s;"></div>
+        <div class="star" style="top: 60%; left: 30%; width: 3px; height: 3px; animation-delay: 2.5s;"></div>
+        <div class="star" style="top: 70%; left: 90%; width: 2px; height: 2px; animation-delay: 3s;"></div>
+        <div class="star" style="top: 80%; left: 40%; width: 1px; height: 1px; animation-delay: 3.5s;"></div>
+        <div class="star" style="top: 90%; left: 60%; width: 2px; height: 2px; animation-delay: 4s;"></div>
+    </div>
+    
+    <!-- Aurora effect -->
+    <div class="aurora"></div>
+    
+    <!-- Floating particles -->
     <div class="particles">
-        <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
-        <div class="particle" style="left: 20%; animation-delay: 1s;"></div>
-        <div class="particle" style="left: 30%; animation-delay: 2s;"></div>
-        <div class="particle" style="left: 40%; animation-delay: 3s;"></div>
-        <div class="particle" style="left: 50%; animation-delay: 4s;"></div>
-        <div class="particle" style="left: 60%; animation-delay: 5s;"></div>
-        <div class="particle" style="left: 70%; animation-delay: 6s;"></div>
-        <div class="particle" style="left: 80%; animation-delay: 7s;"></div>
-        <div class="particle" style="left: 90%; animation-delay: 8s;"></div>
+        <div class="particle" style="left: 10%; width: 10px; height: 10px; animation-delay: 0s;"></div>
+        <div class="particle" style="left: 25%; width: 8px; height: 8px; animation-delay: 2s;"></div>
+        <div class="particle" style="left: 40%; width: 12px; height: 12px; animation-delay: 4s;"></div>
+        <div class="particle" style="left: 55%; width: 10px; height: 10px; animation-delay: 6s;"></div>
+        <div class="particle" style="left: 70%; width: 9px; height: 9px; animation-delay: 8s;"></div>
+        <div class="particle" style="left: 85%; width: 11px; height: 11px; animation-delay: 10s;"></div>
     </div>
 
-    <!-- Simplified navigation for dark theme -->
-    <nav class="w-full px-6 py-4 relative z-10">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-                <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                    <span class="text-black font-bold text-sm">SW</span>  
+    <!-- Navigation -->
+    <nav class="w-full px-6 py-5 relative z-10">
+        <div class="max-w-7xl mx-auto flex items-center justify-between fade-in">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 logo-box rounded-xl flex items-center justify-center">
+                    <span class="text-white font-black text-lg">SW</span>  
                 </div>
-                <span class="font-semibold text-lg text-white">Sitwell</span>  
+                <span class="font-bold text-xl text-white">sitwell</span>  
             </div>
             <div class="hidden md:flex items-center space-x-8">
-                <a href="/" class="text-gray-300 hover:text-white transition-colors">Home</a>
-                <a href="/about" class="text-gray-300 hover:text-white transition-colors">About</a>
-                <a href="/contact" class="text-gray-300 hover:text-white transition-colors">Contact</a>
+                <a href="/" class="nav-link text-gray-300 font-medium">Home</a>
+                <a href="/products" class="nav-link text-gray-300 font-medium">Products</a>
+                <a href="/about" class="nav-link text-gray-300 font-medium">About</a>
+                <a href="/contact" class="nav-link text-gray-300 font-medium">Contact</a>
             </div>
         </div>
     </nav>
 
-    <!-- Main content with person and sofa scene -->
-    <main class="flex-1 flex items-center justify-center px-6 py-12 relative">
+    <!-- Main content -->
+    <main class="flex-1 flex items-center justify-center px-6 py-12 relative z-10">
         <div class="max-w-6xl mx-auto text-center relative">
             
-            <!-- Enhanced scene container with shadows and more realistic animations -->
-            <div class="relative mb-12 h-96 flex items-center justify-center">
+            <!-- Scene -->
+            <div class="relative mb-16 h-96 flex items-center justify-center">
+                <div class="scene-atmosphere"></div>
                 
-                <!-- Added shadow for walking person -->
-                <div class="person-shadow absolute left-0 top-3/4 w-12 h-4 bg-gray-800 rounded-full opacity-30 blur-sm"></div>
+                <!-- Glowing orbs -->
+                <div class="glow-orb" style="top: 10%; left: 20%; width: 100px; height: 100px; background: radial-gradient(circle, rgba(96, 165, 250, 0.4), transparent); animation-delay: 0s;"></div>
+                <div class="glow-orb" style="top: 70%; right: 15%; width: 120px; height: 120px; background: radial-gradient(circle, rgba(167, 139, 250, 0.4), transparent); animation-delay: 2s;"></div>
                 
-                <!-- Enhanced Walking Person with more detailed animation -->
+                <!-- Sparkles -->
+                <div class="sparkle" style="top: 15%; left: 35%; animation-delay: 0s;"></div>
+                <div class="sparkle" style="top: 60%; right: 30%; animation-delay: 1s;"></div>
+                <div class="sparkle" style="top: 35%; right: 40%; animation-delay: 2s;"></div>
+                <div class="sparkle" style="bottom: 25%; left: 25%; animation-delay: 1.5s;"></div>
+                <div class="sparkle" style="top: 50%; left: 50%; animation-delay: 0.5s;"></div>
+                
+                <!-- Shadow -->
+                <div class="person-shadow absolute left-0 top-3/4 w-16 h-6 bg-black rounded-full opacity-50"></div>
+                
+                <!-- Walking Person -->
                 <div class="walking-person absolute left-0 top-1/2 transform -translate-y-1/2">
-                    <svg width="60" height="80" viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Head -->
-                        <circle cx="30" cy="15" r="8" fill="#60a5fa"/>
-                        <!-- Added eyes with blinking -->
-                        <circle cx="27" cy="13" r="1" fill="#000" class="blinking-eyes"/>
-                        <circle cx="33" cy="13" r="1" fill="#000" class="blinking-eyes"/>
-                        <!-- Body -->
-                        <rect x="25" y="23" width="10" height="25" rx="5" fill="#60a5fa"/>
-                        <!-- Enhanced arms with swing animation -->
-                        <g class="walking-arms" style="transform-origin: 25px 30px;">
-                            <rect x="20" y="30" width="8" height="3" rx="1.5" fill="#60a5fa"/>
-                        </g>
-                        <g class="walking-arms" style="transform-origin: 35px 35px; animation-delay: 0.75s;">
-                            <rect x="32" y="35" width="8" height="3" rx="1.5" fill="#60a5fa"/>
-                        </g>
-                        <!-- Enhanced legs with movement -->
-                        <g class="walking-legs" style="transform-origin: 30px 48px;">
-                            <rect x="27" y="48" width="6" height="20" rx="3" fill="#60a5fa"/>
-                        </g>
-                        <g class="walking-legs" style="transform-origin: 25px 48px; animation-delay: 0.75s;">
-                            <rect x="22" y="48" width="6" height="18" rx="3" fill="#60a5fa"/>
-                        </g>
-                    </svg>
-                </div>
-
-                <!-- Enhanced 404 Sofa with more realistic design -->
-                <div class="floating-sofa relative">
-                    <svg width="300" height="150" viewBox="0 0 300 150" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <!-- Sofa shadow -->
-                        <ellipse cx="150" cy="140" rx="120" ry="8" fill="#111111" opacity="0.5"/>
-                        <!-- Sofa base with gradient -->
+                    <svg width="70" height="90" viewBox="0 0 70 90" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <defs>
-                            <linearGradient id="sofaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" style="stop-color:#4b5563"/>
-                                <stop offset="100%" style="stop-color:#374151"/>
+                            <linearGradient id="personGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#60a5fa"/>
+                                <stop offset="100%" style="stop-color:#3b82f6"/>
                             </linearGradient>
                         </defs>
-                        <rect x="20" y="80" width="260" height="50" rx="25" fill="url(#sofaGradient)"/>
-                        <!-- Sofa back -->
-                        <rect x="30" y="40" width="240" height="60" rx="30" fill="#4b5563"/>
-                        <!-- Left armrest -->
-                        <rect x="10" y="50" width="40" height="80" rx="20" fill="#4b5563"/>
-                        <!-- Right armrest -->
-                        <rect x="250" y="50" width="40" height="80" rx="20" fill="#4b5563"/>
-                        <!-- Cushion details -->
-                        <rect x="50" y="85" width="60" height="35" rx="15" fill="#374151"/>
-                        <rect x="130" y="85" width="60" height="35" rx="15" fill="#374151"/>
-                        <rect x="210" y="85" width="60" height="35" rx="15" fill="#374151"/>
-                        <!-- Sofa legs -->
-                        <rect x="40" y="130" width="8" height="15" fill="#1f2937"/>
-                        <rect x="80" y="130" width="8" height="15" fill="#1f2937"/>
-                        <rect x="212" y="130" width="8" height="15" fill="#1f2937"/>
-                        <rect x="252" y="130" width="8" height="15" fill="#1f2937"/>
-                        
-                        <!-- 404 Text on sofa -->
-                        <text x="150" y="85" text-anchor="middle" fill="#60a5fa" font-size="36" font-weight="bold" font-family="Inter">404</text>
+                        <!-- Head -->
+                        <circle cx="35" cy="18" r="10" fill="url(#personGrad)"/>
+                        <!-- Eyes -->
+                        <circle cx="32" cy="16" r="1.5" fill="#1e40af" class="blinking-eyes"/>
+                        <circle cx="38" cy="16" r="1.5" fill="#1e40af" class="blinking-eyes"/>
+                        <!-- Smile -->
+                        <path d="M32 20 Q35 23 38 20" stroke="#1e40af" stroke-width="1.5" fill="none"/>
+                        <!-- Body -->
+                        <rect x="28" y="28" width="14" height="30" rx="7" fill="url(#personGrad)"/>
+                        <!-- Arms -->
+                        <g class="walking-arms" style="transform-origin: 28px 36px;">
+                            <rect x="20" y="36" width="10" height="4" rx="2" fill="url(#personGrad)"/>
+                        </g>
+                        <g class="walking-arms" style="transform-origin: 42px 41px; animation-delay: 0.5s;">
+                            <rect x="40" y="41" width="10" height="4" rx="2" fill="url(#personGrad)"/>
+                        </g>
+                        <!-- Legs -->
+                        <g class="walking-legs" style="transform-origin: 35px 58px;">
+                            <rect x="30" y="58" width="7" height="26" rx="3.5" fill="url(#personGrad)"/>
+                        </g>
+                        <g class="walking-legs" style="transform-origin: 28px 58px; animation-delay: 0.5s;">
+                            <rect x="25" y="58" width="7" height="24" rx="3.5" fill="url(#personGrad)"/>
+                        </g>
                     </svg>
                 </div>
 
-                <!-- Enhanced Sitting Person with more realistic details -->
+                <!-- Sofa -->
+                <div class="floating-sofa relative">
+                    <svg width="340" height="170" viewBox="0 0 340 170" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="sofaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#6b7280"/>
+                                <stop offset="100%" style="stop-color:#4b5563"/>
+                            </linearGradient>
+                            <filter id="sofaGlow">
+                                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+                        <!-- Shadow -->
+                        <ellipse cx="170" cy="155" rx="140" ry="12" fill="#000" opacity="0.6" filter="url(#sofaGlow)"/>
+                        <!-- Base -->
+                        <rect x="35" y="90" width="270" height="60" rx="30" fill="url(#sofaGrad)"/>
+                        <!-- Back -->
+                        <rect x="45" y="50" width="250" height="70" rx="35" fill="#6b7280"/>
+                        <!-- Armrests -->
+                        <rect x="18" y="60" width="48" height="90" rx="24" fill="#6b7280"/>
+                        <rect x="274" y="60" width="48" height="90" rx="24" fill="#6b7280"/>
+                        <!-- Cushions -->
+                        <rect x="65" y="95" width="70" height="40" rx="20" fill="#374151"/>
+                        <rect x="150" y="95" width="70" height="40" rx="20" fill="#374151"/>
+                        <rect x="235" y="95" width="70" height="40" rx="20" fill="#374151"/>
+                        <!-- Legs -->
+                        <rect x="55" y="150" width="12" height="20" rx="6" fill="#1f2937"/>
+                        <rect x="95" y="150" width="12" height="20" rx="6" fill="#1f2937"/>
+                        <rect x="233" y="150" width="12" height="20" rx="6" fill="#1f2937"/>
+                        <rect x="273" y="150" width="12" height="20" rx="6" fill="#1f2937"/>
+                        
+                        <!-- 404 Text -->
+                        <text x="170" y="95" text-anchor="middle" fill="#60a5fa" font-size="48" font-weight="900" font-family="Inter" class="glow-404">404</text>
+                    </svg>
+                </div>
+
+                <!-- Sitting Person -->
                 <div class="sitting-person absolute">
-                    <svg width="80" height="100" viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="95" height="115" viewBox="0 0 95 115" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="sittingGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#a78bfa"/>
+                                <stop offset="100%" style="stop-color:#8b5cf6"/>
+                            </linearGradient>
+                        </defs>
                         <!-- Head -->
-                        <circle cx="40" cy="20" r="10" fill="#a78bfa"/>
-                        <!-- Added facial features -->
-                        <circle cx="37" cy="18" r="1" fill="#000" class="blinking-eyes"/>
-                        <circle cx="43" cy="18" r="1" fill="#000" class="blinking-eyes"/>
-                        <path d="M37 23 Q40 25 43 23" stroke="#000" stroke-width="1" fill="none"/>
+                        <circle cx="47.5" cy="23" r="13" fill="url(#sittingGrad)"/>
+                        <!-- Eyes -->
+                        <circle cx="43" cy="21" r="1.5" fill="#5b21b6" class="blinking-eyes"/>
+                        <circle cx="52" cy="21" r="1.5" fill="#5b21b6" class="blinking-eyes"/>
+                        <!-- Smile -->
+                        <path d="M43 26 Q47.5 29 52 26" stroke="#5b21b6" stroke-width="1.5" fill="none"/>
                         <!-- Body -->
-                        <rect x="32" y="30" width="16" height="20" rx="8" fill="#a78bfa"/>
+                        <rect x="38" y="36" width="19" height="26" rx="9.5" fill="url(#sittingGrad)"/>
                         <!-- Arms -->
-                        <rect x="25" y="35" width="12" height="4" rx="2" fill="#a78bfa"/>
-                        <rect x="43" y="40" width="12" height="4" rx="2" fill="#a78bfa"/>
-                        <!-- Sitting legs -->
-                        <rect x="35" y="50" width="6" height="25" rx="3" fill="#a78bfa"/>
-                        <rect x="45" y="50" width="6" height="25" rx="3" fill="#a78bfa"/>
+                        <rect x="29" y="42" width="15" height="5" rx="2.5" fill="url(#sittingGrad)"/>
+                        <rect x="51" y="47" width="15" height="5" rx="2.5" fill="url(#sittingGrad)"/>
+                        <!-- Legs -->
+                        <rect x="41" y="62" width="7" height="30" rx="3.5" fill="url(#sittingGrad)"/>
+                        <rect x="53" y="62" width="7" height="30" rx="3.5" fill="url(#sittingGrad)"/>
                         <!-- Feet -->
-                        <ellipse cx="38" cy="80" rx="8" ry="4" fill="#a78bfa"/>
-                        <ellipse cx="48" cy="80" rx="8" ry="4" fill="#a78bfa"/>
+                        <ellipse cx="44.5" cy="96" rx="10" ry="5" fill="url(#sittingGrad)"/>
+                        <ellipse cx="56.5" cy="96" rx="10" ry="5" fill="url(#sittingGrad)"/>
                     </svg>
                 </div>
             </div>
 
-            <!-- Error Message -->
-            <div class="mb-12">
-                <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">
-                    Looks like you found our <span class="gradient-text">404 Lounge</span>
+            <!-- Message -->
+            <div class="mb-14 fade-in" style="animation-delay: 0.5s;">
+                <h1 class="text-5xl md:text-7xl font-black text-white mb-6 leading-tight">
+                    Oops! You found our <br/>
+                    <span class="gradient-text">404 Lounge</span>
                 </h1>
-                <p class="text-lg text-gray-300 max-w-2xl mx-auto leading-relaxed">
-                    Someone's already made themselves comfortable on our error sofa. 
-                    The page you're looking for seems to have taken a seat too. Let's get you back on track!
+                <p class="text-lg md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                    🛋️ Someone's already claimed the comfy spot! The page you're seeking seems to have vanished into thin air. Let's get you back on track! ✨
                 </p>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-                <button onclick="history.back()" class="px-8 py-3 bg-white text-black rounded-lg font-medium hover:bg-gray-200 transition-colors">
+            <!-- Buttons -->
+            <div class="flex flex-col sm:flex-row gap-5 justify-center mb-16 fade-in" style="animation-delay: 0.7s;">
+                <button onclick="history.back()" class="btn-ripple px-12 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-bold text-lg shadow-2xl">
                     ← Go Back
                 </button>
-                <a href="/" class="px-8 py-3 border border-gray-600 text-gray-300 rounded-lg font-medium hover:bg-gray-900 transition-colors">
+                <a href="/" class="btn-ripple px-12 py-4 border-2 border-blue-500 text-blue-400 rounded-xl font-bold text-lg">
                     🏠 Go Home
                 </a>
-            </div>
             </div>
         </div>
     </main>
 
     <!-- Footer -->
-    <footer class="w-full px-6 py-8 border-t border-gray-900">
+    <footer class="w-full px-6 py-8 border-t border-gray-800 relative z-10 backdrop-blur-md">
         <div class="max-w-7xl mx-auto text-center">
-            <p class="text-gray-500 text-sm">
-                © 2025 Sitwell. Even our errors have style.
+            <p class="text-gray-400">
+                © 2025 <span class="font-bold gradient-text">sitwell</span>. Even our errors have style. ✨
             </p>
         </div>
     </footer>

@@ -26,13 +26,12 @@ from django.db.models import Sum
 from decimal import Decimal
 from .utils import generate_otp, send_otp_email
 from django.contrib.auth import update_session_auth_hash
+from django.views.decorators.http import require_http_methods
 import logging
 
 logger = logging.getLogger(__name__)
 
-# AUTHENTICATION VIEWS
-
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def signup_view(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
@@ -57,7 +56,7 @@ def signup_view(request):
         form = SignUpForm()
     return render(request, 'signup.html', {'form': form})
 
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def verify_otp_signup_view(request):
     user_id_from_session = request.session.get('otp_user_id')
     
@@ -131,7 +130,7 @@ def verify_otp_signup_view(request):
     return render(request, 'verify_otp.html', context)
 
 @ensure_csrf_cookie
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def login_view(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
@@ -145,7 +144,7 @@ def login_view(request):
     
     return render(request, 'login.html', {'form': form})
 
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def forgot_password_view(request):
     if request.method == 'POST':
         form = ForgotPasswordForm(request.POST)
@@ -168,7 +167,7 @@ def forgot_password_view(request):
         form = ForgotPasswordForm()
     return render(request, 'password/forgot_password.html', {'form': form})
 
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def verify_otp_forgot_view(request):
     logger.info("Forgot Password OTP verification view accessed")
     user_id_from_session = request.session.get('reset_user_id')
@@ -217,7 +216,7 @@ def verify_otp_forgot_view(request):
     }
     return render(request, 'verify_otp.html', context)
 
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def new_password_view(request):
     user_id = request.session.get('verified_user_id')
     if not user_id:
@@ -238,7 +237,7 @@ def new_password_view(request):
         form = NewPasswordForm()
     return render(request, 'new_password.html', {'form': form})
 
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def verify_reset_otp_view(request):
     user_id = request.session.get('reset_user_id')
     if not user_id:
@@ -303,7 +302,7 @@ def verify_reset_otp_view(request):
     }
     return render(request, 'verify_reset_otp.html', context)
 
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def confirm_new_password_view(request):
     logger.info("Confirm new password view accessed")
     
@@ -354,7 +353,7 @@ def confirm_new_password_view(request):
     return render(request, 'confi_new_password.html')
 
 @csrf_protect
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def logout_view(request):
     if request.method == 'POST':
         logout(request)
@@ -362,7 +361,7 @@ def logout_view(request):
         return redirect('home')
     return redirect('home')
 
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def send_test_email(request):
     subject = 'Test Email'
     message = 'This is a test email from your Django application.'
@@ -372,7 +371,7 @@ def send_test_email(request):
     send_mail(subject, message, from_email, recipient_list, fail_silently=False)
     return HttpResponse('Test email sent')
 
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def home_view(request):
     try:
         featured_products = Product.objects.filter(
@@ -399,7 +398,7 @@ def home_view(request):
         })
     
 @login_required
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def dummy_home_view(request):
     try:
         total_products = Product.objects.count()
@@ -501,7 +500,7 @@ def dummy_home_view(request):
         }
         return render(request, 'dummy.html', context)
 
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def product_list_view(request):
     try:
         total_products = Product.objects.count()
@@ -597,7 +596,7 @@ def product_list_view(request):
         }
         return render(request, 'product_list.html', context)
 
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def product_detail_view(request, pk):
     try:
         logger.info(f"Loading product detail for pk: {pk}")
@@ -713,7 +712,7 @@ def product_detail_view(request, pk):
         return redirect('product_list')
 
 @login_required
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def user_profile_view(request):
     """Display user profile with all details"""
     try:
@@ -737,7 +736,7 @@ def user_profile_view(request):
 
 
 @login_required
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def edit_profile_view(request):
     """Edit user profile"""
     try:
@@ -746,7 +745,7 @@ def edit_profile_view(request):
         if request.method == 'POST':
             form = UserProfileForm(request.POST, request.FILES, instance=user)
             if form.is_valid():
-                # Save the form
+            
                 updated_user = form.save()
                 
                 messages.success(request, 'Profile updated successfully!')
@@ -770,7 +769,7 @@ def edit_profile_view(request):
 
 
 @login_required
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def change_email_view(request):
     """Change user email with OTP verification and old email notification"""
     try:
@@ -781,7 +780,7 @@ def change_email_view(request):
             if form.is_valid():
                 new_email = form.cleaned_data['new_email']
                 
-                # Generate and send OTP to new email
+               
                 otp = generate_otp()
                 user.new_email = new_email
                 user.otp = otp
@@ -789,10 +788,10 @@ def change_email_view(request):
                 user.save()
                 
                 try:
-                    # Send OTP to new email
+                   
                     send_otp_email(new_email, otp)
                     
-                    # Send notification to old (current) email
+                    
                     subject = 'Email Change Request for Your Sitwell Account'
                     message = f"""
 Hi {user.first_name},
@@ -809,11 +808,11 @@ Sitwell Team
                         subject,
                         message,
                         settings.EMAIL_HOST_USER,
-                        [user.email],  # Send to current email
+                        [user.email], 
                         fail_silently=False,
                     )
                     
-                    # Store session for verification
+                   
                     request.session['email_change_user_id'] = user.id
                     messages.success(request, f'OTP sent to {new_email}. Please verify. A notification was also sent to your current email.')
                     return redirect('verify_email_otp')
@@ -885,7 +884,7 @@ def verify_email_otp_view(request):
     return render(request, 'profile/verify_email_otp.html', context)
 
 @login_required
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def change_password_view(request):
     """Change user password"""
     try:
@@ -921,7 +920,7 @@ def change_password_view(request):
 
 
 @login_required
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def manage_addresses_view(request):
     user = request.user
     addresses = user.addresses.all().order_by('-is_default', '-created_at')  # Assumes no is_active; add .filter(is_active=True) if using soft delete
@@ -933,7 +932,7 @@ def manage_addresses_view(request):
 
 
 @login_required
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def add_address_view(request):
     """Add new address"""
     try:
@@ -973,7 +972,7 @@ def add_address_view(request):
 
 
 @login_required
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def edit_address_view(request, address_id):
     """Edit existing address"""
     try:
@@ -1005,7 +1004,7 @@ def edit_address_view(request, address_id):
         return redirect('manage_addresses')
 
 @login_required
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def delete_address_view(request, address_id):
     if request.method != 'POST':
         messages.error(request, "Invalid request. Please use the delete button.")
@@ -1037,7 +1036,7 @@ def delete_address_view(request, address_id):
 
 
 @login_required
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def set_default_address_view(request, address_id):
     """Set address as default"""
     try:
@@ -1060,7 +1059,7 @@ def set_default_address_view(request, address_id):
     
 
 @login_required
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def user_orders_view(request):
     query = request.GET.get('q', '')  # Search query
     orders = Order.objects.filter(user=request.user)
@@ -1072,7 +1071,7 @@ def user_orders_view(request):
     return render(request, 'profile/user_orders.html', context)
 
 @login_required
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def order_detail_view(request, order_id):
     order = get_object_or_404(Order, order_number=order_id, user=request.user)  # Use order_number for URL
     items = order.items.all()
@@ -1083,7 +1082,7 @@ def order_detail_view(request, order_id):
 
 @login_required
 @transaction.atomic
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def cancel_order_view(request, order_id, item_id=None):
     order = get_object_or_404(Order, order_number=order_id, user=request.user)
     if not order.can_be_cancelled:
@@ -1238,7 +1237,7 @@ def add_to_cart_view(request, product_id):
         })
 
 @login_required
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def cart_view(request):
     """Display user's shopping cart"""
     try:
@@ -1399,7 +1398,7 @@ def cart_item_count_view(request):
 # WISHLIST VIEWS
 
 # @login_required
-# @cache_control(no_store=True)
+# @cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 # def wishlist_view(request):
 #     """Display user's wishlist"""
 #     try:
@@ -1447,7 +1446,7 @@ def cart_item_count_view(request):
 
 
 @login_required
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def checkout_view(request):
     """
     Displays the checkout page with addresses, cart items, and order summary.
@@ -1581,7 +1580,7 @@ def place_order_view(request):
         return redirect('checkout')
 
 @login_required
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def order_success_view(request, order_id):
     """
     Displays the order confirmation page after a successful order.
@@ -1599,7 +1598,7 @@ def order_success_view(request, order_id):
         return redirect('user_orders')
 
 @login_required
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def download_invoice_view(request, order_id):
     order = get_object_or_404(Order, order_number=order_id, user=request.user)
     
@@ -1632,7 +1631,7 @@ def download_invoice_view(request, order_id):
 
 @login_required
 @transaction.atomic
-@cache_control(no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def return_order_view(request, order_id):
     order = get_object_or_404(Order, order_number=order_id, user=request.user)
     if not order.can_be_returned:
@@ -1660,3 +1659,68 @@ def return_order_view(request, order_id):
     
     context = {'form': form, 'order': order}
     return render(request, 'profile/return_order.html', context)
+
+
+
+
+def contact(request):
+    """Display contact page"""
+    return render(request, 'contact.html')
+
+@require_http_methods(["POST"])
+def contact_submit(request):
+    """Handle contact form submission"""
+    try:
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        subject = request.POST.get('subject', 'No Subject')
+        message = request.POST.get('message')
+        
+        # Validate required fields
+        if not all([name, email, message]):
+            return JsonResponse({
+                'success': False, 
+                'message': 'Please fill in all required fields'
+            })
+        
+        # Compose email
+        email_subject = f'Sitwell Contact Form: {subject}'
+        email_body = f"""
+        New contact form submission from Sitwell website:
+        
+        Name: {name}
+        Email: {email}
+        Subject: {subject}
+        
+        Message:
+        {message}
+        
+        ---
+        Sent from Sitwell Contact Form
+        """
+        
+        # Send email
+        send_mail(
+            email_subject,
+            email_body,
+            settings.DEFAULT_FROM_EMAIL,
+            [settings.ADMIN_EMAIL],
+            fail_silently=False,
+        )
+        
+        return JsonResponse({
+            'success': True, 
+            'message': 'Thank you! Your message has been sent successfully.'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False, 
+            'message': f'An error occurred: {str(e)}'
+        })
+    
+
+
+def about(request):
+    """Display about page"""
+    return render(request, 'about.html')

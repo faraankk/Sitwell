@@ -43,7 +43,7 @@ class Product(models.Model):
         ('sofa', 'Sofa'),
         ('chair', 'Chair'),
         ('table', 'Table'),
-        ('bed', 'Bed'),
+        ('bed', 'Bed'), 
         ('storage', 'Storage'),
         ('accessories', 'Accessories'),
     ]

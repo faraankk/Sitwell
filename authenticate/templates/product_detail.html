@@ -3,7 +3,11 @@
 
 {% block title %}{{ product.name }} - Sitwell{% endblock %}
 
-{% block content %}
+{% block banner %}
+<!-- Banner removed for product detail page -->
+{% endblock %}
+
+{% block extra_css %}
 <style>
     /* Messages */
     .messages {
@@ -13,53 +17,83 @@
     }
 
     .alert {
-        padding: 12px 20px;
-        margin-bottom: 10px;
-        border-radius: 4px;
+        padding: 14px 20px;
+        margin-bottom: 12px;
+        border-radius: 10px;
         position: relative;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     .alert-success {
-        background: #d4edda;
-        color: #155724;
-        border-left: 4px solid #28a745;
+        background: #d1fae5;
+        color: #065f46;
+        border-left: 4px solid #10b981;
     }
 
     .alert-danger {
-        background: #f8d7da;
-        color: #721c24;
-        border-left: 4px solid #dc3545;
+        background: #fee2e2;
+        color: #991b1b;
+        border-left: 4px solid #ef4444;
     }
 
     .alert-warning {
-        background: #fff3cd;
-        color: #856404;
-        border-left: 4px solid #ffc107;
+        background: #fef3c7;
+        color: #92400e;
+        border-left: 4px solid #f59e0b;
     }
 
     .alert-info {
-        background: #d1ecf1;
-        color: #0c5460;
-        border-left: 4px solid #17a2b8;
+        background: #dbeafe;
+        color: #1e40af;
+        border-left: 4px solid #3b82f6;
+    }
+
+    .alert i {
+        font-size: 18px;
     }
 
     .close-btn {
         position: absolute;
         right: 15px;
-        top: 12px;
+        top: 50%;
+        transform: translateY(-50%);
         background: none;
         border: none;
-        font-size: 18px;
+        font-size: 20px;
         cursor: pointer;
+        opacity: 0.7;
+        transition: opacity 0.3s ease;
+    }
+
+    .close-btn:hover {
+        opacity: 1;
     }
 
     /* Breadcrumb */
     .breadcrumb {
         max-width: 1200px;
-        margin: 20px auto;
+        margin: 25px auto;
         padding: 0 20px;
         font-size: 14px;
         color: #666;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
     .breadcrumb a {
@@ -69,7 +103,7 @@
     }
 
     .breadcrumb a:hover {
-        color: #db4444;
+        color: #667eea;
     }
 
     /* Main Content */
@@ -78,9 +112,9 @@
         margin: 0 auto;
         padding: 0 20px;
         display: grid;
-        grid-template-columns: 100px 1fr 400px;
-        gap: 30px;
-        margin-bottom: 50px;
+        grid-template-columns: 120px 1fr 450px;
+        gap: 40px;
+        margin-bottom: 60px;
     }
 
     /* Product Thumbnails */
@@ -91,10 +125,10 @@
     }
 
     .thumbnail {
-        width: 80px;
-        height: 80px;
-        border: 2px solid transparent;
-        border-radius: 8px;
+        width: 100px;
+        height: 100px;
+        border: 3px solid transparent;
+        border-radius: 12px;
         overflow: hidden;
         cursor: pointer;
         background: #f5f5f5;
@@ -102,12 +136,13 @@
     }
 
     .thumbnail:hover {
-        border-color: #db4444;
+        border-color: #667eea;
         transform: scale(1.05);
     }
 
     .thumbnail.active {
-        border-color: #db4444;
+        border-color: #667eea;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
 
     .thumbnail img {
@@ -123,24 +158,26 @@
 
     /* Main Product Image */
     .product-image {
-        background: #f5f5f5;
-        border-radius: 8px;
+        background: white;
+        border-radius: 15px;
         padding: 40px;
         text-align: center;
-        transition: background-color 0.3s ease;
-        min-height: 500px;
+        transition: all 0.3s ease;
+        min-height: 550px;
         display: flex;
         align-items: center;
         justify-content: center;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 2px solid #f0f0f0;
     }
 
     .product-image:hover {
-        background: #f0f0f0;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
     }
 
     .product-image img {
         max-width: 100%;
-        max-height: 400px;
+        max-height: 450px;
         object-fit: contain;
         transition: transform 0.3s ease;
         cursor: zoom-in;
@@ -152,105 +189,136 @@
     }
 
     .product-image:hover img:not(.zoomed) {
-        transform: scale(1.02);
+        transform: scale(1.05);
     }
 
     .no-image {
         color: #ccc;
-        font-size: 4rem;
+        font-size: 5rem;
     }
 
     /* Product Details */
+    .product-details {
+        background: white;
+        padding: 35px;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 2px solid #f0f0f0;
+    }
+
     .product-details h1 {
-        font-size: 24px;
-        margin-bottom: 10px;
+        font-size: 28px;
+        margin-bottom: 15px;
         color: #333;
+        font-weight: 700;
+        line-height: 1.3;
     }
 
     .product-badges {
-        margin-bottom: 15px;
+        margin-bottom: 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
     }
 
     .badge {
         display: inline-block;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 12px;
-        font-weight: 600;
-        margin-right: 8px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 700;
     }
 
     .badge-category {
-        background: #6c757d;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
     }
 
     .badge-brand {
-        background: #17a2b8;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         color: white;
     }
 
     .badge-stock {
-        padding: 8px 15px;
+        padding: 8px 16px;
         font-size: 14px;
     }
 
     .badge-success {
-        background: #28a745;
-        color: white;
+        background: #d1fae5;
+        color: #065f46;
+        border: 1px solid #10b981;
     }
 
     .badge-warning {
-        background: #ffc107;
-        color: #212529;
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #f59e0b;
     }
 
     .badge-danger {
-        background: #dc3545;
-        color: white;
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #ef4444;
     }
 
     .rating {
         display: flex;
         align-items: center;
-        gap: 10px;
-        margin-bottom: 15px;
+        gap: 12px;
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
     }
 
     .stars {
-        color: #ffa500;
+        color: #fbbf24;
+        font-size: 18px;
     }
 
     .price-section {
-        margin-bottom: 20px;
+        margin-bottom: 25px;
+        padding: 20px;
+        background: linear-gradient(135deg, #f8f9ff 0%, #fff5f8 100%);
+        border-radius: 12px;
+        border-left: 4px solid #667eea;
     }
 
     .price-original {
         text-decoration: line-through;
         color: #999;
         font-size: 18px;
+        margin-bottom: 5px;
     }
 
     .price-current {
-        font-size: 24px;
-        font-weight: bold;
-        color: #db4444;
+        font-size: 32px;
+        font-weight: 700;
+        color: #667eea;
+        margin-bottom: 8px;
     }
 
     .price-savings {
-        color: #28a745;
-        font-weight: 600;
-        font-size: 14px;
+        color: #10b981;
+        font-weight: 700;
+        font-size: 15px;
     }
 
     .description {
         color: #666;
         margin-bottom: 25px;
-        line-height: 1.6;
+        line-height: 1.7;
+        font-size: 15px;
     }
 
     .product-specs {
-        margin-bottom: 25px;
+        margin-bottom: 30px;
+    }
+
+    .product-specs h5 {
+        font-weight: 700;
+        margin-bottom: 15px;
+        color: #333;
     }
 
     .specs-table {
@@ -259,73 +327,143 @@
     }
 
     .specs-table td {
-        padding: 8px 12px;
-        border-bottom: 1px solid #eee;
+        padding: 12px;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 14px;
     }
 
     .specs-table td:first-child {
-        font-weight: 600;
+        font-weight: 700;
         width: 40%;
+        color: #333;
+    }
+
+    .specs-table td:last-child {
+        color: #666;
+    }
+
+    .quantity-section {
+        margin-bottom: 25px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 12px;
+    }
+
+    .quantity-section label {
+        font-weight: 700;
+        margin-bottom: 12px;
+        display: block;
+        color: #333;
+    }
+
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 12px;
+    }
+
+    .quantity-btn {
+        background: white;
+        border: 2px solid #e9ecef;
+        width: 45px;
+        height: 45px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #667eea;
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .quantity-btn:hover:not(:disabled) {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+        transform: scale(1.1);
+    }
+
+    .quantity-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    .quantity-input {
+        width: 100px;
+        height: 45px;
+        text-align: center;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        font-size: 18px;
+        font-weight: 700;
     }
 
     .action-buttons {
         display: flex;
-        gap: 15px;
+        flex-direction: column;
+        gap: 12px;
         margin-bottom: 25px;
     }
 
     .btn {
-        padding: 12px 24px;
+        padding: 14px 24px;
         border: none;
-        border-radius: 4px;
+        border-radius: 10px;
         font-size: 16px;
-        font-weight: 600;
+        font-weight: 700;
         cursor: pointer;
         text-decoration: none;
         display: inline-flex;
         align-items: center;
-        gap: 8px;
+        justify-content: center;
+        gap: 10px;
         transition: all 0.3s ease;
+        width: 100%;
     }
 
     .btn-primary {
-        background: #db4444;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
 
     .btn-primary:hover {
-        background: #c13333;
         transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(219, 68, 68, 0.3);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         color: white;
     }
 
     .btn-success {
-        background: #28a745;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         color: white;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
     }
 
     .btn-success:hover {
-        background: #218838;
         transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
         color: white;
+    }
+
+    .btn-outline {
+        background: white;
+        border: 2px solid #e9ecef;
+        color: #333;
+    }
+
+    .btn-outline:hover {
+        border-color: #667eea;
+        color: #667eea;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
     .btn-secondary {
         background: #6c757d;
         color: white;
-    }
-
-    .btn-outline {
-        background: none;
-        border: 1px solid #ddd;
-        color: #333;
-    }
-
-    .btn-outline:hover {
-        border-color: #db4444;
-        color: #db4444;
-        transform: translateY(-2px);
     }
 
     .btn:disabled {
@@ -338,29 +476,31 @@
         box-shadow: none;
     }
 
-    /* Related Items */
+    /* Related Products */
     .related-section {
         max-width: 1200px;
-        margin: 50px auto;
+        margin: 60px auto;
         padding: 0 20px;
     }
 
     .section-title {
-        font-size: 20px;
-        margin-bottom: 20px;
-        padding-left: 15px;
-        border-left: 4px solid #db4444;
+        font-size: 24px;
+        margin-bottom: 30px;
+        padding-left: 20px;
+        border-left: 4px solid #667eea;
+        font-weight: 700;
+        color: #333;
     }
 
     .related-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 25px;
     }
 
     .product-card {
-        border: 1px solid #eee;
-        border-radius: 8px;
+        border: 2px solid #f0f0f0;
+        border-radius: 15px;
         overflow: hidden;
         position: relative;
         transition: all 0.3s ease;
@@ -368,15 +508,15 @@
     }
 
     .product-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        border-color: #db4444;
+        transform: translateY(-8px);
+        box-shadow: 0 12px 30px rgba(102, 126, 234, 0.2);
+        border-color: #667eea;
     }
 
     .product-card-image {
         position: relative;
         overflow: hidden;
-        height: 200px;
+        height: 220px;
     }
 
     .product-card img {
@@ -396,7 +536,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(219, 68, 68, 0.9);
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -410,57 +550,58 @@
 
     .view-btn {
         background: white;
-        color: #db4444;
+        color: #667eea;
         border: none;
-        padding: 12px 24px;
+        padding: 12px 28px;
         border-radius: 25px;
-        font-weight: 600;
+        font-weight: 700;
         cursor: pointer;
         text-decoration: none;
         transition: all 0.3s ease;
     }
 
     .view-btn:hover {
-        background: #db4444;
+        background: #667eea;
         color: white;
-        transform: scale(1.05);
+        transform: scale(1.1);
     }
 
     .product-info {
-        padding: 15px;
+        padding: 20px;
     }
 
     .product-name {
-        font-weight: 600;
-        margin-bottom: 5px;
+        font-weight: 700;
+        margin-bottom: 8px;
         transition: color 0.3s ease;
+        color: #333;
     }
 
     .product-card:hover .product-name {
-        color: #db4444;
+        color: #667eea;
     }
 
     .product-price {
-        color: #db4444;
-        font-weight: bold;
-        font-size: 16px;
+        color: #667eea;
+        font-weight: 700;
+        font-size: 18px;
     }
 
     .no-image-placeholder {
-        height: 200px;
+        height: 220px;
         background: #f5f5f5;
         display: flex;
         align-items: center;
         justify-content: center;
         color: #ccc;
-        font-size: 2rem;
+        font-size: 3rem;
     }
 
     /* Responsive Design */
     @media (max-width: 1024px) {
         .main-container {
-            grid-template-columns: 80px 1fr 350px;
-            gap: 20px;
+            grid-template-columns: 100px 1fr 400px;
+            gap: 30px;
         }
     }
 
@@ -481,35 +622,32 @@
             order: 3;
         }
         .related-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         }
     }
 
     @media (max-width: 480px) {
-        .main-container {
-            padding: 0 10px;
-        }
+        .main-container,
         .related-section {
-            padding: 0 10px;
+            padding: 0 15px;
         }
         .product-details h1 {
-            font-size: 20px;
+            font-size: 22px;
         }
         .price-current {
-            font-size: 20px;
-        }
-        .btn {
-            padding: 10px 20px;
-            font-size: 14px;
+            font-size: 26px;
         }
     }
 </style>
+{% endblock %}
 
+{% block content %}
 <!-- Messages -->
 {% if messages %}
 <div class="messages">
     {% for message in messages %}
     <div class="alert alert-{{ message.tags }}">
+        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'danger' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
         {{ message }}
         <button class="close-btn" onclick="this.parentElement.remove();">&times;</button>
     </div>
@@ -526,10 +664,10 @@
             {% else %}
                 <a href="{% url breadcrumb.url_name %}">{{ breadcrumb.name }}</a>
             {% endif %}
-            {% if not forloop.last %} > {% endif %}
+            {% if not forloop.last %}<i class="fas fa-chevron-right" style="font-size: 12px; color: #ddd;"></i>{% endif %}
         {% else %}
-            {% if not forloop.first %} > {% endif %}
-            <strong>{{ breadcrumb.name }}</strong>
+            {% if not forloop.first %}<i class="fas fa-chevron-right" style="font-size: 12px; color: #ddd;"></i>{% endif %}
+            <strong style="color: #667eea;">{{ breadcrumb.name }}</strong>
         {% endif %}
     {% endfor %}
 </div>
@@ -575,32 +713,40 @@
         <!-- Rating -->
         <div class="rating">
             <span class="stars">★★★★☆</span>
-            <span>(Reviews)</span>
-            <span>|</span>
+            <span style="color: #666;">(Reviews)</span>
+            <span style="color: #ddd;">|</span>
             
             <!-- Updated Stock Status -->
             {% if stock_status == 'in_stock' %}
-                <span class="badge badge-stock badge-success">In Stock ({{ product.stock_quantity }} available)</span>
+                <span class="badge badge-stock badge-success">
+                    <i class="fas fa-check-circle"></i> In Stock ({{ product.stock_quantity }})
+                </span>
             {% elif stock_status == 'low_stock' %}
-                <span class="badge badge-stock badge-warning">Low Stock ({{ product.stock_quantity }} left)</span>
+                <span class="badge badge-stock badge-warning">
+                    <i class="fas fa-exclamation-triangle"></i> Low Stock ({{ product.stock_quantity }} left)
+                </span>
             {% elif stock_status == 'sold_out' %}
-                <span class="badge badge-stock badge-danger">Sold Out</span>
+                <span class="badge badge-stock badge-danger">
+                    <i class="fas fa-times-circle"></i> Sold Out
+                </span>
             {% endif %}
         </div>
 
         <!-- Price Section -->
         <div class="price-section">
             {% if discount_amount > 0 %}
-                <div class="price-original">₹{{ original_price }}</div>
-                <div class="price-current">₹{{ discounted_price }}</div>
-                <div class="price-savings">You save ₹{{ discount_amount }}!</div>
+                <div class="price-original">₹{{ original_price|floatformat:2 }}</div>
+                <div class="price-current">₹{{ discounted_price|floatformat:2 }}</div>
+                <div class="price-savings">
+                    <i class="fas fa-tag"></i> You save ₹{{ discount_amount|floatformat:2 }}!
+                </div>
                 {% if product.tax_type == 'taxable' %}
-                    <small style="color: #666;">Final price (incl. tax): ₹{{ final_price }}</small>
+                    <small style="color: #666;">Final price (incl. tax): ₹{{ final_price|floatformat:2 }}</small>
                 {% endif %}
             {% else %}
-                <div class="price-current">₹{{ original_price }}</div>
+                <div class="price-current">₹{{ original_price|floatformat:2 }}</div>
                 {% if product.tax_type == 'taxable' %}
-                    <small style="color: #666;">Final price (incl. tax): ₹{{ final_price }}</small>
+                    <small style="color: #666;">Final price (incl. tax): ₹{{ final_price|floatformat:2 }}</small>
                 {% endif %}
             {% endif %}
         </div>
@@ -613,7 +759,7 @@
         <!-- Product Specifications -->
         {% if specs %}
             <div class="product-specs">
-                <h5 style="margin-bottom: 10px;">Specifications</h5>
+                <h5>Specifications</h5>
                 <table class="specs-table">
                     {% for spec in specs %}
                         <tr>
@@ -629,14 +775,16 @@
         {% if stock_status != 'sold_out' %}
             <form class="add-to-cart-form" data-product-id="{{ product.id }}">
                 {% csrf_token %}
-                <div style="margin-bottom: 20px;">
-                    <label style="font-weight: 600; margin-bottom: 8px; display: block;">Quantity:</label>
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                        <button type="button" onclick="decrementQuantity({{ product.id }})" style="background: #f5f5f5; border: 1px solid #ddd; width: 40px; height: 40px; border-radius: 4px; cursor: pointer;">
+                <div class="quantity-section">
+                    <label>
+                        <i class="fas fa-cubes"></i> Quantity:
+                    </label>
+                    <div class="quantity-controls">
+                        <button type="button" class="quantity-btn" onclick="decrementQuantity({{ product.id }})">
                             <i class="fas fa-minus"></i>
                         </button>
-                        <input type="number" id="quantity-{{ product.id }}" name="quantity" value="1" min="1" max="{{ product.stock_quantity }}" style="width: 80px; height: 40px; text-align: center; border: 1px solid #ddd; border-radius: 4px;">
-                        <button type="button" onclick="incrementQuantity({{ product.id }})" style="background: #f5f5f5; border: 1px solid #ddd; width: 40px; height: 40px; border-radius: 4px; cursor: pointer;">
+                        <input type="number" id="quantity-{{ product.id }}" name="quantity" value="1" min="1" max="{{ product.stock_quantity }}" class="quantity-input" readonly>
+                        <button type="button" class="quantity-btn" onclick="incrementQuantity({{ product.id }})">
                             <i class="fas fa-plus"></i>
                         </button>
                     </div>
@@ -651,23 +799,22 @@
                         <i class="fas fa-bolt"></i> Buy Now
                     </button>
                     <button type="button" class="btn btn-outline">
-                        <i class="fas fa-heart"></i> Wishlist
+                        <i class="fas fa-heart"></i> Add to Wishlist
                     </button>
                 </div>
             </form>
         {% else %}
             <div class="action-buttons">
                 <button class="btn btn-secondary" disabled>
-                    <i class="fas fa-times"></i> Sold Out
+                    <i class="fas fa-times-circle"></i> Sold Out
                 </button>
             </div>
         {% endif %}
 
-
         <!-- Additional Details -->
         {% if product.detailed_description %}
             <div class="description">
-                <h5 style="margin-bottom: 10px;">Detailed Information</h5>
+                <h5 style="margin-bottom: 12px; font-weight: 700;">Detailed Information</h5>
                 <p>{{ product.detailed_description }}</p>
             </div>
         {% endif %}
@@ -688,17 +835,19 @@
                         <div class="no-image-placeholder">📷</div>
                     {% endif %}
                     <div class="product-overlay">
-                        <a href="{% url 'product_detail' related_product.pk %}" class="view-btn">View Details</a>
+                        <a href="{% url 'product_detail' related_product.pk %}" class="view-btn">
+                            <i class="fas fa-eye"></i> View Details
+                        </a>
                     </div>
                 </div>
                 <div class="product-info">
                     <div class="product-name">{{ related_product.name|truncatechars:40 }}</div>
                     <div class="product-price">
                         {% if related_product.discount_type != 'none' and related_product.discount_value > 0 %}
-                            ₹{{ related_product.get_discounted_price }}
-                            <span style="text-decoration: line-through; color: #999; font-size: 14px;">₹{{ related_product.price }}</span>
+                            ₹{{ related_product.get_discounted_price|floatformat:2 }}
+                            <span style="text-decoration: line-through; color: #999; font-size: 14px; margin-left: 6px;">₹{{ related_product.price|floatformat:2 }}</span>
                         {% else %}
-                            ₹{{ related_product.price }}
+                            ₹{{ related_product.price|floatformat:2 }}
                         {% endif %}
                     </div>
                 </div>
@@ -707,7 +856,9 @@
     </div>
 </div>
 {% endif %}
+{% endblock %}
 
+{% block extra_js %}
 <script>
 // Image gallery functionality
 function changeMainImage(imageUrl, thumbnailElement) {
@@ -735,13 +886,12 @@ document.addEventListener('keydown', function(e) {
         }
     }
 });
-</script>
 
-<script>
+// Quantity controls
 function incrementQuantity(productId) {
     const input = document.getElementById(`quantity-${productId}`);
     const max = parseInt(input.getAttribute('max'));
-    if (parseInt(input.value) < Math.min(max, 10)) {
+    if (parseInt(input.value) < max) {
         input.value = parseInt(input.value) + 1;
     }
 }
@@ -775,24 +925,56 @@ document.querySelector('.add-to-cart-form')?.addEventListener('submit', function
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert(data.message);
-            // Update cart count
-            fetch('/cart/count/')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.querySelector('.cart-count').textContent = data.count;
-                }
-            });
+            // Show success message
+            const messagesDiv = document.querySelector('.messages') || createMessagesDiv();
+            messagesDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    ${data.message}
+                    <button class="close-btn" onclick="this.parentElement.remove();">&times;</button>
+                </div>
+            `;
+            
+            // Update cart count if element exists
+            const cartCount = document.querySelector('.cart-count');
+            if (cartCount) {
+                fetch('/cart/count/')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            cartCount.textContent = data.count;
+                        }
+                    });
+            }
         } else {
             alert(data.message);
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
     })
     .finally(() => {
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-cart-plus"></i> Add to Cart';
     });
 });
-</script>
 
+function createMessagesDiv() {
+    const div = document.createElement('div');
+    div.className = 'messages';
+    document.querySelector('.main-container').parentNode.insertBefore(div, document.querySelector('.main-container'));
+    return div;
+}
+
+// Auto-dismiss messages after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        document.querySelectorAll('.alert').forEach(alert => {
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 300);
+        });
+    }, 5000);
+});
+</script>
 {% endblock %}

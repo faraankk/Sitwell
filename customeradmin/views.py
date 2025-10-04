@@ -1,34 +1,24 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from django.contrib.auth import login
+from django.contrib.auth import login, logout, get_user_model
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import cache_control
 from django.core.paginator import Paginator
-from django.db.models import Q
-import logging
-from .forms import CustomAuthenticationForm, ProductForm, ProductImageFormSet  
-from .models import Product, ProductImage, Category  
-from .utils import process_image
-from django.db import transaction
-from django.db.models import Q, Max  
-from django.contrib.auth import get_user_model
-from django.contrib.sessions.models import Session
-from django.contrib.auth import get_user_model
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST
-from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, Max, Sum
 from django.db import transaction
 from django.utils import timezone
+from django.contrib.sessions.models import Session
+import logging
 
-from authenticate.models import Order, OrderItem, Product
-from .forms import OrderStatusForm
-
+from .forms import CustomAuthenticationForm, ProductForm, ProductImageFormSet, OrderStatusForm
+from .models import Product, ProductImage, Category
+from .utils import process_image
+from authenticate.models import Order, OrderItem
 
 logger = logging.getLogger(__name__)
-
+User = get_user_model()
 
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def login_to_account(request):
@@ -65,25 +55,53 @@ def login_to_account(request):
 
 
 @login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def admin_dashboard(request):
     if not request.user.is_superuser:
         messages.error(request, "You do not have permission to view this page.")
         return redirect('/')
 
+   
     total_products = Product.objects.count()
     published_products = Product.objects.filter(status='published').count()
     low_stock_products = Product.objects.filter(status='low-stock').count()
     draft_products = Product.objects.filter(status='draft').count()
+    
+    recent_orders = Order.objects.all().order_by('-created_at')[:5]
+    
+    today = timezone.now().date()
+    
+    today_orders = Order.objects.filter(created_at__date=today)
+    today_sales = today_orders.aggregate(total=Sum('total_amount'))['total'] or 0
+    today_orders_count = today_orders.count()
+    
+    total_revenue = Order.objects.aggregate(total=Sum('total_amount'))['total'] or 0
+    
+    User = get_user_model()
+    total_users = User.objects.filter(is_superuser=False).count()
     
     context = {
         'total_products': total_products,
         'published_products': published_products,
         'low_stock_products': low_stock_products,
         'draft_products': draft_products,
+        'recent_orders': recent_orders,
+        'today': today,
+        'today_sales': today_sales,
+        'today_orders_count': today_orders_count,
+        'total_revenue': total_revenue,
+        'total_users': total_users,
     }
     
-    print("Rendering admin_dashboard.html")
+    print("=== DASHBOARD DEBUG ===")
+    print(f"Today's Sales: ₹{today_sales}")
+    print(f"Today's Orders: {today_orders_count}")
+    print(f"Total Revenue: ₹{total_revenue}")
+    print(f"Total Users: {total_users}")
+    print("=======================")
+    
     return render(request, 'admin_dashboard.html', context)
+
 
 
 @login_required
@@ -218,6 +236,7 @@ def add_product(request):
 
 
 @login_required
+
 def edit_product(request, product_id):
     if not request.user.is_superuser:
         messages.error(request, "You do not have permission to view this page.")
@@ -739,6 +758,7 @@ def unblock_user(request, user_id):
     
 
 @login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def order_list(request):
     if not request.user.is_superuser:
         messages.error(request, "You do not have permission to view this page.")
@@ -755,8 +775,8 @@ def order_list(request):
             | Q(user__email__icontains=search)
             | Q(user__first_name__icontains=search)
             | Q(user__last_name__icontains=search)
-            | Q(user__username__icontains=search)
         )
+
 
     # Status filter
     status_filter = request.GET.get("status") or ""
@@ -821,6 +841,7 @@ def order_list(request):
 
 
 @login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def order_detail(request, order_id: int):
     if not request.user.is_superuser:
         messages.error(request, "You do not have permission to view this page.")
@@ -836,6 +857,7 @@ def order_detail(request, order_id: int):
 @login_required
 @require_POST
 @transaction.atomic
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def order_update_status(request, order_id: int):
     if not request.user.is_superuser:
         messages.error(request, "Permission denied.")
@@ -911,6 +933,7 @@ def order_update_status(request, order_id: int):
 @login_required
 @require_POST
 @transaction.atomic
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def order_cancel(request, order_id: int):
     if not request.user.is_superuser:
         messages.error(request, "Permission denied.")

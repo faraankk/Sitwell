@@ -4,103 +4,190 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>{% block title %}Admin{% endblock %}</title>
+  <title>{% block title %}Admin - Sitwell{% endblock %}</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
   <script>
-    tailwind.config = { theme: { extend: { colors: { primary: '#2563eb', accent: '#22c55e' } } } }
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'primary': '#667eea',
+            'accent': '#764ba2'
+          }
+        }
+      }
+    }
   </script>
+  
   <style>
-    .progress-ring { transform: rotate(-90deg); }
-    .progress-ring-circle { transition: stroke-dasharray 0.35s; transform-origin: 50% 50%; }
-    body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif; }
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .dashboard-bg {
+      background: linear-gradient(135deg, #f8f9ff 0%, #fff5f8 100%);
+    }
+    
+    .sidebar-gradient {
+      background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .sidebar-item {
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .sidebar-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 4px;
+      background: white;
+      transform: scaleY(0);
+      transition: transform 0.3s ease;
+    }
+    
+    .sidebar-item:hover::before,
+    .sidebar-item.active::before {
+      transform: scaleY(1);
+    }
+    
+    .sidebar-item.active {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .progress-ring {
+      transform: rotate(-90deg);
+    }
+    
+    .progress-ring-circle {
+      transition: stroke-dasharray 0.35s;
+      transform-origin: 50% 50%;
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.6s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .pulse {
+      animation: pulse 2s ease-in-out infinite;
+    }
   </style>
+  
   {% block head_extra %}{% endblock %}
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="dashboard-bg min-h-screen">
   <div class="flex h-screen overflow-hidden">
-    <!-- Sidebar (from admin_dashboard) -->
-    <aside class="w-64 bg-white shadow-lg border-r border-gray-200 flex-shrink-0">
-      <div class="p-6 border-b border-gray-200">
+    <!-- Enhanced Sidebar -->
+    <aside class="w-72 sidebar-gradient shadow-2xl flex-shrink-0">
+      <!-- Logo Section -->
+      <div class="p-6 border-b border-white/20">
         <div class="flex items-center">
-          <div class="w-8 h-8 border-2 border-gray-800 rounded mr-3"></div>
-          <span class="text-lg font-semibold text-gray-800">sit well</span>
+          <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+            <span class="text-2xl font-black" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">SW</span>
+          </div>
+          <div class="ml-3">
+            <span class="text-xl font-black text-white">sitwell</span>
+            <p class="text-xs text-white/70">Admin Portal</p>
+          </div>
         </div>
       </div>
 
-      <nav class="mt-6 px-4">
-        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 px-3">MENU</div>
+      <!-- Navigation -->
+      <nav class="mt-6 px-4 pb-6 overflow-y-auto" style="max-height: calc(100vh - 120px);">
+        <div class="text-xs font-bold text-white/50 uppercase tracking-wider mb-4 px-3">MAIN MENU</div>
 
         {% with url_name=request.resolver_match.url_name %}
         <div class="space-y-2">
           <a href="{% url 'admin_dashboard' %}"
-             class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg {% if url_name == 'admin_dashboard' %}text-white bg-blue-600{% else %}text-gray-600 hover:bg-gray-100 transition-colors{% endif %}">
-            <i class="fas fa-home w-5 text-center mr-3"></i>
-            Dashboard
-          </a>
-          <a href="{% url 'product-list' %}"
-             class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg {% if url_name == 'product-list' %}text-white bg-blue-600{% else %}text-gray-600 hover:bg-gray-100 transition-colors{% endif %}">
-            <i class="fas fa-box w-5 text-center mr-3"></i>
-            Products
-          </a>
-          <a href="{% url 'category-list' %}"
-             class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg {% if url_name == 'category-list' %}text-white bg-blue-600{% else %}text-gray-600 hover:bg-gray-100 transition-colors{% endif %}">
-            <i class="fas fa-tags w-5 text-center mr-3"></i>
-            Category
-          </a>
-          <a href="{% url 'user-management' %}"
-             class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg {% if url_name == 'user-management' %}text-white bg-blue-600{% else %}text-gray-600 hover:bg-gray-100 transition-colors{% endif %}">
-            <i class="fas fa-users-cog w-5 text-center mr-3"></i>
-            User Management
-          </a>
-          <a href="#"
-             class="flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-            <i class="fas fa-ticket-alt w-5 text-center mr-3"></i>
-            Coupon
-          </a>
-          <a href="#"
-             class="flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-            <i class="fas fa-image w-5 text-center mr-3"></i>
-            Banner
-          </a>
-          <a href="#"
-             class="flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-            <i class="fas fa-credit-card w-5 text-center mr-3"></i>
-            Transaction
-          </a>
-          <a href="{% url 'customer-list' %}"
-             class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg {% if url_name == 'customer-list' %}text-white bg-blue-600{% else %}text-gray-600 hover:bg-gray-100 transition-colors{% endif %}">
-            <i class="fas fa-users w-5 text-center mr-3"></i>
-            Customers
-          </a>
-          <a href="{% url 'order-list' %}"
-             class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg {% if url_name == 'order-list' %}text-white bg-blue-600{% else %}text-gray-600 hover:bg-gray-100 transition-colors{% endif %}">
-            <i class="fas fa-users w-5 text-center mr-3"></i>
-            Orders
-          </a>
-          <a href="#"
-             class="flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-            <i class="fas fa-chart-bar w-5 text-center mr-3"></i>
-            Sales Report
+             class="sidebar-item flex items-center px-4 py-3 text-sm font-medium rounded-xl {% if url_name == 'admin_dashboard' %}active text-white{% else %}text-white/80 hover:text-white{% endif %}">
+            <i class="fas fa-home w-5 text-center mr-3 text-lg"></i>
+            <span>Dashboard</span>
           </a>
 
-          <form action="{% url 'admin_logout' %}" method="post" style="display:inline; width: 100%;">
-            {% csrf_token %}
-            <button type="submit"
-                    class="flex items-center px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors w-full text-left border-none bg-transparent cursor-pointer">
-              <i class="fas fa-sign-out-alt w-5 text-center mr-3"></i>
-              Logout
-            </button>
-          </form>
+          <a href="{% url 'product-list' %}"
+             class="sidebar-item flex items-center px-4 py-3 text-sm font-medium rounded-xl {% if url_name == 'product-list' or url_name == 'product-add' or url_name == 'product-edit' %}active text-white{% else %}text-white/80 hover:text-white{% endif %}">
+            <i class="fas fa-box w-5 text-center mr-3 text-lg"></i>
+            <span>Products</span>
+          </a>
+
+          <a href="{% url 'category-list' %}"
+             class="sidebar-item flex items-center px-4 py-3 text-sm font-medium rounded-xl {% if url_name == 'category-list' %}active text-white{% else %}text-white/80 hover:text-white{% endif %}">
+            <i class="fas fa-tags w-5 text-center mr-3 text-lg"></i>
+            <span>Categories</span>
+          </a>
+
+          <a href="{% url 'user-management' %}"
+             class="sidebar-item flex items-center px-4 py-3 text-sm font-medium rounded-xl {% if url_name == 'user-management' %}active text-white{% else %}text-white/80 hover:text-white{% endif %}">
+            <i class="fas fa-users-cog w-5 text-center mr-3 text-lg"></i>
+            <span>User Management</span>
+          </a>
+
+          <a href="#"
+             class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded-xl">
+            <i class="fas fa-ticket-alt w-5 text-center mr-3 text-lg"></i>
+            <span>Coupons</span>
+          </a>
+
+          <a href="#"
+             class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded-xl">
+            <i class="fas fa-image w-5 text-center mr-3 text-lg"></i>
+            <span>Banners</span>
+          </a>
+
+          <a href="{% url 'order-list' %}"
+             class="sidebar-item flex items-center px-4 py-3 text-sm font-medium rounded-xl {% if url_name == 'order-list' %}active text-white{% else %}text-white/80 hover:text-white{% endif %}">
+            <i class="fas fa-shopping-bag w-5 text-center mr-3 text-lg"></i>
+            <span>Orders</span>
+          </a>
+
+          <a href="{% url 'customer-list' %}"
+             class="sidebar-item flex items-center px-4 py-3 text-sm font-medium rounded-xl {% if url_name == 'customer-list' %}active text-white{% else %}text-white/80 hover:text-white{% endif %}">
+            <i class="fas fa-users w-5 text-center mr-3 text-lg"></i>
+            <span>Customers</span>
+          </a>
+
+          <a href="#"
+             class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded-xl">
+            <i class="fas fa-chart-bar w-5 text-center mr-3 text-lg"></i>
+            <span>Sales Report</span>
+          </a>
+
+          <!-- Logout -->
+          <div class="mt-6 pt-6 border-t border-white/20">
+            <form action="{% url 'admin_logout' %}" method="post" style="width: 100%;">
+              {% csrf_token %}
+              <button type="submit"
+                      class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded-xl w-full text-left border-none bg-transparent cursor-pointer">
+                <i class="fas fa-sign-out-alt w-5 text-center mr-3 text-lg"></i>
+                <span>Logout</span>
+              </button>
+            </form>
+          </div>
         </div>
         {% endwith %}
       </nav>
     </aside>
 
-    <!-- Right side -->
-    <div class="flex-1 flex flex-col overflow-hidden p-2">
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col overflow-hidden">
       {% block body %}{% endblock %}
     </div>
   </div>

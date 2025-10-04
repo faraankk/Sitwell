@@ -1,363 +1,295 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Deleted Categories - Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    .sidebar-item { transition: all 0.2s ease; }
-    .sidebar-item:hover { background-color: #f8fafc; border-radius: 8px; }
-    .sidebar-item.active { background-color: #3b82f6; color: white; border-radius: 8px; }
-    .table-header { background-color: #f8fafc; }
-    .action-btn { transition: all 0.2s ease; }
-    .action-btn:hover { transform: scale(1.1); }
-    .deleted-row { background-color: #fef2f2; }
-    .restore-btn:hover { transform: scale(1.05); }
-    .deleted-item { background-color: #fee2e2; border-left: 4px solid #ef4444; }
-    .restore-btn { transition: all 0.2s ease; }
-  </style>
-</head>
-<body class="bg-gray-50 font-sans">
-  <div class="flex min-h-screen flex-col md:flex-row">
-    <!-- Sidebar -->
-    <div class="w-full md:w-64 bg-white shadow-sm border-r border-gray-200 md:min-h-screen">
-      <!-- Logo -->
-      <div class="p-6 border-b border-gray-200">
-        <div class="flex items-center space-x-2">
-          <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
-            <span class="text-white font-bold text-sm">SW</span>
-          </div>
-          <span class="font-semibold text-gray-900">sit well</span>
-        </div>
-      </div>
+{% extends "admin/base_admin.html" %}
+{% block title %}Deleted Categories - Sitwell Admin{% endblock %}
 
-      <!-- Menu -->
-      <div class="p-4">
-        <p class="text-xs font-medium text-gray-400 uppercase tracking-wider mb-4">MENU</p>
-        <nav class="space-y-2">
-          <a href="{% url 'admin_dashboard' %}" class="sidebar-item flex items-center space-x-3 px-3 py-2 text-gray-600">
-            <i class="fas fa-th-large w-4"></i>
-            <span class="text-sm">Dashboard</span>
+{% block body %}
+  <!-- Enhanced Header -->
+  <header class="bg-white shadow-sm border-b border-gray-100 px-8 py-5 flex-shrink-0">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-black text-red-600">🗑️ Deleted Categories</h1>
+        <nav class="flex items-center space-x-2 text-sm text-gray-500 mt-2">
+          <a href="{% url 'admin_dashboard' %}" class="text-purple-600 hover:text-purple-800 font-medium transition-colors">
+            <i class="fas fa-home mr-1"></i>Dashboard
           </a>
-          <a href="{% url 'product-list' %}" class="sidebar-item flex items-center space-x-3 px-3 py-2 text-gray-600">
-            <i class="fas fa-box w-4"></i>
-            <span class="text-sm">Products</span>
-          </a>
-          <a href="{% url 'category-list' %}" class="sidebar-item flex items-center space-x-3 px-3 py-2 text-gray-600">
-            <i class="fas fa-tags w-4"></i>
-            <span class="text-sm">Categories</span>
-          </a>
-          <a href="{% url 'deleted-categories' %}" class="sidebar-item active flex items-center space-x-3 px-3 py-2">
-            <i class="fas fa-trash-restore w-4"></i>
-            <span class="text-sm">Deleted Categories</span>
-          </a>
-          <a href="{% url 'customer-list' %}" class="sidebar-item flex items-center space-x-3 px-3 py-2 text-gray-600">
-            <i class="fas fa-users w-4"></i>
-            <span class="text-sm">Customers</span>
-          </a>
-          <a href="{% url 'logout' %}" class="sidebar-item flex items-center space-x-3 px-3 py-2 text-gray-600">
-            <i class="fas fa-sign-out-alt w-4"></i>
-            <span class="text-sm">Logout</span>
-          </a>
+          <i class="fas fa-chevron-right text-xs"></i>
+          <a href="{% url 'category-list' %}" class="text-purple-600 hover:text-purple-800 font-medium transition-colors">Categories</a>
+          <i class="fas fa-chevron-right text-xs"></i>
+          <span class="font-medium">Deleted Categories</span>
         </nav>
       </div>
+      <div class="flex items-center space-x-3">
+        <a href="{% url 'category-list' %}" class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-bold transition-all">
+          <i class="fas fa-arrow-left mr-2"></i>Back to Categories
+        </a>
+        <div class="flex items-center space-x-3 bg-gradient-to-r from-blue-50 to-purple-50 px-4 py-2 rounded-xl">
+          <div class="w-2 h-2 bg-green-500 rounded-full pulse"></div>
+          <span class="text-sm font-bold text-gray-700">Farhaan</span>
+          <span class="text-xs text-gray-500 font-medium">Admin</span>
+        </div>
+      </div>
     </div>
+  </header>
 
-    <!-- Main Content -->
-    <div class="flex-1 flex flex-col">
-      <!-- Header -->
-      <header class="bg-white border-b border-gray-200 px-6 py-4">
-        <div class="flex flex-col md:flex-row items-start md:items-center justify-between">
-          <div class="mb-4 md:mb-0">
-            <h1 class="text-2xl font-semibold text-gray-900">Deleted Categories</h1>
-            <nav class="flex items-center space-x-2 text-sm text-gray-500 mt-1">
-              <a href="{% url 'admin_dashboard' %}" class="text-blue-600 hover:text-blue-800">Dashboard</a>
-              <i class="fas fa-chevron-right text-xs"></i>
-              <a href="{% url 'category-list' %}" class="text-blue-600 hover:text-blue-800">Categories</a>
-              <i class="fas fa-chevron-right text-xs"></i>
-              <span>Deleted Categories</span>
-            </nav>
+  <!-- Main Content -->
+  <main class="flex-1 overflow-auto p-8">
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-bold text-gray-500 uppercase mb-2">Deleted Categories</p>
+            <p class="text-3xl font-black text-red-600">{{ categories|length }}</p>
           </div>
-          <div class="flex items-center space-x-3">
-            <a href="{% url 'category-list' %}" class="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              <i class="fas fa-arrow-left"></i>
-              <span>Back to Categories</span>
-            </a>
+          <div class="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+            <i class="fas fa-trash text-white text-2xl"></i>
           </div>
         </div>
-      </header>
-
-      <!-- Page Content -->
-      <main class="flex-1 p-6">
-        <!-- Deleted Categories Table -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
-          <table class="w-full">
-            <thead class="table-header">
-              <tr>
-                <th class="px-6 py-4 text-left">S.NO</th>
-                <th class="px-6 py-4 text-left">CATEGORY NAME</th>
-                <th class="px-6 py-4 text-left">DELETED DATE</th>
-                <th class="px-6 py-4 text-left">DELETED BY</th>
-                <th class="px-6 py-4 text-left">ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for category in categories %}
-                <tr class="deleted-row deleted-item">
-                  <td class="px-6 py-4">{{ forloop.counter }}</td>
-                  <td class="px-6 py-4">
-                    <span class="text-red-600 font-medium">{{ category.name }}</span>
-                    <span class="text-xs text-red-500 block">(Deleted)</span>
-                  </td>
-                  <td class="px-6 py-4">
-                    {% if category.deleted_at %}
-                      {{ category.deleted_at|date:"d M Y H:i" }}
-                    {% else %}
-                      -
-                    {% endif %}
-                  </td>
-                  <td class="px-6 py-4">
-                    {{ category.deleted_by|default:"-" }}
-                  </td>
-                  <td class="px-6 py-4">
-                    <button
-                      type="button"
-                      class="restore-btn inline-flex items-center px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
-                      onclick="confirmRestore('{{ category.id }}')">
-                      <i class="fas fa-undo mr-1"></i>
-                      Restore
-                    </button>
-                  </td>
-                </tr>
-              {% empty %}
-                <tr>
-                  <td colspan="5" class="px-6 py-12 text-center">
-                    <div class="flex flex-col items-center space-y-3">
-                      <i class="fas fa-trash-restore text-gray-300 text-4xl"></i>
-                      <p class="text-gray-500 text-sm">No deleted categories found</p>
-                      <p class="text-gray-400 text-xs">All categories are active</p>
-                    </div>
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Pagination -->
-        <div class="mt-6 flex justify-center items-center space-x-2">
-          {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100">Previous</a>
-          {% endif %}
-          <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-          {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100">Next</a>
-          {% endif %}
-        </div>
-      </main>
-    </div>
-  </div>
-
-  <!-- Toast container -->
-  <div id="toast-container" style="position:fixed; top:16px; right:16px; z-index:9999; display:flex; flex-direction:column; gap:8px;"></div>
-
-  <!-- Confirm dialog overlay -->
-  <div id="confirm-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.35); display:none; align-items:center; justify-content:center; z-index:9998;">
-    <div style="background:#fff; width:360px; max-width:92vw; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.15); overflow:hidden;">
-      <div style="padding:16px 20px; border-bottom:1px solid #e5e7eb;">
-        <h3 style="margin:0; font-size:16px; font-weight:700; color:#1a202c;">Confirm action</h3>
       </div>
-      <div id="confirm-message" style="padding:16px 20px; color:#374151; font-size:14px;">
-        Are you sure?
+      
+      <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in" style="animation-delay: 0.1s;">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-bold text-gray-500 uppercase mb-2">Can Be Restored</p>
+            <p class="text-3xl font-black text-green-600">{{ categories|length }}</p>
+          </div>
+          <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+            <i class="fas fa-undo text-white text-2xl"></i>
+          </div>
+        </div>
       </div>
-      <div style="display:flex; gap:8px; justify-content:flex-end; padding:12px 16px; background:#fafbfc; border-top:1px solid #e5e7eb;">
-        <button id="confirm-cancel" type="button" class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">Cancel</button>
-        <button id="confirm-ok" type="button" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">Yes</button>
+      
+      <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in" style="animation-delay: 0.2s;">
+        <a href="{% url 'category-list' %}" class="flex items-center justify-between h-full">
+          <div>
+            <p class="text-sm font-bold text-gray-500 uppercase mb-2">Back to Categories</p>
+            <p class="text-lg font-bold text-purple-600">View All Categories →</p>
+          </div>
+          <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+            <i class="fas fa-arrow-left text-white text-2xl"></i>
+          </div>
+        </a>
       </div>
     </div>
-  </div>
 
-  <script>
-    // Toast helper
-    function showToast(message, type='info', timeout=3000) {
-      const id = 'toast-container';
-      let container = document.getElementById(id);
-      if (!container) {
-        container = document.createElement('div');
-        container.id = id;
-        container.style.position = 'fixed';
-        container.style.top = '16px';
-        container.style.right = '16px';
-        container.style.zIndex = '9999';
-        container.style.display = 'flex';
-        container.style.flexDirection = 'column';
-        container.style.gap = '8px';
-        document.body.appendChild(container);
-      }
+    <!-- Deleted Categories Table -->
+    <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden fade-in" style="animation-delay: 0.3s;">
+      <div class="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-red-50 to-pink-50">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-black text-gray-900">Deleted Categories</h2>
+            <p class="text-sm text-gray-500 mt-1">Restore categories to make them available again</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50 border-b-2 border-gray-200">
+            <tr>
+              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">S.NO</th>
+              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Category Name</th>
+              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Deleted Date</th>
+              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Deleted By</th>
+              <th class="px-6 py-4 text-center text-xs font-black text-gray-700 uppercase tracking-wider">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for category in categories %}
+            <tr class="bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 transition-all">
+              <td class="px-6 py-4 text-sm font-bold text-gray-900">{{ forloop.counter }}</td>
+              <td class="px-6 py-4">
+                <div class="flex items-center">
+                  <div class="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center text-white font-bold mr-3 opacity-60">
+                    {{ category.name|slice:":1"|upper }}
+                  </div>
+                  <div>
+                    <span class="font-bold text-red-700">{{ category.name }}</span>
+                    <span class="block text-xs text-red-500">(Deleted)</span>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-600">
+                {% if category.deleted_at %}
+                  {{ category.deleted_at|date:"d M Y, H:i" }}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-600 font-medium">
+                {{ category.deleted_by|default:"-" }}
+              </td>
+              <td class="px-6 py-4 text-center">
+                <button type="button" onclick="confirmRestore('{{ category.id }}')"
+                        class="px-5 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-bold rounded-xl hover:shadow-lg transition-all">
+                  <i class="fas fa-undo mr-2"></i>Restore
+                </button>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="px-6 py-20 text-center">
+                <div class="inline-flex items-center justify-center w-24 h-24 bg-green-100 rounded-full mb-6">
+                  <i class="fas fa-check-circle text-4xl text-green-600"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">No Deleted Categories</h3>
+                <p class="text-gray-500 mb-4">All categories are active!</p>
+                <a href="{% url 'category-list' %}" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:shadow-lg transition-all inline-block">
+                  <i class="fas fa-arrow-left mr-2"></i>Back to Categories
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
 
-      const el = document.createElement('div');
-      el.style.padding = '10px 12px';
-      el.style.borderRadius = '8px';
-      el.style.fontSize = '13px';
-      el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.12)';
-      el.style.border = '1px solid';
-      el.style.display = 'flex';
-      el.style.alignItems = 'center';
-      el.style.gap = '8px';
-      el.style.transition = 'transform .2s ease, opacity .2s ease';
-      el.style.transform = 'translateY(-6px)';
-      el.style.opacity = '0';
-
-      const types = {
-        success: { b:'#bbf7d0', bg:'#dcfce7', c:'#166534', icon:'fa-check-circle' },
-        error:   { b:'#fecaca', bg:'#fef2f2', c:'#b91c1c', icon:'fa-times-circle' },
-        info:    { b:'#dbeafe', bg:'#eff6ff', c:'#1d4ed8', icon:'fa-info-circle' },
-        warning: { b:'#fed7aa', bg:'#fef3c7', c:'#92400e', icon:'fa-exclamation-triangle' },
-      };
-      const t = types[type] || types.info;
-      el.style.borderColor = t.b;
-      el.style.background = t.bg;
-      el.style.color = t.c;
-
-      const icon = document.createElement('i');
-      icon.className = `fas ${t.icon}`;
-      icon.style.minWidth = '16px';
-
-      const text = document.createElement('div');
-      text.textContent = message;
-
-      const close = document.createElement('button');
-      close.type = 'button';
-      close.innerHTML = '<i class="fas fa-times"></i>';
-      close.style.border = 'none';
-      close.style.background = 'transparent';
-      close.style.cursor = 'pointer';
-      close.style.color = t.c;
-
-      close.onclick = () => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(-6px)';
-        setTimeout(() => el.remove(), 200);
-      };
-
-      el.appendChild(icon);
-      el.appendChild(text);
-      el.appendChild(close);
-      container.appendChild(el);
-
-      requestAnimationFrame(() => {
-        el.style.opacity = '1';
-        el.style.transform = 'translateY(0)';
-      });
-
-      if (timeout) setTimeout(() => close.onclick(), timeout);
-    }
-
-    // Confirm dialog
-    function confirmDialog(message) {
-      let overlay = document.getElementById('confirm-overlay');
-      if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'confirm-overlay';
-        overlay.style.position = 'fixed';
-        overlay.style.inset = '0';
-        overlay.style.background = 'rgba(0,0,0,0.35)';
-        overlay.style.display = 'none';
-        overlay.style.alignItems = 'center';
-        overlay.style.justifyContent = 'center';
-        overlay.style.zIndex = '9998';
-
-        const box = document.createElement('div');
-        box.style.background = '#fff';
-        box.style.width = '360px';
-        box.style.maxWidth = '92vw';
-        box.style.border = '1px solid #e5e7eb';
-        box.style.borderRadius = '12px';
-        box.style.boxShadow = '0 10px 30px rgba(0,0,0,0.15)';
-        box.style.overflow = 'hidden';
-
-        const head = document.createElement('div');
-        head.style.padding = '16px 20px';
-        head.style.borderBottom = '1px solid #e5e7eb';
-        head.innerHTML = '<h3 style="margin:0; font-size:16px; font-weight:700; color:#1a202c;">Confirm action</h3>';
-
-        const body = document.createElement('div');
-        body.id = 'confirm-message';
-        body.style.padding = '16px 20px';
-        body.style.color = '#374151';
-        body.style.fontSize = '14px';
-
-        const foot = document.createElement('div');
-        foot.style.display = 'flex';
-        foot.style.gap = '8px';
-        foot.style.justifyContent = 'flex-end';
-        foot.style.padding = '12px 16px';
-        foot.style.background = '#fafbfc';
-        foot.style.borderTop = '1px solid #e5e7eb';
-
-        const cancel = document.createElement('button');
-        cancel.id = 'confirm-cancel';
-        cancel.type = 'button';
-        cancel.className = 'px-3 py-1 border border-gray-300 rounded hover:bg-gray-50';
-        cancel.textContent = 'Cancel';
-
-        const ok = document.createElement('button');
-        ok.id = 'confirm-ok';
-        ok.type = 'button';
-        ok.className = 'px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700';
-        ok.textContent = 'Yes';
-
-        foot.appendChild(cancel);
-        foot.appendChild(ok);
-        box.appendChild(head);
-        box.appendChild(body);
-        box.appendChild(foot);
-        overlay.appendChild(box);
-        document.body.appendChild(overlay);
-      }
-
-      return new Promise((resolve) => {
-        const msg = document.getElementById('confirm-message');
-        const ok = document.getElementById('confirm-ok');
-        const cancel = document.getElementById('confirm-cancel');
-
-        msg.textContent = message;
-        overlay.style.display = 'flex';
-
-        const cleanup = () => {
-          overlay.style.display = 'none';
-          ok.onclick = null;
-          cancel.onclick = null;
-          overlay.onclick = null;
-        };
-
-        ok.onclick = () => { cleanup(); resolve(true); };
-        cancel.onclick = () => { cleanup(); resolve(false); };
-        overlay.onclick = (e) => {
-          if (e.target === overlay) { cleanup(); resolve(false); }
-        };
-      });
-    }
-
-    // Restore handler with confirm + toasts
-    async function confirmRestore(id) {
-      const ok = await confirmDialog('Restore this category?');
-      if (!ok) return;
-      showToast('Restoring...', 'info', 1200);
-      // Navigate to the server restore URL (GET) after confirm
-      window.location.href = `{% url 'restore-category' 0 %}`.replace('/0/', `/${id}/`);
-    }
-
-    // Show Django messages as toasts if present
-    document.addEventListener('DOMContentLoaded', () => {
-      {% if messages %}
-        {% for message in messages %}
-          showToast('{{ message|escapejs }}', '{{ message.tags|default:"info" }}');
-        {% endfor %}
+      <!-- Pagination -->
+      {% if page_obj.paginator.num_pages > 1 %}
+      <div class="px-8 py-4 border-t border-gray-100 bg-gray-50">
+        <div class="flex items-center justify-between">
+          <p class="text-sm text-gray-600">
+            Page <span class="font-bold text-purple-600">{{ page_obj.number }}</span> of 
+            <span class="font-bold text-purple-600">{{ page_obj.paginator.num_pages }}</span>
+          </p>
+          <div class="flex space-x-2">
+            {% if page_obj.has_previous %}
+              <a href="?page={{ page_obj.previous_page_number }}"
+                 class="px-4 py-2 border-2 border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-100 transition-all">
+                <i class="fas fa-chevron-left"></i>
+              </a>
+            {% endif %}
+            
+            <span class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold">
+              {{ page_obj.number }}
+            </span>
+            
+            {% if page_obj.has_next %}
+              <a href="?page={{ page_obj.next_page_number }}"
+                 class="px-4 py-2 border-2 border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-100 transition-all">
+                <i class="fas fa-chevron-right"></i>
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
       {% endif %}
+    </div>
+  </main>
+
+  <!-- Toast & Confirm Dialog -->
+  <div id="toast-container" style="position:fixed; top:16px; right:16px; z-index:9999; display:flex; flex-direction:column; gap:8px;"></div>
+  <div id="confirm-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:9998;">
+    <div style="background:#fff; width:460px; max-width:92vw; border-radius:20px; box-shadow:0 25px 60px rgba(0,0,0,0.3); overflow:hidden;">
+      <div style="padding:24px; border-bottom:2px solid #e5e7eb; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <h3 style="margin:0; font-size:20px; font-weight:900; color:#fff;">
+          <i class="fas fa-question-circle mr-2"></i>Confirm Restore
+        </h3>
+      </div>
+      <div id="confirm-message" style="padding:24px; color:#374151; font-size:15px; line-height:1.6;">Restore this category?</div>
+      <div style="display:flex; gap:12px; justify-content:flex-end; padding:20px 24px; background:#f9fafb; border-top:2px solid #e5e7eb;">
+        <button id="confirm-cancel" type="button" class="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50 font-bold transition-all">
+          <i class="fas fa-times mr-2"></i>Cancel
+        </button>
+        <button id="confirm-ok" type="button" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-lg font-bold transition-all">
+          <i class="fas fa-check mr-2"></i>Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .fade-in {
+      animation: fadeIn 0.6s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .pulse {
+      animation: pulse 2s ease-in-out infinite;
+    }
+  </style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Toast function
+  function showToast(message, type='info', timeout=3000) {
+    const container = document.getElementById('toast-container') || (() => {
+      const el = document.createElement('div');
+      el.id = 'toast-container';
+      el.style.cssText = 'position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;';
+      document.body.appendChild(el);
+      return el;
+    })();
+
+    const types = {
+      success: { bg:'linear-gradient(135deg, #d1fae5, #a7f3d0)', c:'#166534', icon:'fa-check-circle' },
+      error: { bg:'linear-gradient(135deg, #fef2f2, #fecaca)', c:'#b91c1c', icon:'fa-times-circle' },
+      info: { bg:'linear-gradient(135deg, #dbeafe, #bfdbfe)', c:'#1d4ed8', icon:'fa-info-circle' },
+      warning: { bg:'linear-gradient(135deg, #fef3c7, #fed7aa)', c:'#92400e', icon:'fa-exclamation-triangle' },
+    };
+    const t = types[type] || types.info;
+
+    const toast = document.createElement('div');
+    toast.style.cssText = `padding:16px 20px;border-radius:12px;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,0.15);display:flex;align-items:center;gap:12px;background:${t.bg};color:${t.c};font-weight:600;border:2px solid ${t.c}33;animation:slideIn 0.3s;min-width:300px;`;
+    
+    toast.innerHTML = `
+      <i class="fas ${t.icon}" style="font-size:20px;"></i>
+      <div style="flex:1;">${message}</div>
+      <button onclick="this.parentElement.remove()" style="border:none;background:transparent;cursor:pointer;color:${t.c};font-size:18px;">
+        <i class="fas fa-times"></i>
+      </button>
+    `;
+
+    container.appendChild(toast);
+    if (timeout) setTimeout(() => toast.remove(), timeout);
+  }
+
+  // Confirm dialog
+  function confirmDialog(message) {
+    const overlay = document.getElementById('confirm-overlay');
+    const msg = document.getElementById('confirm-message');
+    const ok = document.getElementById('confirm-ok');
+    const cancel = document.getElementById('confirm-cancel');
+
+    return new Promise((resolve) => {
+      msg.textContent = message;
+      overlay.style.display = 'flex';
+
+      const cleanup = () => {
+        overlay.style.display = 'none';
+        ok.onclick = null;
+        cancel.onclick = null;
+        overlay.onclick = null;
+      };
+
+      ok.onclick = () => { cleanup(); resolve(true); };
+      cancel.onclick = () => { cleanup(); resolve(false); };
+      overlay.onclick = (e) => { if (e.target === overlay) { cleanup(); resolve(false); } };
     });
-  </script>
-</body>
-</html>
+  }
+
+  // Restore handler
+  async function confirmRestore(id) {
+    const ok = await confirmDialog('🔄 Restore this category? It will be available again.');
+    if (!ok) return;
+    
+    showToast('Restoring category...', 'info', 1500);
+    window.location.href = `{% url 'restore-category' 0 %}`.replace('/0/', `/${id}/`);
+  }
+
+  // Show Django messages
+  document.addEventListener('DOMContentLoaded', () => {
+    {% if messages %}
+      {% for message in messages %}
+        showToast('{{ message|escapejs }}', '{{ message.tags|default:"info" }}');
+      {% endfor %}
+    {% endif %}
+  });
+</script>
+{% endblock %}

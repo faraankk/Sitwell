@@ -1,85 +1,217 @@
 {% load static %}
-<div class="profile-sidebar-nav" id="leftNavbar">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My Account - Sitwell{% endblock %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
     <style>
-        /* ----------------- Sidebar ----------------- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f9fafb;
+        }
+
+        /* Main Content Wrapper */
+        .main-content {
+            margin-left: 0;
+            padding: 20px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.content-pushed {
+            margin-left: 320px;
+        }
+
+        /* Left Navigation Sidebar */
         .profile-sidebar-nav {
             position: fixed;
-            left: -300px;
+            left: -320px;
             top: 0;
-            width: 300px;
+            width: 320px;
             height: 100vh;
             background: white;
             z-index: 1000;
             transition: left 0.3s ease;
             overflow-y: auto;
-            padding-top: 20px;
-            box-shadow: 2px 0 15px rgba(0,0,0,0.1);
+            padding: 25px;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.1);
         }
-        .profile-sidebar-nav.active { left: 0; }
+        
+        .profile-sidebar-nav.active {
+            left: 0;
+        }
+
+        /* Scrollbar Styling */
+        .profile-sidebar-nav::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .profile-sidebar-nav::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .profile-sidebar-nav::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
 
         .profile-sidebar {
             background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 20px;
-            margin: 20px;
         }
 
+        /* Home Button */
+        .home-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .home-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+
+        .home-btn i {
+            margin-right: 10px;
+            font-size: 16px;
+        }
+
+        /* Profile Image */
         .profile-image {
             width: 120px;
             height: 120px;
             border-radius: 50%;
             object-fit: cover;
-            border: 3px solid #f8f9fa;
+            border: 4px solid #667eea;
             margin: 0 auto 15px;
             display: block;
+            background: #f8f9fa;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
         }
 
+        .profile-image-placeholder {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .profile-name {
+            margin: 10px 0 5px;
+            color: #333;
+            text-align: center;
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        .profile-email {
+            color: #999;
+            font-size: 13px;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        /* Navigation */
         .profile-nav {
-            margin-top: 20px;
+            margin-top: 30px;
+        }
+
+        .section-title {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
         }
 
         .profile-nav .nav-link {
             color: #6c757d;
-            padding: 12px 15px;
+            padding: 14px 16px;
             margin-bottom: 8px;
-            border-radius: 8px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             text-decoration: none;
             cursor: pointer;
             transition: all 0.3s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-weight: 600;
+            font-size: 15px;
         }
+        
         .profile-nav .nav-link:hover {
             background-color: #f8f9fa;
-            color: #db4444;
+            color: #667eea;
+            transform: translateX(8px);
         }
+        
         .profile-nav .nav-link.active {
-            background-color: #db4444;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
+        
         .profile-nav .nav-link i {
             width: 20px;
-            margin-right: 10px;
+            margin-right: 12px;
+            font-size: 16px;
         }
 
-        /* Sidebar toggle button */
+        /* Sidebar Toggle Button */
         .navbar-toggle-btn {
             position: fixed;
             top: 100px;
             left: 20px;
             z-index: 1001;
-            background: #db4444;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 12px 15px;
-            border-radius: 8px;
+            padding: 14px 16px;
+            border-radius: 12px;
             cursor: pointer;
-            font-size: 16px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-size: 18px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
             transition: all 0.3s ease;
         }
-        .navbar-toggle-btn:hover { background: #c13333; transform: translateY(-2px); }
+        
+        .navbar-toggle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .navbar-toggle-btn.active {
+            left: 340px;
+        }
 
         /* Overlay */
         .navbar-overlay {
@@ -88,41 +220,142 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.6);
             z-index: 999;
             display: none;
+            backdrop-filter: blur(5px);
         }
-        .navbar-overlay.active { display: block; }
+        
+        .navbar-overlay.active {
+            display: block;
+        }
+
+        /* Beautiful Breadcrumbs */
+        .breadcrumb {
+            background: white;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            list-style: none;
+        }
+        
+        .breadcrumb-item {
+            display: flex;
+            align-items: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .breadcrumb-item a {
+            color: #666;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .breadcrumb-item a:hover {
+            color: #667eea;
+        }
+        
+        .breadcrumb-item.active {
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .breadcrumb-item::after {
+            content: '/';
+            margin: 0 10px;
+            color: #ddd;
+        }
+        
+        .breadcrumb-item:last-child::after {
+            content: '';
+            margin: 0;
+        }
+
+        .breadcrumb-item i {
+            margin-right: 6px;
+        }
 
         /* Responsive */
         @media (max-width: 768px) {
-            .navbar-toggle-btn.active { left: 20px; }
+            .navbar-toggle-btn.active {
+                left: 20px;
+            }
+            
+            .main-content.content-pushed {
+                margin-left: 0;
+            }
+
+            .profile-sidebar-nav {
+                width: 280px;
+            }
         }
+
+        {% block extra_css %}{% endblock %}
     </style>
+</head>
+<body>
+    <!-- Sidebar Toggle Button -->
+    <button class="navbar-toggle-btn" onclick="toggleLeftNavbar()" title="Toggle Menu">
+        <i class="fas fa-bars"></i>
+    </button>
 
-    <div class="profile-sidebar">
-        <!-- Profile Picture -->
-        <div style="text-align:center; margin-bottom:20px;">
-            {% if user.profile_image %}
-                <img src="{{ user.profile_image.url }}" alt="Profile Picture" class="profile-image">
-            {% else %}
-                <div class="profile-image" style="display:flex; align-items:center; justify-content:center; background:#f8f9fa;">
-                    <i class="fas fa-user" style="font-size:3rem; color:#6c757d;"></i>
-                </div>
-            {% endif %}
-            <h6>{{ user.full_name|default:"Customer Name" }}</h6>
-        </div>
+    <!-- Overlay -->
+    <div class="navbar-overlay" onclick="toggleLeftNavbar()"></div>
 
-        <!-- Sidebar Links -->
-        <div class="profile-nav">
-            <a href="javascript:void(0)" class="nav-link active" onclick="showTabFromSidebar('profile-details')">
-                <i class="fas fa-user"></i> My Profile
+    <!-- Left Navigation Sidebar -->
+    <div class="profile-sidebar-nav" id="leftNavbar">
+        <div class="profile-sidebar">
+            <!-- Home Button -->
+            <a href="{% url 'dummy_home' %}" class="home-btn">
+                <i class="fas fa-home"></i>Back to Home
             </a>
-            <a href="{% url 'edit_profile' %}" class="nav-link"><i class="fas fa-edit"></i> Edit Profile</a>
-            <a href="/profile/addresses/" class="nav-link"><i class="fas fa-address-book"></i> Address Book</a>
-            <a href="javascript:void(0)" class="nav-link" onclick="showTabFromSidebar('orders')"><i class="fas fa-shopping-bag"></i> My Orders</a>
-            <a href="javascript:void(0)" class="nav-link" onclick="showTabFromSidebar('security')"><i class="fas fa-shield-alt"></i> Security</a>
+
+            <!-- Profile Picture Section -->
+            <div style="text-align: center; margin-bottom: 25px; padding-bottom: 25px; border-bottom: 2px solid #f0f0f0;">
+                {% if user.profile_image %}
+                    <img src="{{ user.profile_image.url }}" alt="{{ user.full_name }}" class="profile-image">
+                {% else %}
+                    <div class="profile-image-placeholder">
+                        <i class="fas fa-user" style="font-size: 3rem; color: white;"></i>
+                    </div>
+                {% endif %}
+                <h6 class="profile-name">{{ user.first_name|default:user.email }}</h6>
+                <p class="profile-email">{{ user.email }}</p>
+            </div>
+
+            <!-- Navigation Menu -->
+            <div class="profile-nav">
+                <h6 class="section-title">Manage My Account</h6>
+                <div style="display: flex; flex-direction: column;">
+                    <a href="#profile-details" class="nav-link active" onclick="showTabFromSidebar('profile-details'); return false;">
+                        <i class="fas fa-user-circle"></i>My Profile
+                    </a>
+                    <a href="{% url 'edit_profile' %}" class="nav-link">
+                        <i class="fas fa-edit"></i>Edit Profile
+                    </a>
+                    <a href="#addresses" class="nav-link" onclick="showTabFromSidebar('addresses'); return false;">
+                        <i class="fas fa-map-marked-alt"></i>Address Book
+                    </a>
+                    <a href="#orders" class="nav-link" onclick="showTabFromSidebar('orders'); return false;">
+                        <i class="fas fa-shopping-bag"></i>My Orders
+                    </a>
+                    <a href="#security" class="nav-link" onclick="showTabFromSidebar('security'); return false;">
+                        <i class="fas fa-shield-alt"></i>Security
+                    </a>
+                </div>
+            </div>
         </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content" id="mainContent">
+        {% block banner %}{% endblock %}
+        {% block content %}{% endblock %}
     </div>
 
     <script>
@@ -131,17 +364,95 @@
             const navbar = document.getElementById('leftNavbar');
             const overlay = document.querySelector('.navbar-overlay');
             const toggleBtn = document.querySelector('.navbar-toggle-btn');
+            const mainContent = document.getElementById('mainContent');
             
             if (navbar) {
                 navbar.classList.toggle('active');
-                if (overlay) overlay.classList.toggle('active');
-                if (toggleBtn) toggleBtn.classList.toggle('active');
+            }
+            if (overlay) {
+                overlay.classList.toggle('active');
+            }
+            if (toggleBtn) {
+                toggleBtn.classList.toggle('active');
+            }
+            if (mainContent && window.innerWidth > 768) {
+                mainContent.classList.toggle('content-pushed');
             }
         }
 
-        // Sidebar tab placeholder
+        // Tab switching functionality
         function showTabFromSidebar(tabId) {
-            console.log('Switching to tab:', tabId);
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-pane');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all sidebar nav links
+            const sidebarLinks = document.querySelectorAll('.profile-sidebar-nav .nav-link');
+            sidebarLinks.forEach(link => link.classList.remove('active'));
+            
+            // Show selected tab
+            const selectedTab = document.getElementById(tabId);
+            if (selectedTab) {
+                selectedTab.classList.add('active');
+            }
+            
+            // Add active class to clicked sidebar nav link
+            const activeLink = document.querySelector(`.profile-sidebar-nav .nav-link[href="#${tabId}"]`);
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+
+            // Close sidebar on mobile after selection
+            if (window.innerWidth <= 768) {
+                toggleLeftNavbar();
+            }
         }
+
+        // On page load, check for hash in URL and auto-open sidebar
+        document.addEventListener('DOMContentLoaded', function() {
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                showTabFromSidebar(hash);
+            }
+
+            // Auto-open sidebar on desktop
+            if (window.innerWidth > 768) {
+                const navbar = document.getElementById('leftNavbar');
+                const mainContent = document.getElementById('mainContent');
+                const toggleBtn = document.querySelector('.navbar-toggle-btn');
+                
+                if (navbar) navbar.classList.add('active');
+                if (mainContent) mainContent.classList.add('content-pushed');
+                if (toggleBtn) toggleBtn.classList.add('active');
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            const navbar = document.getElementById('leftNavbar');
+            const mainContent = document.getElementById('mainContent');
+            const toggleBtn = document.querySelector('.navbar-toggle-btn');
+            const overlay = document.querySelector('.navbar-overlay');
+
+            if (window.innerWidth > 768) {
+                // Desktop view
+                if (navbar && navbar.classList.contains('active')) {
+                    if (mainContent) mainContent.classList.add('content-pushed');
+                    if (toggleBtn) toggleBtn.classList.add('active');
+                }
+                if (overlay) overlay.classList.remove('active');
+            } else {
+                // Mobile view
+                if (mainContent) mainContent.classList.remove('content-pushed');
+                if (toggleBtn && navbar && navbar.classList.contains('active')) {
+                    toggleBtn.classList.remove('active');
+                }
+            }
+        });
     </script>
-</div>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

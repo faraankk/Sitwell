@@ -1,144 +1,258 @@
 {% extends "admin/base_admin.html" %}
 {% load static %}
-{% block title %}Product Management Dashboard{% endblock %}
+{% block title %}Product Management - Sitwell Admin{% endblock %}
 
 {% block head_extra %}
-  <link rel="stylesheet" href="{% static 'css/product.css' %}">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <!-- ✅ Toastify CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 {% endblock %}
 
 {% block body %}
-  <!-- Header -->
-  <header class="header">
-    <div class="search-container">
-      <form method="GET" class="search-form" style="display: flex; align-items: center;">
-        <input type="text" name="search" value="{{ search_query|default:'' }}" placeholder="Search products..." class="search-input">
-        <button type="submit" class="search-icon" style="background: none; border: none; cursor: pointer;">
-          <i class="fas fa-search"></i>
-        </button>
-        {% if search_query %}
-          <a href="{% url 'product-list' %}" class="clear-search" style="margin-left: 8px; color: #666;">Clear</a>
-        {% endif %}
-      </form>
-    </div>
-    <div class="header-actions">
-      <div class="notification">
-        <i class="fas fa-bell"></i>
-        <span class="notification-badge">2</span>
+  <!-- Enhanced Header -->
+  <header class="bg-white shadow-sm border-b border-gray-100 px-8 py-5 flex-shrink-0">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-black" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Product Management</h1>
+        <nav class="flex items-center space-x-2 text-sm text-gray-500 mt-2">
+          <a href="{% url 'admin_dashboard' %}" class="text-purple-600 hover:text-purple-800 font-medium transition-colors">
+            <i class="fas fa-home mr-1"></i>Dashboard
+          </a>
+          <i class="fas fa-chevron-right text-xs"></i>
+          <span class="font-medium">Products</span>
+        </nav>
       </div>
-      <div class="user-profile">
-        <span class="user-name">Farhaan</span>
-        <span class="user-role">Admin</span>
-        <div class="user-avatar"></div>
+      <div class="flex items-center space-x-4">
+        <!-- Search -->
+        <form method="GET" class="relative">
+          <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          <input type="text" name="search" value="{{ search_query|default:'' }}" placeholder="Search products..." class="pl-10 pr-4 py-2 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-all w-80">
+          {% if search_query %}
+            <a href="{% url 'product-list' %}" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <i class="fas fa-times"></i>
+            </a>
+          {% endif %}
+        </form>
+        <div class="flex items-center space-x-3 bg-gradient-to-r from-blue-50 to-purple-50 px-4 py-2 rounded-xl">
+          <div class="w-2 h-2 bg-green-500 rounded-full pulse"></div>
+          <span class="text-sm font-bold text-gray-700">Farhaan</span>
+          <span class="text-xs text-gray-500 font-medium">Admin</span>
+        </div>
       </div>
     </div>
   </header>
 
-  <!-- Page Content -->
-  <div class="page-content">
-    <div class="page-header">
-      <div class="breadcrumb">
-        <h1>Product</h1>
-        <nav class="breadcrumb-nav">
-          <a href="{% url 'admin_dashboard' %}">Dashboard</a> > <span>Product List</span>
-        </nav>
+  <!-- Main Content -->
+  <main class="flex-1 overflow-auto p-8">
+    <!-- Stats + Action Buttons -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-bold text-gray-500 uppercase mb-2">Total Products</p>
+            <p class="text-3xl font-black text-gray-900">{{ products|length }}</p>
+          </div>
+          <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+            <i class="fas fa-box text-white text-2xl"></i>
+          </div>
+        </div>
       </div>
-      <div class="page-actions">
-        <button class="btn-export">
-          <i class="fas fa-download"></i> Export
-        </button>
-        <a href="{% url 'deleted-products' %}" class="btn-export" style="background-color: #dc2626; margin-right: 10px;">
-          <i class="fas fa-trash-restore"></i> View Deleted
-        </a>
-        <a href="{% url 'add-product' %}" class="btn-add-product">
-          <i class="fas fa-plus"></i> Add Product
-        </a>
+      
+      <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in" style="animation-delay: 0.1s;">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-bold text-gray-500 uppercase mb-2">Published</p>
+            <p class="text-3xl font-black text-green-600">{{ published_count|default:0 }}</p>
+          </div>
+          <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+            <i class="fas fa-check-circle text-white text-2xl"></i>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in" style="animation-delay: 0.2s;">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-bold text-gray-500 uppercase mb-2">Low Stock</p>
+            <p class="text-3xl font-black text-orange-600">{{ low_stock_count|default:0 }}</p>
+          </div>
+          <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+            <i class="fas fa-exclamation-triangle text-white text-2xl"></i>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in" style="animation-delay: 0.3s;">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-bold text-gray-500 uppercase mb-2">Out of Stock</p>
+            <p class="text-3xl font-black text-red-600">{{ out_of_stock_count|default:0 }}</p>
+          </div>
+          <div class="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+            <i class="fas fa-times-circle text-white text-2xl"></i>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Filter Tabs -->
-    <div class="filter-tabs">
-      <a href="?status=all{% if search_query %}&search={{ search_query }}{% endif %}" class="tab {% if current_status == 'all' %}active{% endif %}">All Products</a>
-      <a href="?status=published{% if search_query %}&search={{ search_query }}{% endif %}" class="tab {% if current_status == 'published' %}active{% endif %}">Published</a>
-      <a href="?status=low-stock{% if search_query %}&search={{ search_query }}{% endif %}" class="tab {% if current_status == 'low-stock' %}active{% endif %}">Low Stock</a>
-      <a href="?status=draft{% if search_query %}&search={{ search_query }}{% endif %}" class="tab {% if current_status == 'draft' %}active{% endif %}">Draft</a>
-      <a href="?status=out-of-stock{% if search_query %}&search={{ search_query }}{% endif %}" class="tab {% if current_status == 'out-of-stock' %}active{% endif %}">Out of Stock</a>
-      <div class="tab-actions">
-        <button class="btn-select-date"><i class="fas fa-calendar"></i> Select Date</button>
-        <button class="btn-filters"><i class="fas fa-filter"></i> Filters</button>
+    <!-- Filter Tabs + Actions -->
+    <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 mb-8 fade-in" style="animation-delay: 0.4s;">
+      <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        <div class="flex flex-wrap gap-2">
+          <a href="?status=all{% if search_query %}&search={{ search_query }}{% endif %}" 
+             class="px-4 py-2 rounded-xl font-bold text-sm transition-all {% if current_status == 'all' %}bg-gradient-to-r from-blue-600 to-purple-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
+            All Products
+          </a>
+          <a href="?status=published{% if search_query %}&search={{ search_query }}{% endif %}" 
+             class="px-4 py-2 rounded-xl font-bold text-sm transition-all {% if current_status == 'published' %}bg-gradient-to-r from-green-500 to-emerald-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
+            Published
+          </a>
+          <a href="?status=low-stock{% if search_query %}&search={{ search_query }}{% endif %}" 
+             class="px-4 py-2 rounded-xl font-bold text-sm transition-all {% if current_status == 'low-stock' %}bg-gradient-to-r from-orange-500 to-red-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
+            Low Stock
+          </a>
+          <a href="?status=draft{% if search_query %}&search={{ search_query }}{% endif %}" 
+             class="px-4 py-2 rounded-xl font-bold text-sm transition-all {% if current_status == 'draft' %}bg-gradient-to-r from-gray-500 to-gray-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
+            Draft
+          </a>
+          <a href="?status=out-of-stock{% if search_query %}&search={{ search_query }}{% endif %}" 
+             class="px-4 py-2 rounded-xl font-bold text-sm transition-all {% if current_status == 'out-of-stock' %}bg-gradient-to-r from-red-500 to-red-600 text-white{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
+            Out of Stock
+          </a>
+        </div>
+        
+        <div class="flex gap-2">
+          <a href="{% url 'deleted-products' %}" class="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-bold hover:shadow-lg transition-all">
+            <i class="fas fa-trash-restore mr-2"></i>Deleted
+          </a>
+          <a href="{% url 'add-product' %}" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:shadow-lg transition-all">
+            <i class="fas fa-plus mr-2"></i>Add Product
+          </a>
+        </div>
       </div>
     </div>
 
-    <!-- Product Table -->
-    <div class="table-container">
-      <table class="product-table">
-        <thead>
-          <tr>
-            <th><input type="checkbox"></th>
-            <th>Product <i class="fas fa-sort"></i></th>
-            <th>SKU</th>
-            <th>Category</th>
-            <th>Stock <i class="fas fa-sort"></i></th>
-            <th>Price <i class="fas fa-sort"></i></th>
-            <th>Status <i class="fas fa-sort"></i></th>
-            <th>Added <i class="fas fa-sort"></i></th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for product in products %}
+    <!-- Products Table -->
+    <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden fade-in" style="animation-delay: 0.5s;">
+      <div class="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-black text-gray-900">All Products</h2>
+            <p class="text-sm text-gray-500 mt-1">Manage your product inventory</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50 border-b-2 border-gray-200">
             <tr>
-              <td><input type="checkbox"></td>
-              <td class="product-cell">
-                {% with main_image=product.get_main_image_url %}
-                  {% if main_image %}
-                    <img src="{{ main_image }}" alt="{{ product.name }}"
-                         style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;"
-                         >
-                  {% else %}
-                    <img src="https://via.placeholder.com/40x40?text=No+Image" alt="{{ product.name }}"
-                         style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
-                  {% endif %}
-                {% endwith %}
-                <span>{{ product.name }}</span>
+              <th class="px-6 py-4 text-left">
+                <input type="checkbox" class="w-4 h-4 text-purple-600 rounded">
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">
+                Product <i class="fas fa-sort ml-1"></i>
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">SKU</th>
+              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Category</th>
+              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">
+                Stock <i class="fas fa-sort ml-1"></i>
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">
+                Price <i class="fas fa-sort ml-1"></i>
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Status</th>
+              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">
+                Added <i class="fas fa-sort ml-1"></i>
+              </th>
+              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for product in products %}
+            <tr class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all">
+              <td class="px-6 py-4">
+                <input type="checkbox" class="w-4 h-4 text-purple-600 rounded">
               </td>
-              <td><a href="#" class="sku-link">{{ product.sku }}</a></td>
-              <td>{{ product.category }}</td>
-              <td>{{ product.stock_quantity }}</td>
-              <td>₹{{ product.price }}</td>
-              <td>
+              <td class="px-6 py-4">
+                <div class="flex items-center">
+                  {% with main_image=product.get_main_image_url %}
+                    {% if main_image %}
+                      <img src="{{ main_image }}" alt="{{ product.name }}" class="w-12 h-12 rounded-xl object-cover mr-3 border-2 border-gray-200">
+                    {% else %}
+                      <div class="w-12 h-12 rounded-xl bg-gray-200 flex items-center justify-center mr-3 border-2 border-gray-300">
+                        <i class="fas fa-image text-gray-400"></i>
+                      </div>
+                    {% endif %}
+                  {% endwith %}
+                  <span class="font-bold text-gray-900">{{ product.name }}</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 text-sm text-purple-600 font-bold">{{ product.sku }}</td>
+              <td class="px-6 py-4">
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full">
+                  {{ product.category }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-sm font-bold text-gray-700">{{ product.stock_quantity }}</td>
+              <td class="px-6 py-4 text-sm font-bold text-gray-900">₹{{ product.price }}</td>
+              <td class="px-6 py-4">
                 {% if product.stock_quantity == 0 %}
-                  <span class="status out-of-stock">Sold out</span>
+                  <span class="px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full">
+                    <i class="fas fa-times-circle mr-1"></i>Sold Out
+                  </span>
+                {% elif product.status == 'published' %}
+                  <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">
+                    <i class="fas fa-check-circle mr-1"></i>Published
+                  </span>
+                {% elif product.status == 'low-stock' %}
+                  <span class="px-3 py-1 bg-orange-100 text-orange-800 text-xs font-bold rounded-full">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>Low Stock
+                  </span>
                 {% else %}
-                  <span class="status {{ product.status }}">{{ product.get_status_display }}</span>
+                  <span class="px-3 py-1 bg-gray-100 text-gray-800 text-xs font-bold rounded-full">
+                    {{ product.get_status_display }}
+                  </span>
                 {% endif %}
               </td>
-              <td>{{ product.created_at|date:"d M Y" }}</td>
-              <td class="action-cell">
-                <a href="{% url 'edit-product' product_id=product.id %}" class="action-btn"><i class="fas fa-edit"></i></a>
-                <button class="action-btn"><i class="fas fa-eye"></i></button>
-                <button class="action-btn delete-btn" data-product-id="{{ product.id }}" data-product-name="{{ product.name }}">
-                  <i class="fas fa-trash"></i>
-                </button>
+              <td class="px-6 py-4 text-sm text-gray-600">{{ product.created_at|date:"d M Y" }}</td>
+              <td class="px-6 py-4">
+                <div class="flex items-center space-x-2">
+                  <a href="{% url 'edit-product' product_id=product.id %}" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Edit">
+                    <i class="fas fa-edit"></i>
+                  </a>
+                  <button class="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-all" title="View">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button class="delete-btn p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all" 
+                          data-product-id="{{ product.id }}" 
+                          data-product-name="{{ product.name }}"
+                          title="Delete">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
               </td>
             </tr>
-          {% empty %}
+            {% empty %}
             <tr>
-              <td colspan="9" class="text-center py-8 text-gray-500">
-                No products found. <a href="{% url 'add-product' %}" class="text-blue-600">Add your first product</a>
+              <td colspan="9" class="px-6 py-20 text-center">
+                <div class="inline-flex items-center justify-center w-24 h-24 bg-gray-100 rounded-full mb-6">
+                  <i class="fas fa-box text-4xl text-gray-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">No Products Found</h3>
+                <p class="text-gray-500 mb-4">Start by adding your first product</p>
+                <a href="{% url 'add-product' %}" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:shadow-lg transition-all inline-block">
+                  <i class="fas fa-plus mr-2"></i>Add Product
+                </a>
               </td>
             </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
+  </main>
 {% endblock %}
 
 {% block scripts %}
-  <!-- ✅ Toastify JS -->
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script>
     function getCookie(name) {
@@ -165,17 +279,20 @@
           const productId = this.getAttribute('data-product-id');
           const productName = this.getAttribute('data-product-name');
 
-          // 🔥 Confirmation Toast
           Toastify({
-            text: `Click here to confirm delete: "${productName}"`,
-            duration: 3000,
+            text: `🗑️ Click to confirm delete: "${productName}"`,
+            duration: 4000,
             close: true,
             gravity: "top",
             position: "right",
-            backgroundColor: "#f87171", // red
+            style: {
+              background: "linear-gradient(135deg, #f87171 0%, #dc2626 100%)",
+              borderRadius: "12px",
+              fontWeight: "bold",
+              padding: "16px 20px"
+            },
             stopOnFocus: true,
             onClick: () => {
-              // ✅ Perform delete request
               fetch(`/staff/products/soft-delete/${productId}/`, {
                 method: 'POST',
                 headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' },
@@ -184,30 +301,45 @@
               .then(data => {
                 if (data.success) {
                   Toastify({
-                    text: `"${productName}" deleted successfully!`,
+                    text: `✅ "${productName}" deleted successfully!`,
                     duration: 3000,
                     gravity: "top",
                     position: "right",
-                    backgroundColor: "#22c55e" // green
+                    style: {
+                      background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+                      borderRadius: "12px",
+                      fontWeight: "bold",
+                      padding: "16px 20px"
+                    }
                   }).showToast();
                   setTimeout(() => window.location.reload(), 1500);
                 } else {
                   Toastify({
-                    text: `Error: ${data.error}`,
+                    text: `❌ Error: ${data.error}`,
                     duration: 3000,
                     gravity: "top",
                     position: "right",
-                    backgroundColor: "#f87171"
+                    style: {
+                      background: "linear-gradient(135deg, #f87171 0%, #dc2626 100%)",
+                      borderRadius: "12px",
+                      fontWeight: "bold",
+                      padding: "16px 20px"
+                    }
                   }).showToast();
                 }
               })
               .catch(() => {
                 Toastify({
-                  text: "An error occurred while deleting.",
+                  text: "⚠️ An error occurred while deleting.",
                   duration: 3000,
                   gravity: "top",
                   position: "right",
-                  backgroundColor: "#f87171"
+                  style: {
+                    background: "linear-gradient(135deg, #f87171 0%, #dc2626 100%)",
+                    borderRadius: "12px",
+                    fontWeight: "bold",
+                    padding: "16px 20px"
+                  }
                 }).showToast();
               });
             }

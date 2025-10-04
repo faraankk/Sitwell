@@ -1,10 +1,11 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Left Navigation Bar</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>{% block title %}My Account - Sitwell{% endblock %}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
     <style>
         * {
@@ -14,29 +15,79 @@
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
-            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            min-height: 100vh;
+        }
+
+        /* Layout Grid */
+        .page-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 30px;
+            padding: 30px;
+            max-width: 1600px;
+            margin: 0 auto;
+            min-height: 100vh;
         }
 
         /* Left Navigation Sidebar Styles */
         .profile-sidebar-nav {
-            position: relative;
-            width: 300px;
-            height: 100vh;
+            position: sticky;
+            top: 30px;
+            height: fit-content;
+            max-height: calc(100vh - 60px);
             background: white;
-            box-shadow: 2px 0 15px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             overflow-y: auto;
-            padding-top: 20px;
+            border-radius: 15px;
+            border: 2px solid #f0f0f0;
+        }
+
+        /* Scrollbar Styling */
+        .profile-sidebar-nav::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .profile-sidebar-nav::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .profile-sidebar-nav::-webkit-scrollbar-thumb {
+            background: #667eea;
             border-radius: 10px;
         }
 
         .profile-sidebar {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 20px;
-            margin: 20px;
+            padding: 30px;
+        }
+
+        /* Home Button */
+        .home-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .home-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+
+        .home-btn i {
+            margin-right: 10px;
+            font-size: 16px;
         }
 
         .profile-image {
@@ -44,25 +95,35 @@
             height: 120px;
             border-radius: 50%;
             object-fit: cover;
-            border: 3px solid #f8f9fa;
+            border: 4px solid #667eea;
             margin: 0 auto 15px;
             display: block;
             background: #f8f9fa;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .profile-image-placeholder {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0 auto 15px;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
 
         .profile-nav {
-            margin-top: 20px;
+            margin-top: 25px;
         }
 
         .profile-nav .nav-link {
             color: #6c757d;
             border: none;
-            padding: 12px 15px;
+            padding: 14px 16px;
             margin-bottom: 8px;
-            border-radius: 8px;
+            border-radius: 10px;
             transition: all 0.3s ease;
             text-align: left;
             display: flex;
@@ -71,89 +132,257 @@
             background: none;
             width: 100%;
             cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
         }
 
         .profile-nav .nav-link:hover {
             background-color: #f8f9fa;
-            color: #db4444;
+            color: #667eea;
+            transform: translateX(8px);
         }
 
         .profile-nav .nav-link.active {
-            background-color: #db4444;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
 
         .profile-nav .nav-link i {
             width: 20px;
-            margin-right: 10px;
+            margin-right: 12px;
+            font-size: 16px;
         }
 
         .section-title {
             color: #666;
             margin-bottom: 15px;
-            font-size: 14px;
-            font-weight: 600;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
         }
 
         .profile-name {
             margin: 10px 0 5px;
             color: #333;
             text-align: center;
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        .profile-email {
+            color: #999;
+            font-size: 13px;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        /* Main Content Area */
+        .main-content-area {
+            padding: 0;
+            min-width: 0;
+        }
+
+        /* Beautiful Breadcrumbs */
+        .breadcrumb {
+            background: white;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            list-style: none;
+        }
+        
+        .breadcrumb-item {
+            display: flex;
+            align-items: center;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .breadcrumb-item a {
+            color: #666;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .breadcrumb-item a:hover {
+            color: #667eea;
+        }
+        
+        .breadcrumb-item.active {
+            color: #667eea;
             font-weight: 600;
         }
+        
+        .breadcrumb-item::after {
+            content: '/';
+            margin: 0 10px;
+            color: #ddd;
+        }
+        
+        .breadcrumb-item:last-child::after {
+            content: '';
+            margin: 0;
+        }
+
+        .breadcrumb-item i {
+            margin-right: 6px;
+        }
+
+        /* Profile Section */
+        .profile-section {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .page-layout {
+                grid-template-columns: 280px 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+
+            .profile-sidebar {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-layout {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 15px;
+            }
+            
+            .profile-sidebar-nav {
+                position: static;
+                height: auto;
+                max-height: none;
+            }
+
+            .profile-image,
+            .profile-image-placeholder {
+                width: 100px;
+                height: 100px;
+            }
+
+            .profile-image-placeholder i {
+                font-size: 2.5rem !important;
+            }
+        }
+
+        {% block extra_css %}{% endblock %}
     </style>
 </head>
 <body>
-    <!-- Left Navigation Sidebar -->
-    <div class="profile-sidebar-nav">
-        <div class="profile-sidebar">
-            <!-- Profile Picture Section -->
-            <div style="text-align: center; margin-bottom: 20px;">
-                <div class="profile-image">
-                    <i class="fas fa-user" style="font-size: 3rem; color: #6c757d;"></i>
-                </div>
-                <h6 class="profile-name">Customer Name</h6>
-            </div>
+    <div class="page-layout">
+        <!-- Left Navigation Sidebar -->
+        <aside class="profile-sidebar-nav">
+            <div class="profile-sidebar">
+                <!-- Home Button -->
+                <a href="{% url 'dummy_home' %}" class="home-btn">
+                    <i class="fas fa-home"></i>Back to Home
+                </a>
 
-            <!-- Navigation Menu -->
-            <div class="profile-nav">
-                <h6 class="section-title">Manage My Account</h6>
-                <div style="display: flex; flex-direction: column;">
-                    <a href="#" class="nav-link active">
-                        <i class="fas fa-user"></i>My Profile
-                    </a>
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-edit"></i>Edit Profile
-                    </a>
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-address-book"></i>Address Book
-                    </a>
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-shopping-bag"></i>My Orders
-                    </a>
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-shield-alt"></i>Security
-                    </a>
+                <!-- Profile Picture Section -->
+                <div class="profile-section">
+                    {% if user.profile_image %}
+                        <img src="{{ user.profile_image.url }}" alt="{{ user.get_full_name }}" class="profile-image">
+                    {% else %}
+                        <div class="profile-image-placeholder">
+                            <i class="fas fa-user" style="font-size: 3rem; color: white;"></i>
+                        </div>
+                    {% endif %}
+                    <h6 class="profile-name">{{ user.first_name|default:user.email }}</h6>
+                    <p class="profile-email">{{ user.email }}</p>
+                </div>
+
+                <!-- Navigation Menu -->
+                <div class="profile-nav">
+                    <h6 class="section-title">Manage My Account</h6>
+                    <div style="display: flex; flex-direction: column;">
+                        <a href="#profile-details" class="nav-link active" onclick="showTabFromSidebar('profile-details'); return false;">
+                            <i class="fas fa-user-circle"></i>My Profile
+                        </a>
+                        <a href="{% url 'edit_profile' %}" class="nav-link">
+                            <i class="fas fa-edit"></i>Edit Profile
+                        </a>
+                        <a href="#addresses" class="nav-link" onclick="showTabFromSidebar('addresses'); return false;">
+                            <i class="fas fa-map-marked-alt"></i>Address Book
+                        </a>
+                        <a href="#orders" class="nav-link" onclick="showTabFromSidebar('orders'); return false;">
+                            <i class="fas fa-shopping-bag"></i>My Orders
+                        </a>
+                        <a href="#security" class="nav-link" onclick="showTabFromSidebar('security'); return false;">
+                            <i class="fas fa-shield-alt"></i>Security
+                        </a>
+                    </div>
                 </div>
             </div>
-        </div>
+        </aside>
+
+        <!-- Main Content Area (Child templates inject content here) -->
+        <main class="main-content-area">
+            {% block banner %}{% endblock %}
+            {% block content %}{% endblock %}
+        </main>
     </div>
 
     <script>
-        // Add click handlers for navigation links
+        // Tab switching functionality
+        function showTabFromSidebar(tabId) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-pane');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all sidebar nav links
+            const sidebarLinks = document.querySelectorAll('.profile-sidebar-nav .nav-link');
+            sidebarLinks.forEach(link => link.classList.remove('active'));
+            
+            // Show selected tab
+            const selectedTab = document.getElementById(tabId);
+            if (selectedTab) {
+                selectedTab.classList.add('active');
+            }
+            
+            // Add active class to clicked sidebar nav link
+            const activeLink = document.querySelector(`.profile-sidebar-nav .nav-link[href="#${tabId}"]`);
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+        }
+
+        // On page load, check for hash in URL
+        document.addEventListener('DOMContentLoaded', function() {
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                showTabFromSidebar(hash);
+            }
+        });
+
+        // Smooth scroll to top when switching tabs
         document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Remove active class from all links
-                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                
-                // Add active class to clicked link
-                this.classList.add('active');
-                
-                console.log('Navigated to:', this.textContent.trim());
+            link.addEventListener('click', function() {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
             });
         });
     </script>
+
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

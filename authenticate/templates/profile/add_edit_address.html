@@ -1,222 +1,404 @@
-{% extends 'authenticated_base.html' %}
+{% extends 'left_navbar.html' %}
 {% load static %}
+
 
 {% block title %}{{ title }} - Sitwell{% endblock %}
 
+
 {% block show_navbar_toggle %}show{% endblock %}
+
 
 {% block extra_css %}
 <style>
     .content-card {
         background: white;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        padding: 40px;
         margin-bottom: 20px;
-        max-width: 800px;
+        max-width: 900px;
         margin-left: auto;
         margin-right: auto;
     }
     
+    /* Beautiful Breadcrumbs */
+    .breadcrumb {
+        background: white;
+        padding: 15px 20px;
+        margin-bottom: 25px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        list-style: none;
+        max-width: 900px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .breadcrumb-item {
+        display: flex;
+        align-items: center;
+        color: #666;
+        font-size: 14px;
+    }
+
+    .breadcrumb-item a {
+        color: #666;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .breadcrumb-item a:hover {
+        color: #db4444;
+    }
+    
+    .breadcrumb-item.active {
+        color: #db4444;
+        font-weight: 600;
+    }
+    
+    .breadcrumb-item::after {
+        content: '/';
+        margin: 0 10px;
+        color: #ddd;
+    }
+    
+    .breadcrumb-item:last-child::after {
+        content: '';
+        margin: 0;
+    }
+
+    .breadcrumb-item i {
+        margin-right: 6px;
+    }
+
+    /* Address icon header */
+    .address-header {
+        text-align: center;
+        margin-bottom: 35px;
+        padding-bottom: 25px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    .address-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .address-icon i {
+        font-size: 2.5rem;
+        color: white;
+    }
+
+    .address-header h4 {
+        color: #333;
+        margin: 0 0 10px;
+        font-size: 26px;
+        font-weight: 700;
+    }
+
+    .address-header p {
+        color: #666;
+        margin: 0;
+        font-size: 15px;
+    }
+    
     .form-group {
-        margin-bottom: 20px;
+        margin-bottom: 25px;
     }
     
     .form-group label {
-        font-weight: 500;
-        color: #555;
-        margin-bottom: 8px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 10px;
         display: block;
+        font-size: 14px;
     }
     
     .form-control {
         width: 100%;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 12px 15px;
-        font-size: 0.95rem;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 14px 16px;
+        font-size: 15px;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
     }
     
     .form-control:focus {
-        border-color: #db4444;
+        border-color: #667eea;
         outline: none;
-        box-shadow: 0 0 0 0.2rem rgba(219, 68, 68, 0.25);
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        background: white;
     }
-    
-    .form-check-input {
-        margin-right: 8px;
+
+    .form-control:hover {
+        border-color: #d4d8dd;
     }
-    
-    .form-check-label {
-        font-weight: 400;
-        color: #555;
+
+    select.form-control {
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 16px center;
+        padding-right: 40px;
+    }
+
+    small.form-hint {
+        display: block;
+        color: #6c757d;
+        font-size: 13px;
+        margin-top: 6px;
+        font-style: italic;
     }
     
     .btn-primary {
-        background-color: #db4444;
-        border-color: #db4444;
-        color: white;
-        padding: 12px 30px;
-        border-radius: 8px;
-        font-weight: 500;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: none;
+        color: white;
+        padding: 14px 36px;
+        border-radius: 10px;
+        font-weight: 600;
         cursor: pointer;
         font-size: 16px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
     
     .btn-primary:hover {
-        background-color: #c13333;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-primary:active {
+        transform: translateY(0);
     }
     
     .btn-cancel {
         background-color: transparent;
-        border: 1px solid #6c757d;
+        border: 2px solid #6c757d;
         color: #6c757d;
-        padding: 12px 30px;
-        border-radius: 8px;
+        padding: 12px 34px;
+        border-radius: 10px;
         margin-right: 15px;
         text-decoration: none;
         display: inline-block;
         font-size: 16px;
+        font-weight: 600;
+        transition: all 0.3s ease;
     }
     
     .btn-cancel:hover {
         background-color: #6c757d;
         color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
     }
     
     .error {
         color: #dc3545;
+        font-size: 13px;
+        margin-top: 8px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .error::before {
+        content: '⚠';
         font-size: 14px;
-        margin-top: 5px;
-    }
-    
-    .breadcrumb {
-        background: none;
-        padding: 0;
-        margin: 20px 0;
-    }
-    
-    .breadcrumb-item {
-        color: #666;
-    }
-    
-    .breadcrumb-item a {
-        color: #333;
-        text-decoration: none;
-    }
-    
-    .breadcrumb-item.active {
-        color: #db4444;
-    }
-
-    /* Address icon */
-    .address-icon {
-        text-align: center;
-        margin-bottom: 20px;
-    }
-
-    .address-icon i {
-        font-size: 4rem;
-        color: #db4444;
-        margin-bottom: 10px;
     }
 
     /* Form grid layouts */
     .form-grid-2 {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        margin-bottom: 20px;
+        gap: 25px;
+        margin-bottom: 25px;
     }
 
     .form-grid-3 {
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
-        gap: 20px;
-        margin-bottom: 20px;
+        gap: 25px;
+        margin-bottom: 25px;
     }
 
     /* Default address checkbox styling */
     .default-checkbox {
         display: flex;
-        align-items: center;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        margin: 20px 0;
-        border: 1px solid #e9ecef;
+        align-items: flex-start;
+        padding: 20px;
+        background: linear-gradient(135deg, #f8f9ff 0%, #fff5f8 100%);
+        border-radius: 12px;
+        margin: 25px 0;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+    .default-checkbox:hover {
+        border-color: #667eea;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
     }
 
     .default-checkbox input[type="checkbox"] {
-        width: 18px;
-        height: 18px;
+        width: 20px;
+        height: 20px;
         margin-right: 12px;
-        accent-color: #db4444;
+        margin-top: 2px;
+        accent-color: #667eea;
+        cursor: pointer;
     }
 
     .default-checkbox label {
         margin: 0;
-        font-weight: 500;
+        font-weight: 600;
         color: #333;
         cursor: pointer;
+        flex: 1;
+    }
+
+    .default-checkbox small {
+        display: block;
+        color: #666;
+        font-weight: 400;
+        margin-top: 5px;
+        font-size: 13px;
     }
 
     /* Required field indicator */
     .required::after {
         content: " *";
         color: #dc3545;
+        font-weight: 700;
+    }
+
+    /* Form section divider */
+    .form-section {
+        margin-top: 35px;
+        padding-top: 25px;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .form-section-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .form-section-title i {
+        color: #667eea;
+    }
+
+    /* Success animation for valid fields */
+    .form-control.valid {
+        border-color: #28a745;
+        background-color: #f0fff4;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 35px;
+        padding-top: 25px;
+        border-top: 2px solid #f0f0f0;
     }
     
     @media (max-width: 768px) {
         .content-card {
-            padding: 20px 15px;
+            padding: 25px 20px;
         }
 
         .form-grid-2,
         .form-grid-3 {
-            display: block;
+            grid-template-columns: 1fr;
+            gap: 20px;
         }
 
-        .form-grid-2 > div,
-        .form-grid-3 > div {
-            margin-bottom: 20px;
+        .address-header h4 {
+            font-size: 22px;
+        }
+
+        .form-actions {
+            flex-direction: column-reverse;
+        }
+
+        .btn-cancel,
+        .btn-primary {
+            width: 100%;
+            margin: 0;
+            margin-bottom: 10px;
         }
     }
 </style>
 {% endblock %}
 
+
 {% block banner %}
 <!-- Remove banner for profile pages -->
 {% endblock %}
 
+
 {% block content %}
-<!-- Breadcrumb -->
+<!-- Beautiful Breadcrumb -->
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'dummy_home' %}">Home</a></li>
-        <li class="breadcrumb-item"><a href="/profile/">My Account</a></li>
-        <li class="breadcrumb-item"><a href="/profile/addresses/">My Addresses</a></li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'dummy_home' %}">
+                <i class="fas fa-home"></i>Home
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'user_profile' %}">
+                <i class="fas fa-user"></i>My Account
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="/profile/addresses/">
+                <i class="fas fa-address-book"></i>My Addresses
+            </a>
+        </li>
         <li class="breadcrumb-item active" aria-current="page">{{ title }}</li>
     </ol>
 </nav>
 
+
 {% if user.first_name %}
-    <p style="text-align: right; color: #666; margin-bottom: 30px;">
-        Welcome! <span style="color: #db4444; font-weight: 500;">{{ user.first_name }}</span>
+    <p style="text-align: right; color: #666; margin-bottom: 30px; max-width: 900px; margin-left: auto; margin-right: auto;">
+        Welcome! <span style="color: #667eea; font-weight: 600;">{{ user.first_name }}</span>
     </p>
 {% endif %}
 
+
 <!-- Main Content -->
 <div class="content-card">
-    <div class="address-icon">
-        <i class="fas fa-map-marker-alt"></i>
-        <h4 style="color: #db4444; margin: 0;">{{ title }}</h4>
-        <p style="color: #666; margin-top: 10px;">
+    <!-- Header -->
+    <div class="address-header">
+        <div class="address-icon">
+            <i class="fas fa-map-marker-alt"></i>
+        </div>
+        <h4>{{ title }}</h4>
+        <p>
             {% if 'Add' in title %}
-                Add a new delivery address to your account
+                Add a new delivery address to your account for faster checkout
             {% else %}
-                Update your existing delivery address
+                Update your existing delivery address information
             {% endif %}
         </p>
     </div>
@@ -224,7 +406,11 @@
     <form method="post">
         {% csrf_token %}
         
-        <!-- Address Type and Full Name -->
+        <!-- Contact Information Section -->
+        <div class="form-section-title">
+            <i class="fas fa-user-circle"></i>Contact Information
+        </div>
+
         <div class="form-grid-2">
             <div class="form-group">
                 <label for="{{ form.address_type.id_for_label }}" class="required">Address Type</label>
@@ -242,76 +428,78 @@
             </div>
         </div>
         
-        <!-- Phone Number -->
         <div class="form-group">
             <label for="{{ form.phone_number.id_for_label }}" class="required">Phone Number</label>
             {{ form.phone_number }}
+            <small class="form-hint">We'll use this number for delivery updates</small>
             {% if form.phone_number.errors %}
                 <div class="error">{{ form.phone_number.errors.0 }}</div>
             {% endif %}
         </div>
         
-        <!-- Address Lines -->
-        <div class="form-group">
-            <label for="{{ form.address_line_1.id_for_label }}" class="required">Address Line 1</label>
-            {{ form.address_line_1 }}
-            <small style="color: #666; font-size: 12px;">House number, street name</small>
-            {% if form.address_line_1.errors %}
-                <div class="error">{{ form.address_line_1.errors.0 }}</div>
-            {% endif %}
-        </div>
-        
-        <div class="form-group">
-            <label for="{{ form.address_line_2.id_for_label }}">Address Line 2 (Optional)</label>
-            {{ form.address_line_2 }}
-            <small style="color: #666; font-size: 12px;">Apartment, suite, building, floor, etc.</small>
-            {% if form.address_line_2.errors %}
-                <div class="error">{{ form.address_line_2.errors.0 }}</div>
-            {% endif %}
-        </div>
-        
-        <!-- City, State, Postal Code -->
-        <div class="form-grid-3">
+        <!-- Address Details Section -->
+        <div class="form-section">
+            <div class="form-section-title">
+                <i class="fas fa-map-marked-alt"></i>Address Details
+            </div>
+
             <div class="form-group">
-                <label for="{{ form.city.id_for_label }}" class="required">City</label>
-                {{ form.city }}
-                {% if form.city.errors %}
-                    <div class="error">{{ form.city.errors.0 }}</div>
+                <label for="{{ form.address_line_1.id_for_label }}" class="required">Address Line 1</label>
+                {{ form.address_line_1 }}
+                <small class="form-hint">House number, building name, street name</small>
+                {% if form.address_line_1.errors %}
+                    <div class="error">{{ form.address_line_1.errors.0 }}</div>
                 {% endif %}
             </div>
+            
             <div class="form-group">
-                <label for="{{ form.state.id_for_label }}" class="required">State</label>
-                {{ form.state }}
-                {% if form.state.errors %}
-                    <div class="error">{{ form.state.errors.0 }}</div>
+                <label for="{{ form.address_line_2.id_for_label }}">Address Line 2 (Optional)</label>
+                {{ form.address_line_2 }}
+                <small class="form-hint">Apartment, suite, unit, building, floor, etc.</small>
+                {% if form.address_line_2.errors %}
+                    <div class="error">{{ form.address_line_2.errors.0 }}</div>
                 {% endif %}
             </div>
+            
+            <div class="form-grid-3">
+                <div class="form-group">
+                    <label for="{{ form.city.id_for_label }}" class="required">City</label>
+                    {{ form.city }}
+                    {% if form.city.errors %}
+                        <div class="error">{{ form.city.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.state.id_for_label }}" class="required">State</label>
+                    {{ form.state }}
+                    {% if form.state.errors %}
+                        <div class="error">{{ form.state.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.postal_code.id_for_label }}" class="required">Postal Code</label>
+                    {{ form.postal_code }}
+                    {% if form.postal_code.errors %}
+                        <div class="error">{{ form.postal_code.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            
             <div class="form-group">
-                <label for="{{ form.postal_code.id_for_label }}" class="required">Postal Code</label>
-                {{ form.postal_code }}
-                {% if form.postal_code.errors %}
-                    <div class="error">{{ form.postal_code.errors.0 }}</div>
+                <label for="{{ form.country.id_for_label }}" class="required">Country</label>
+                {{ form.country }}
+                {% if form.country.errors %}
+                    <div class="error">{{ form.country.errors.0 }}</div>
                 {% endif %}
             </div>
-        </div>
-        
-        <!-- Country -->
-        <div class="form-group">
-            <label for="{{ form.country.id_for_label }}" class="required">Country</label>
-            {{ form.country }}
-            {% if form.country.errors %}
-                <div class="error">{{ form.country.errors.0 }}</div>
-            {% endif %}
         </div>
         
         <!-- Default Address Checkbox -->
         <div class="default-checkbox">
             {{ form.is_default }}
             <label for="{{ form.is_default.id_for_label }}">
-                Set as default address
-                <small style="display: block; color: #666; font-weight: 400; margin-top: 2px;">
-                    This address will be selected automatically for future orders
-                </small>
+                <i class="fas fa-star" style="color: #ffc107; margin-right: 5px;"></i>Set as default address
+                <small>This address will be selected automatically for future orders and checkouts</small>
             </label>
             {% if form.is_default.errors %}
                 <div class="error">{{ form.is_default.errors.0 }}</div>
@@ -319,20 +507,21 @@
         </div>
         
         <!-- Form Actions -->
-        <div style="display: flex; justify-content: center; margin-top: 30px;">
-            <a href="/profile/addresses/" class="btn-cancel">Cancel</a>
+        <div class="form-actions">
+            <a href="/profile/addresses/" class="btn-cancel">
+                <i class="fas fa-times" style="margin-right: 8px;"></i>Cancel
+            </a>
             <button type="submit" class="btn-primary">
-                <i class="fas fa-save" style="margin-right: 8px;"></i>
-                Save Address
+                <i class="fas fa-save" style="margin-right: 8px;"></i>Save Address
             </button>
         </div>
     </form>
 </div>
 {% endblock %}
 
+
 {% block extra_js %}
 <script>
-    // Show navbar on page load and set active state
     document.addEventListener('DOMContentLoaded', function() {
         // Auto-open the navbar on desktop
         if (window.innerWidth > 768) {
@@ -351,40 +540,25 @@
         const sidebarLinks = document.querySelectorAll('.profile-sidebar-nav .nav-link');
         sidebarLinks.forEach(link => link.classList.remove('active'));
         
-        // Find the address book link and set it as active
         const addressLink = document.querySelector('.profile-sidebar-nav .nav-link[href*="addresses"]');
         if (addressLink) {
             addressLink.classList.add('active');
         }
     });
 
-    // Override tab switching for add/edit address
-    function showTabFromSidebar(tabId) {
-        // For navigation from address form, redirect to appropriate pages
-        if (tabId === 'profile-details') {
-            window.location.href = '/profile/';
-        } else if (tabId === 'addresses') {
-            window.location.href = '/profile/addresses/';
-        } else if (tabId === 'orders') {
-            window.location.href = '/profile/#orders';
-        } else if (tabId === 'security') {
-            window.location.href = '/profile/#security';
-        }
-    }
-
-    // Form validation and enhancements
+    // Form submission loading state
     const form = document.querySelector('form');
     const submitBtn = document.querySelector('.btn-primary');
     
-    // Add loading state on form submission
     if (form && submitBtn) {
         form.addEventListener('submit', function() {
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Saving...';
             submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.7';
         });
     }
 
-    // Auto-format phone number (basic formatting)
+    // Auto-format phone number
     const phoneField = document.getElementById('id_phone_number');
     if (phoneField) {
         phoneField.addEventListener('input', function() {
@@ -413,9 +587,23 @@
     const postalField = document.getElementById('id_postal_code');
     if (postalField) {
         postalField.addEventListener('input', function() {
-            this.value = this.value.toUpperCase();
+            this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
         });
     }
+
+    // Field validation visual feedback
+    const allInputs = document.querySelectorAll('.form-control');
+    allInputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.value.trim() && !this.classList.contains('error')) {
+                this.classList.add('valid');
+            }
+        });
+
+        input.addEventListener('focus', function() {
+            this.classList.remove('valid');
+        });
+    });
 
     // Address validation hints
     const addressLine1 = document.getElementById('id_address_line_1');
@@ -423,18 +611,24 @@
         addressLine1.addEventListener('blur', function() {
             const value = this.value.trim();
             if (value && !(/\d/.test(value))) {
-                // Suggest adding house number if no numbers detected
                 const hint = this.nextElementSibling;
-                if (hint && hint.tagName === 'SMALL') {
+                if (hint && hint.classList.contains('form-hint')) {
+                    const originalText = hint.textContent;
                     hint.style.color = '#856404';
-                    hint.textContent = 'Consider adding a house number for more accurate delivery';
+                    hint.innerHTML = '<i class="fas fa-info-circle"></i> Tip: Adding a house/building number helps with accurate delivery';
                     setTimeout(() => {
-                        hint.style.color = '#666';
-                        hint.textContent = 'House number, street name';
+                        hint.style.color = '#6c757d';
+                        hint.textContent = originalText;
                     }, 5000);
                 }
             }
         });
+    }
+
+    // Smooth scroll to first error
+    const firstError = document.querySelector('.error');
+    if (firstError) {
+        firstError.closest('.form-group').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 </script>
 {% endblock %}

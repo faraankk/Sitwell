@@ -3,79 +3,504 @@
 
 {% block title %}Home - Sitwell{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Flash Sales Section */
+    .flash-sales {
+        margin: 60px 0;
+        position: relative;
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .flash-sales h2 {
+        font-size: 36px;
+        margin-bottom: 10px;
+        color: #333;
+        position: relative;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .flash-sales h2::before {
+        content: '';
+        width: 20px;
+        height: 40px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 4px;
+    }
+
+    .flash-sales h2 span {
+        font-weight: 600;
+        font-size: 14px;
+        color: #667eea;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-left: 10px;
+    }
+
+    .sale-time {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .sale-time span {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 18px;
+        border-radius: 12px;
+        min-width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: 700;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    .sale-time::before {
+        content: '⏰ Ends in:';
+        font-weight: 600;
+        color: #333;
+        font-size: 18px;
+    }
+
+    /* Products Grid */
+    .products {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 30px;
+        margin: 40px 0;
+    }
+
+    .product {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        position: relative;
+        border: 2px solid #f0f0f0;
+    }
+
+    .product:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 8px 30px rgba(102, 126, 234, 0.2);
+        border-color: #667eea;
+    }
+
+    .product img {
+        width: 100%;
+        height: 240px;
+        object-fit: cover;
+        background: #f5f5f5;
+        transition: transform 0.3s ease;
+    }
+
+    .product:hover img {
+        transform: scale(1.1);
+    }
+
+    .product-info {
+        padding: 20px;
+        text-align: center;
+    }
+
+    .product-info p:first-of-type {
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: #333;
+        font-size: 16px;
+    }
+
+    .product-info p:nth-of-type(2) {
+        color: #667eea;
+        font-weight: 700;
+        font-size: 20px;
+        margin-bottom: 10px;
+    }
+
+    .rating {
+        color: #fbbf24;
+        font-weight: 600;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+    }
+
+    .view-all {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 16px 48px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 16px;
+        margin: 50px auto;
+        display: block;
+        transition: all 0.3s ease;
+        font-weight: 700;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .view-all:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    /* Best Selling Section */
+    .best-selling {
+        margin: 80px 0;
+        padding-top: 60px;
+        border-top: 2px solid #f0f0f0;
+    }
+
+    .best-selling h2 {
+        font-size: 36px;
+        margin-bottom: 40px;
+        color: #333;
+        position: relative;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .best-selling h2::before {
+        content: '';
+        width: 20px;
+        height: 40px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 4px;
+    }
+
+    /* Badge for flash sales */
+    .flash-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+        z-index: 2;
+        animation: flashBadge 2s infinite;
+    }
+
+    @keyframes flashBadge {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.1);
+        }
+    }
+
+    /* Best Seller Badge */
+    .bestseller-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        z-index: 2;
+    }
+
+    /* Add to Cart Button */
+    .add-to-cart {
+        width: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 15px;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .add-to-cart:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    @media (max-width: 1200px) {
+        .products {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .flash-sales h2,
+        .best-selling h2 {
+            font-size: 28px;
+        }
+
+        .sale-time span {
+            min-width: 50px;
+            height: 50px;
+            font-size: 20px;
+            padding: 10px 14px;
+        }
+
+        .products {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .product img {
+            height: 200px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .products {
+            grid-template-columns: 1fr;
+        }
+
+        .sale-time {
+            gap: 10px;
+        }
+
+        .sale-time::before {
+            font-size: 16px;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
     <section class="flash-sales">
-        <h2>Flash Sales <span>Today</span></h2>
+        <h2><span>Today's</span> Flash Sales</h2>
         <div class="sale-time">
-            <span>03</span> : 
-            <span>22</span> : 
-            <span>19</span> : 
+            <span>03</span>
+            <span>22</span>
+            <span>19</span>
             <span>56</span>
         </div>
         <div class="products">
             <div class="product">
-                <img src="/media/leather-armchair.jpg" alt="Leather Armchair" width="250" height="200"> 
+                <div class="flash-badge">🔥 HOT DEAL</div>
+                <img src="/media/leather-armchair.jpg" alt="Leather Armchair"> 
                 <div class="product-info">
                     <p>Leather Armchair</p>
-                    <p>₹23000</p>
-                    <div class="rating">★★★★☆ (12)</div>
+                    <p>₹23,000</p>
+                    <div class="rating">
+                        <span>★★★★☆</span>
+                        <span style="color: #666;">(12)</span>
+                    </div>
+                    <button class="add-to-cart">
+                        <i class="fas fa-shopping-cart" style="margin-right: 8px;"></i>Add to Cart
+                    </button>
                 </div>
             </div>
             <div class="product">
-                <img src="/media/carle.webp" alt="Suede Loveseat" width="250" height="200"> 
+                <div class="flash-badge">🔥 HOT DEAL</div>
+                <img src="/media/carle.webp" alt="Suede Loveseat"> 
                 <div class="product-info">
                     <p>Suede Loveseat</p>
-                    <p>₹14999</p>
-                    <div class="rating">★★★★☆ (15)</div>
+                    <p>₹14,999</p>
+                    <div class="rating">
+                        <span>★★★★☆</span>
+                        <span style="color: #666;">(15)</span>
+                    </div>
+                    <button class="add-to-cart">
+                        <i class="fas fa-shopping-cart" style="margin-right: 8px;"></i>Add to Cart
+                    </button>
                 </div>
             </div>
             <div class="product">
-                <img src="/media/KillongChair.jpg" alt="Accent Chair" width="250" height="200"> 
+                <div class="flash-badge">🔥 HOT DEAL</div>
+                <img src="/media/KillongChair.jpg" alt="Accent Chair"> 
                 <div class="product-info">
                     <p>Accent Chair</p>
-                    <p>₹15000</p>
-                    <div class="rating">★★★★☆ (10)</div>
+                    <p>₹15,000</p>
+                    <div class="rating">
+                        <span>★★★★☆</span>
+                        <span style="color: #666;">(10)</span>
+                    </div>
+                    <button class="add-to-cart">
+                        <i class="fas fa-shopping-cart" style="margin-right: 8px;"></i>Add to Cart
+                    </button>
+                </div>
+            </div>
+            <div class="product">
+                <div class="flash-badge">🔥 HOT DEAL</div>
+                <img src="/media/stool.webp" alt="Wooden Stool"> 
+                <div class="product-info">
+                    <p>Wooden Stool</p>
+                    <p>₹5,500</p>
+                    <div class="rating">
+                        <span>★★★★☆</span>
+                        <span style="color: #666;">(8)</span>
+                    </div>
+                    <button class="add-to-cart">
+                        <i class="fas fa-shopping-cart" style="margin-right: 8px;"></i>Add to Cart
+                    </button>
                 </div>
             </div>
         </div>
-        <button class="view-all">View All Products</button>
+        <button class="view-all">
+            View All Products<i class="fas fa-arrow-right" style="margin-left: 8px;"></i>
+        </button>
     </section>
 
     <section class="best-selling">
         <h2>Best Selling Products</h2>
         <div class="products">
             <div class="product">
-                <img src="/media/2seat.webp" alt="2-Seater Sofa" width="250" height="200">
+                <div class="bestseller-badge">⭐ BEST SELLER</div>
+                <img src="/media/2seat.webp" alt="2-Seater Sofa">
                 <div class="product-info">
                     <p>2-Seater Sofa</p>
-                    <p>₹25400</p>
-                    <div class="rating">★★★★☆ (20)</div>
+                    <p>₹25,400</p>
+                    <div class="rating">
+                        <span>★★★★☆</span>
+                        <span style="color: #666;">(20)</span>
+                    </div>
+                    <button class="add-to-cart">
+                        <i class="fas fa-shopping-cart" style="margin-right: 8px;"></i>Add to Cart
+                    </button>
                 </div>
             </div>
             <div class="product">
-                <img src="/media/HiroDiningTable.webp" alt="Wooden Table" width="250" height="200">
+                <div class="bestseller-badge">⭐ BEST SELLER</div>
+                <img src="/media/HiroDiningTable.webp" alt="Wooden Table">
                 <div class="product-info">
                     <p>Wooden Dining Table</p>
-                    <p>₹14300</p>
-                    <div class="rating">★★★★☆ (18)</div>
+                    <p>₹14,300</p>
+                    <div class="rating">
+                        <span>★★★★☆</span>
+                        <span style="color: #666;">(18)</span>
+                    </div>
+                    <button class="add-to-cart">
+                        <i class="fas fa-shopping-cart" style="margin-right: 8px;"></i>Add to Cart
+                    </button>
                 </div>
             </div>
             <div class="product">
-                <img src="/media/stool.webp" alt="Wooden stool" width="250" height="200">
+                <div class="bestseller-badge">⭐ BEST SELLER</div>
+                <img src="/media/leather-armchair.jpg" alt="Leather Chair">
                 <div class="product-info">
-                    <p>Wooden Stool</p>
-                    <p>₹5000</p>
-                    <div class="rating">★★★★☆ (15)</div>
+                    <p>Premium Leather Chair</p>
+                    <p>₹18,000</p>
+                    <div class="rating">
+                        <span>★★★★★</span>
+                        <span style="color: #666;">(15)</span>
+                    </div>
+                    <button class="add-to-cart">
+                        <i class="fas fa-shopping-cart" style="margin-right: 8px;"></i>Add to Cart
+                    </button>
                 </div>
             </div>
             <div class="product">
-                <img src="/media/Somerville.webp" alt="1-seater Sofa" width="250" height="200">
+                <div class="bestseller-badge">⭐ BEST SELLER</div>
+                <img src="/media/Somerville.webp" alt="1-seater Sofa">
                 <div class="product-info">
                     <p>1-Seater Sofa</p>
-                    <p>₹11200</p>
-                    <div class="rating">★★★★☆ (12)</div>
+                    <p>₹11,200</p>
+                    <div class="rating">
+                        <span>★★★★☆</span>
+                        <span style="color: #666;">(12)</span>
+                    </div>
+                    <button class="add-to-cart">
+                        <i class="fas fa-shopping-cart" style="margin-right: 8px;"></i>Add to Cart
+                    </button>
                 </div>
             </div>
         </div>
     </section>
+
+    <script>
+        // Countdown timer
+        function updateCountdown() {
+            const timeElements = document.querySelectorAll('.sale-time span');
+            let hours = parseInt(timeElements[0].textContent);
+            let minutes = parseInt(timeElements[1].textContent);
+            let seconds = parseInt(timeElements[2].textContent);
+            let milliseconds = parseInt(timeElements[3].textContent);
+
+            milliseconds--;
+            
+            if (milliseconds < 0) {
+                milliseconds = 99;
+                seconds--;
+            }
+            
+            if (seconds < 0) {
+                seconds = 59;
+                minutes--;
+            }
+            
+            if (minutes < 0) {
+                minutes = 59;
+                hours--;
+            }
+            
+            if (hours < 0) {
+                hours = 23;
+            }
+
+            timeElements[0].textContent = hours.toString().padStart(2, '0');
+            timeElements[1].textContent = minutes.toString().padStart(2, '0');
+            timeElements[2].textContent = seconds.toString().padStart(2, '0');
+            timeElements[3].textContent = milliseconds.toString().padStart(2, '0');
+        }
+
+        setInterval(updateCountdown, 10);
+
+        // Add to cart button animation
+        document.querySelectorAll('.add-to-cart').forEach(button => {
+            button.addEventListener('click', function() {
+                this.innerHTML = '<i class="fas fa-check" style="margin-right: 8px;"></i>Added!';
+                this.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-shopping-cart" style="margin-right: 8px;"></i>Add to Cart';
+                    this.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                }, 2000);
+            });
+        });
+    </script>
 {% endblock %}

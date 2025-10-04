@@ -1,4 +1,4 @@
-{% extends 'authenticated_base.html' %}
+{% extends 'left_navbar.html' %}
 {% load static %}
 
 {% block title %}My Profile - Sitwell{% endblock %}
@@ -7,109 +7,226 @@
 
 {% block extra_css %}
 <style>
+    /* Beautiful Breadcrumbs */
+    .breadcrumb {
+        background: white;
+        padding: 15px 20px;
+        margin-bottom: 25px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        list-style: none;
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .breadcrumb-item {
+        display: flex;
+        align-items: center;
+        color: #666;
+        font-size: 14px;
+    }
+
+    .breadcrumb-item a {
+        color: #666;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .breadcrumb-item a:hover {
+        color: #667eea;
+    }
+    
+    .breadcrumb-item.active {
+        color: #667eea;
+        font-weight: 600;
+    }
+    
+    .breadcrumb-item::after {
+        content: '/';
+        margin: 0 10px;
+        color: #ddd;
+    }
+    
+    .breadcrumb-item:last-child::after {
+        content: '';
+        margin: 0;
+    }
+
+    .breadcrumb-item i {
+        margin-right: 6px;
+    }
+
     .content-card {
         background: white;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        padding: 25px;
-        margin-bottom: 20px;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        padding: 35px;
+        margin-bottom: 25px;
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 3px solid #667eea;
+    }
+
+    .card-header h4 {
+        color: #333;
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .card-header h4 i {
+        color: #667eea;
     }
     
     .info-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         gap: 20px;
-        margin-top: 20px;
+        margin-top: 25px;
     }
     
     .info-item {
-        padding: 15px;
-        background-color: #f8f9fa;
-        border-radius: 8px;
+        padding: 20px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .info-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+        border-color: #667eea;
     }
     
     .info-label {
-        font-weight: 600;
-        color: #495057;
-        font-size: 0.9rem;
-        margin-bottom: 5px;
+        font-weight: 700;
+        color: #6c757d;
+        font-size: 12px;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
     .info-value {
-        color: #212529;
-        font-size: 1rem;
+        color: #333;
+        font-size: 16px;
+        font-weight: 600;
     }
     
     .btn-primary {
-        background-color: #db4444;
-        border-color: #db4444;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
         color: white;
-        padding: 8px 16px;
-        border-radius: 5px;
+        padding: 10px 20px;
+        border-radius: 8px;
         text-decoration: none;
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
         font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
     
     .btn-primary:hover {
-        background-color: #c13333;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
         color: white;
     }
     
     .btn-outline-secondary {
-        border: 1px solid #6c757d;
+        border: 2px solid #e9ecef;
         color: #6c757d;
-        background: transparent;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 12px;
+        background: white;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 14px;
         cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-outline-secondary:hover {
+        border-color: #667eea;
+        color: #667eea;
+        background: #f8f9ff;
     }
 
     .address-card {
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 15px;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 20px;
         transition: all 0.3s ease;
+        background: white;
     }
     
     .address-card:hover {
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        transform: translateY(-4px);
+        border-color: #667eea;
     }
     
     .address-card.default {
-        border-color: #db4444;
-        background-color: #fef5f5;
+        border-color: #667eea;
+        background: linear-gradient(135deg, #f8f9ff 0%, #fff5f8 100%);
     }
     
     .default-badge {
-        background-color: #db4444;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        font-size: 0.75rem;
-        padding: 2px 8px;
-        border-radius: 12px;
+        font-size: 11px;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .default-badge i {
+        font-size: 10px;
     }
     
-    /* Order Styles */
     .order-card {
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 15px;
-        transition: box-shadow 0.3s ease;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+        background: white;
     }
     
     .order-card:hover {
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        transform: translateY(-4px);
+        border-color: #667eea;
     }
     
     .order-status {
-        padding: 4px 12px;
+        padding: 6px 16px;
         border-radius: 20px;
         font-size: 12px;
-        font-weight: 600;
+        font-weight: 700;
         text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
     .status-pending { background: #fff3cd; color: #856404; }
@@ -120,64 +237,103 @@
     .status-cancelled { background: #f8d7da; color: #721c24; }
     
     .btn-outline-danger {
-        border: 1px solid #dc3545;
+        border: 2px solid #dc3545;
         color: #dc3545;
         background: transparent;
-        padding: 6px 12px;
-        border-radius: 4px;
+        padding: 8px 16px;
+        border-radius: 8px;
         text-decoration: none;
         font-size: 12px;
+        font-weight: 600;
         transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
     }
     
     .btn-outline-danger:hover {
         background: #dc3545;
         color: white;
+        transform: translateY(-2px);
     }
     
     .btn-sm {
-        padding: 6px 12px;
-        font-size: 12px;
-        border-radius: 4px;
+        padding: 8px 16px;
+        font-size: 13px;
+        border-radius: 8px;
         text-decoration: none;
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
         transition: all 0.3s ease;
+        font-weight: 600;
     }
     
     .btn-details {
-        background-color: #db4444;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
+        border: none;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
     
     .btn-details:hover {
-        background-color: #c13333;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
         color: white;
     }
     
     .empty-state {
         text-align: center;
-        padding: 60px 20px;
+        padding: 80px 20px;
         color: #6c757d;
+    }
+
+    .empty-icon {
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, #f8f9ff 0%, #fff5f8 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 25px;
     }
     
     .empty-state i {
         font-size: 4rem;
-        margin-bottom: 20px;
+        color: #667eea;
         opacity: 0.5;
+    }
+
+    .empty-state h5 {
+        color: #333;
+        margin-bottom: 10px;
     }
     
     .dropdown-menu {
         background: white;
-        border: 1px solid #ddd;
-        border-radius: 8px;
+        border: none;
+        border-radius: 12px;
         padding: 8px 0;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
         position: absolute;
         right: 0;
         top: 100%;
-        min-width: 150px;
+        min-width: 180px;
         z-index: 1000;
         display: none;
+        animation: dropdownSlide 0.3s ease-out;
+    }
+
+    @keyframes dropdownSlide {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     
     .dropdown-menu.show {
@@ -185,28 +341,37 @@
     }
     
     .dropdown-item {
-        padding: 8px 16px;
+        padding: 10px 20px;
         color: #333;
         text-decoration: none;
-        display: block;
+        display: flex;
+        align-items: center;
+        gap: 10px;
         font-size: 14px;
+        transition: all 0.2s ease;
     }
     
     .dropdown-item:hover {
         background-color: #f8f9fa;
-        color: #db4444;
+        color: #667eea;
+        padding-left: 24px;
+    }
+
+    .dropdown-item i {
+        width: 16px;
     }
     
     .dropdown-divider {
         height: 1px;
-        background-color: #e0e0e0;
-        margin: 4px 0;
+        background-color: #e9ecef;
+        margin: 8px 0;
     }
     
     .badge {
-        padding: 4px 8px;
-        font-size: 12px;
-        border-radius: 12px;
+        padding: 4px 12px;
+        font-size: 11px;
+        border-radius: 20px;
+        font-weight: 700;
     }
     
     .bg-secondary {
@@ -214,32 +379,24 @@
         color: white;
     }
     
-    .breadcrumb {
-        background: none;
-        padding: 0;
-        margin: 20px 0;
-    }
-    
-    .breadcrumb-item {
-        color: #666;
-    }
-    
-    .breadcrumb-item a {
-        color: #333;
-        text-decoration: none;
-    }
-    
-    .breadcrumb-item.active {
-        color: #db4444;
-    }
-    
-    /* Hide tab content initially */
     .tab-pane {
         display: none;
     }
     
     .tab-pane.active {
         display: block;
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     
     /* Modal Styles */
@@ -249,41 +406,77 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(0,0,0,0.5);
+        background-color: rgba(0,0,0,0.6);
         z-index: 1000;
         display: none;
+        backdrop-filter: blur(5px);
+    }
+
+    .modal-overlay.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
     .modal-content {
         background-color: white;
-        margin: 15% auto;
-        padding: 25px;
-        border-radius: 12px;
-        width: 90%;
-        max-width: 400px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        position: relative;
-        animation: modalSlideIn 0.3s ease-out;
+        padding: 35px;
+        border-radius: 15px;
+        width: 450px;
+        max-width: 90%;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        animation: modalScale 0.3s ease-out;
     }
     
-    @keyframes modalSlideIn {
+    @keyframes modalScale {
         from {
-            transform: translateY(-50px);
             opacity: 0;
+            transform: scale(0.9);
         }
         to {
-            transform: translateY(0);
             opacity: 1;
+            transform: scale(1);
         }
+    }
+
+    .modal-icon {
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+    }
+
+    .modal-icon i {
+        font-size: 2rem;
+        color: white;
+    }
+
+    .modal-content h5 {
+        color: #333;
+        margin: 0 0 15px;
+        font-size: 22px;
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .modal-content p {
+        margin: 15px 0 25px;
+        line-height: 1.6;
+        color: #666;
+        text-align: center;
     }
     
     .modal-button {
         border: none;
-        padding: 10px 20px;
-        border-radius: 6px;
+        padding: 12px 28px;
+        border-radius: 10px;
         cursor: pointer;
-        font-size: 14px;
-        font-weight: 500;
+        font-size: 15px;
+        font-weight: 600;
         transition: all 0.3s ease;
     }
     
@@ -294,34 +487,110 @@
     
     .modal-button-cancel:hover {
         background: #5a6268;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
     }
     
     .modal-button-delete {
-        background: #dc3545;
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
         color: white;
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
     }
     
     .modal-button-delete:hover {
-        background: #c82333;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(220, 53, 69, 0.4);
+    }
+
+    .bio-section {
+        margin-top: 30px;
+        padding: 25px;
+        background: linear-gradient(135deg, #f8f9ff 0%, #fff5f8 100%);
+        border-radius: 12px;
+        border-left: 4px solid #667eea;
+    }
+
+    .bio-section h6 {
+        color: #667eea;
+        font-weight: 700;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        font-size: 13px;
+        letter-spacing: 0.5px;
+    }
+
+    .bio-section p {
+        margin: 0;
+        line-height: 1.8;
+        color: #555;
+    }
+
+    .security-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+    }
+
+    .security-card {
+        text-align: center;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 30px;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .security-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        border-color: #667eea;
+    }
+
+    .security-card i {
+        font-size: 3.5rem;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .security-card h5 {
+        color: #333;
+        margin-bottom: 10px;
+        font-size: 20px;
+    }
+
+    .security-card p {
+        color: #666;
+        margin-bottom: 20px;
+        font-size: 14px;
     }
     
     @media (max-width: 768px) {
+        .content-card {
+            padding: 25px 20px;
+        }
+
         .info-grid {
             grid-template-columns: 1fr;
         }
         
         .order-card {
-            padding: 15px;
+            padding: 20px;
         }
         
         .btn-sm {
-            padding: 4px 8px;
-            font-size: 11px;
+            padding: 6px 12px;
+            font-size: 12px;
         }
         
         .modal-content {
-            margin: 25% auto;
-            width: 95%;
+            padding: 25px;
+        }
+
+        .security-grid {
+            grid-template-columns: 1fr;
         }
     }
 </style>
@@ -332,17 +601,21 @@
 {% endblock %}
 
 {% block content %}
-<!-- Breadcrumb -->
+<!-- Beautiful Breadcrumb -->
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{% url 'dummy_home' %}">Home</a></li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'dummy_home' %}">
+                <i class="fas fa-home"></i>Home
+            </a>
+        </li>
         <li class="breadcrumb-item active" aria-current="page">My Account</li>
     </ol>
 </nav>
 
 {% if user.first_name %}
-    <p style="text-align: right; color: #666; margin-bottom: 30px;">
-        Welcome! <span style="color: #db4444; font-weight: 500;">{{ user.first_name }}</span>
+    <p style="text-align: right; color: #666; margin-bottom: 30px; max-width: 1200px; margin-left: auto; margin-right: auto;">
+        Welcome! <span style="color: #667eea; font-weight: 600;">{{ user.first_name }}</span>
     </p>
 {% endif %}
 
@@ -351,10 +624,12 @@
     <!-- Profile Details Tab -->
     <div class="tab-pane active" id="profile-details">
         <div class="content-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h4 style="color: #db4444; margin: 0;">Profile Details</h4>
+            <div class="card-header">
+                <h4>
+                    <i class="fas fa-user-circle"></i>Profile Details
+                </h4>
                 <a href="{% url 'edit_profile' %}" class="btn-primary">
-                    <i class="fas fa-edit" style="margin-right: 5px;"></i>Edit Profile
+                    <i class="fas fa-edit"></i>Edit Profile
                 </a>
             </div>
 
@@ -369,7 +644,7 @@
                     <div class="info-value">{{ user.last_name|default:"Not provided" }}</div>
                 </div>
                 <div class="info-item">
-                    <div class="info-label">Email</div>
+                    <div class="info-label">Email Address</div>
                     <div class="info-value">{{ user.email }}</div>
                 </div>
                 <div class="info-item">
@@ -387,11 +662,9 @@
             </div>
 
             {% if user.bio %}
-            <div style="margin-top: 30px;">
-                <h6 class="info-label">About Me</h6>
-                <div style="padding: 15px; background-color: #f8f9fa; border-radius: 8px; margin-top: 10px;">
-                    <p style="margin: 0; line-height: 1.6;">{{ user.bio }}</p>
-                </div>
+            <div class="bio-section">
+                <h6><i class="fas fa-pen" style="margin-right: 8px;"></i>About Me</h6>
+                <p>{{ user.bio }}</p>
             </div>
             {% endif %}
         </div>
@@ -400,23 +673,27 @@
     <!-- Addresses Tab -->
     <div class="tab-pane" id="addresses">
         <div class="content-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h4 style="margin: 0; color: #db4444;">Address Book</h4>
+            <div class="card-header">
+                <h4>
+                    <i class="fas fa-map-marked-alt"></i>Address Book
+                </h4>
                 <a href="{% url 'add_address' %}" class="btn-primary">
-                    <i class="fas fa-plus" style="margin-right: 5px;"></i>Add New Address
+                    <i class="fas fa-plus"></i>Add New Address
                 </a>
             </div>
 
             {% if addresses %}
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px;">
                     {% for address in addresses %}
                     <div class="address-card {% if address.is_default %}default{% endif %}">
-                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
-                            <div>
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                                 {% if address.is_default %}
-                                    <span class="default-badge">Default</span>
+                                    <span class="default-badge">
+                                        <i class="fas fa-star"></i>Default
+                                    </span>
                                 {% endif %}
-                                <span class="badge bg-secondary" style="margin-left: 8px;">{{ address.address_type|title }}</span>
+                                <span class="badge bg-secondary">{{ address.address_type|title }}</span>
                             </div>
                             <div style="position: relative;">
                                 <button class="btn-outline-secondary" onclick="toggleAddressDropdown({{ address.id }})">
@@ -424,39 +701,45 @@
                                 </button>
                                 <div class="dropdown-menu" id="dropdown-{{ address.id }}">
                                     <a class="dropdown-item" href="{% url 'edit_address' address.id %}">
-                                        <i class="fas fa-edit" style="margin-right: 8px;"></i>Edit
+                                        <i class="fas fa-edit"></i>Edit
                                     </a>
                                     {% if not address.is_default %}
                                     <a class="dropdown-item" href="{% url 'set_default_address' address.id %}">
-                                        <i class="fas fa-star" style="margin-right: 8px;"></i>Set Default
+                                        <i class="fas fa-star"></i>Set Default
                                     </a>
                                     {% endif %}
                                     <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item" href="#" style="color: #dc3545;" onclick="confirmDelete('{{ address.id }}')">
-                                        <i class="fas fa-trash" style="margin-right: 8px;"></i>Delete
+                                    <a class="dropdown-item" href="#" style="color: #dc3545;" onclick="confirmDelete('{{ address.id }}'); return false;">
+                                        <i class="fas fa-trash"></i>Delete
                                     </a>
                                 </div>
                             </div>
                         </div>
-                        <h6 style="margin-bottom: 8px;">{{ address.full_name }}</h6>
-                        <p style="margin: 4px 0;">{{ address.address_line_1 }}</p>
+                        <h6 style="margin-bottom: 12px; font-size: 18px; font-weight: 700; color: #333;">{{ address.full_name }}</h6>
+                        <p style="margin: 6px 0; color: #666; line-height: 1.6;">{{ address.address_line_1 }}</p>
                         {% if address.address_line_2 %}
-                            <p style="margin: 4px 0;">{{ address.address_line_2 }}</p>
+                            <p style="margin: 6px 0; color: #666; line-height: 1.6;">{{ address.address_line_2 }}</p>
                         {% endif %}
-                        <p style="margin: 4px 0;">{{ address.city }}, {{ address.state }} {{ address.postal_code }}</p>
-                        <p style="margin: 4px 0;">{{ address.country }}</p>
+                        <p style="margin: 6px 0; color: #666; line-height: 1.6;">{{ address.city }}, {{ address.state }} {{ address.postal_code }}</p>
+                        <p style="margin: 6px 0; color: #666; line-height: 1.6;">{{ address.country }}</p>
                         {% if address.phone_number %}
-                            <p style="margin: 4px 0; color: #666;"><i class="fas fa-phone" style="margin-right: 8px;"></i>{{ address.phone_number }}</p>
+                            <p style="margin: 12px 0 0; color: #667eea; font-weight: 600; display: flex; align-items: center; gap: 8px; padding-top: 12px; border-top: 1px solid #e9ecef;">
+                                <i class="fas fa-phone"></i>{{ address.phone_number }}
+                            </p>
                         {% endif %}
                     </div>
                     {% endfor %}
                 </div>
             {% else %}
                 <div class="empty-state">
-                    <i class="fas fa-map-marker-alt"></i>
-                    <h5>No addresses found</h5>
-                    <p style="margin-bottom: 20px;">Add your first address to get started</p>
-                    <a href="{% url 'add_address' %}" class="btn-primary">Add Address</a>
+                    <div class="empty-icon">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <h5>No Addresses Found</h5>
+                    <p style="margin-bottom: 25px;">Add your first address to get started</p>
+                    <a href="{% url 'add_address' %}" class="btn-primary">
+                        <i class="fas fa-plus"></i>Add Address
+                    </a>
                 </div>
             {% endif %}
         </div>
@@ -465,71 +748,81 @@
     <!-- Orders Tab -->
     <div class="tab-pane" id="orders">
         <div class="content-card">
-            <h4 style="margin-bottom: 20px; color: #db4444;">My Orders</h4>
+            <div class="card-header">
+                <h4>
+                    <i class="fas fa-shopping-bag"></i>My Orders
+                </h4>
+            </div>
             
             {% if user.orders.all %}
                 {% for order in user.orders.all|slice:":5" %}
                 <div class="order-card">
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e9ecef;">
                         <div>
-                            <h6 style="margin: 0; font-weight: 600; color: #333;">Order #{{ order.order_number }}</h6>
-                            <small style="color: #666;">{{ order.created_at|date:"F d, Y g:i A" }}</small>
+                            <h6 style="margin: 0 0 5px; font-weight: 700; font-size: 18px; color: #333;">Order #{{ order.order_number }}</h6>
+                            <small style="color: #6c757d; font-size: 13px;">
+                                <i class="fas fa-calendar" style="margin-right: 5px;"></i>
+                                {{ order.created_at|date:"F d, Y g:i A" }}
+                            </small>
                         </div>
                         <span class="order-status status-{{ order.status }}">{{ order.get_status_display }}</span>
                     </div>
                     
-                    <div style="margin-bottom: 15px;">
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
-                            <div>
-                                <p style="margin: 5px 0; font-size: 14px;"><strong>Total:</strong> ₹{{ order.total_amount }}</p>
-                                <p style="margin: 5px 0; font-size: 14px;"><strong>Payment:</strong> {{ order.get_payment_status_display }}</p>
-                            </div>
-                            <div>
-                                <p style="margin: 5px 0; font-size: 14px;"><strong>Items:</strong> {{ order.items.count }} item{{ order.items.count|pluralize }}</p>
-                                {% if order.tracking_number %}
-                                    <p style="margin: 5px 0; font-size: 14px;"><strong>Tracking:</strong> {{ order.tracking_number }}</p>
-                                {% endif %}
-                            </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
+                            <strong style="display: block; color: #6c757d; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Total Amount</strong>
+                            <p style="margin: 0; color: #667eea; font-size: 18px; font-weight: 700;">₹{{ order.total_amount|floatformat:2 }}</p>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
+                            <strong style="display: block; color: #6c757d; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Payment Status</strong>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 600;">{{ order.get_payment_status_display }}</p>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
+                            <strong style="display: block; color: #6c757d; font-size: 12px; text-transform: uppercase; margin-bottom: 5px;">Items Count</strong>
+                            <p style="margin: 0; color: #333; font-size: 15px; font-weight: 600;">{{ order.items.count }} item{{ order.items.count|pluralize }}</p>
                         </div>
                     </div>
                     
                     <!-- Order Items Preview -->
-                    <div style="margin-bottom: 15px; background: #f8f9fa; padding: 12px; border-radius: 6px;">
-                        <h6 style="margin: 0 0 8px; font-size: 13px; color: #666;">Order Items:</h6>
+                    <div style="background: linear-gradient(135deg, #f8f9ff 0%, #fff5f8 100%); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                        <h6 style="margin: 0 0 10px; font-size: 14px; color: #667eea; font-weight: 700;">
+                            <i class="fas fa-box" style="margin-right: 5px;"></i>Order Items
+                        </h6>
                         {% for item in order.items.all|slice:":2" %}
-                            <div style="font-size: 13px; color: #555; margin-bottom: 3px;">
-                                <strong>{{ item.quantity }}x</strong> {{ item.product_name }} - <span style="color: #db4444;">₹{{ item.total_price }}</span>
+                            <div style="display: flex; justify-content: space-between; font-size: 14px; color: #555; margin-bottom: 6px;">
+                                <span><strong>{{ item.quantity }}x</strong> {{ item.product_name }}</span>
+                                <span style="color: #667eea; font-weight: 600;">₹{{ item.total_price|floatformat:2 }}</span>
                             </div>
                         {% endfor %}
                         {% if order.items.count > 2 %}
-                            <div style="font-size: 12px; color: #888; margin-top: 5px;">
+                            <div style="font-size: 13px; color: #888; margin-top: 8px;">
                                 ...and {{ order.items.count|add:"-2" }} more item{{ order.items.count|add:"-2"|pluralize }}
                             </div>
                         {% endif %}
                     </div>
                     
                     <!-- Action Buttons -->
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <a href="{% url 'order_detail' order.id %}" class="btn-sm btn-details">
-                            <i class="fas fa-eye" style="margin-right: 5px;"></i>View Details
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+                        <a href="{% url 'order_detail' order.order_number %}" class="btn-sm btn-details">
+                            <i class="fas fa-eye"></i>View Details
                         </a>
                         
                         {% if order.can_be_cancelled %}
-                            <a href="{% url 'cancel_order' order.id %}" class="btn-outline-danger">
-                                <i class="fas fa-times" style="margin-right: 5px;"></i>Cancel Order
+                            <a href="{% url 'cancel_order' order.order_number %}" class="btn-outline-danger">
+                                <i class="fas fa-times"></i>Cancel Order
                             </a>
                         {% endif %}
                         
                         {% if order.status == 'cancelled' %}
-                            <span style="font-size: 12px; color: #721c24; display: flex; align-items: center;">
-                                <i class="fas fa-times-circle" style="margin-right: 5px;"></i>
+                            <span style="font-size: 13px; color: #721c24; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-times-circle"></i>
                                 Cancelled on {{ order.cancelled_at|date:"M d, Y" }}
                             </span>
                         {% endif %}
                         
                         {% if order.status == 'delivered' %}
-                            <span style="font-size: 12px; color: #155724; display: flex; align-items: center;">
-                                <i class="fas fa-check-circle" style="margin-right: 5px;"></i>
+                            <span style="font-size: 13px; color: #155724; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-check-circle"></i>
                                 Delivered
                             </span>
                         {% endif %}
@@ -539,21 +832,25 @@
                 
                 <!-- Show "View All Orders" if user has more than 5 orders -->
                 {% if user.orders.count > 5 %}
-                    <div style="text-align: center; margin-top: 25px; padding-top: 20px; border-top: 1px solid #eee;">
-                        <p style="color: #666; margin-bottom: 15px;">
-                            Showing latest 5 orders out of {{ user.orders.count }} total orders
+                    <div style="text-align: center; margin-top: 30px; padding-top: 25px; border-top: 2px solid #e9ecef;">
+                        <p style="color: #666; margin-bottom: 15px; font-size: 15px;">
+                            Showing latest 5 orders out of <strong>{{ user.orders.count }}</strong> total orders
                         </p>
                         <a href="{% url 'user_orders' %}" class="btn-primary">
-                            <i class="fas fa-list" style="margin-right: 5px;"></i>View All Orders ({{ user.orders.count }})
+                            <i class="fas fa-list"></i>View All Orders ({{ user.orders.count }})
                         </a>
                     </div>
                 {% endif %}
             {% else %}
                 <div class="empty-state">
-                    <i class="fas fa-shopping-bag"></i>
-                    <h5>No orders found</h5>
-                    <p style="margin-bottom: 20px;">You haven't placed any orders yet</p>
-                    <a href="{% url 'product_list' %}" class="btn-primary">Start Shopping</a>
+                    <div class="empty-icon">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                    <h5>No Orders Yet</h5>
+                    <p style="margin-bottom: 25px;">You haven't placed any orders yet</p>
+                    <a href="{% url 'product_list' %}" class="btn-primary">
+                        <i class="fas fa-shopping-cart"></i>Start Shopping
+                    </a>
                 </div>
             {% endif %}
         </div>
@@ -562,44 +859,51 @@
     <!-- Security Tab -->
     <div class="tab-pane" id="security">
         <div class="content-card">
-            <h4 style="margin-bottom: 20px; color: #db4444;">Security Settings</h4>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-                <div style="text-align: center; border: 1px solid #ddd; border-radius: 8px; padding: 20px;">
-                    <i class="fas fa-envelope" style="font-size: 3rem; color: #db4444; margin-bottom: 15px;"></i>
+            <div class="card-header">
+                <h4>
+                    <i class="fas fa-shield-alt"></i>Security Settings
+                </h4>
+            </div>
+            <div class="security-grid">
+                <div class="security-card">
+                    <i class="fas fa-envelope"></i>
                     <h5>Change Email</h5>
-                    <p style="color: #666; margin-bottom: 20px;">Update your email address</p>
-                    <a href="{% url 'change_email' %}" class="btn-primary">Change Email</a>
+                    <p>Update your email address for account notifications</p>
+                    <a href="{% url 'change_email' %}" class="btn-primary">
+                        <i class="fas fa-edit"></i>Change Email
+                    </a>
                 </div>
-                <div style="text-align: center; border: 1px solid #ddd; border-radius: 8px; padding: 20px;">
-                    <i class="fas fa-lock" style="font-size: 3rem; color: #db4444; margin-bottom: 15px;"></i>
+                <div class="security-card">
+                    <i class="fas fa-lock"></i>
                     <h5>Change Password</h5>
-                    <p style="color: #666; margin-bottom: 20px;">Update your account password</p>
-                    <a href="{% url 'change_password' %}" class="btn-primary">Change Password</a>
+                    <p>Keep your account secure with a strong password</p>
+                    <a href="{% url 'change_password' %}" class="btn-primary">
+                        <i class="fas fa-key"></i>Change Password
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Delete Address Modal - COMPLETE FIXED VERSION -->
+<!-- Delete Address Modal -->
 <div id="deleteModal" class="modal-overlay">
     <div class="modal-content">
-        <h5 style="color: #db4444; margin: 0 0 15px; font-size: 18px;">
-            <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>Delete Address
-        </h5>
-        <p style="margin: 15px 0; line-height: 1.5; color: #555;">
-            Are you sure you want to delete this address? This action cannot be undone.
-        </p>
+        <div class="modal-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h5>Delete Address?</h5>
+        <p>Are you sure you want to delete this address? This action cannot be undone.</p>
         
         <!-- FORM FOR POST REQUEST -->
-        <form id="deleteForm" method="POST" style="margin-top: 25px;">
+        <form id="deleteForm" method="POST">
             {% csrf_token %}
-            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+            <div style="display: flex; justify-content: center; gap: 12px;">
                 <button type="button" onclick="closeDeleteModal()" class="modal-button modal-button-cancel">
                     <i class="fas fa-times" style="margin-right: 6px;"></i>Cancel
                 </button>
                 <button type="submit" class="modal-button modal-button-delete">
-                    <i class="fas fa-trash" style="margin-right: 6px;"></i>Delete
+                    <i class="fas fa-trash" style="margin-right: 6px;"></i>Delete Address
                 </button>
             </div>
         </form>
@@ -609,62 +913,23 @@
 
 {% block extra_js %}
 <script>
-    // Show navbar on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        // Auto-open the navbar on desktop
-        if (window.innerWidth > 768) {
-            const navbar = document.getElementById('leftNavbar');
-            const content = document.getElementById('mainContent');
-            const toggleBtn = document.querySelector('.navbar-toggle-btn');
-            
-            if (navbar && content && toggleBtn) {
-                navbar.classList.add('active');
-                content.classList.add('content-pushed');
-                toggleBtn.classList.add('active');
-            }
-        }
-    });
-
-    // Tab switching functionality for sidebar navigation
-    function showTabFromSidebar(tabId) {
-        // Hide all tabs
-        const tabs = document.querySelectorAll('.tab-pane');
-        tabs.forEach(tab => {
-            tab.classList.remove('active');
-        });
-        
-        // Remove active class from all sidebar nav links
-        const sidebarLinks = document.querySelectorAll('.profile-sidebar-nav .nav-link');
-        sidebarLinks.forEach(link => link.classList.remove('active'));
-        
-        // Show selected tab
-        const selectedTab = document.getElementById(tabId);
-        if (selectedTab) {
-            selectedTab.classList.add('active');
-        }
-        
-        // Add active class to clicked sidebar nav link
-        const activeLink = document.querySelector(`[onclick="showTabFromSidebar('${tabId}')"]`);
-        if (activeLink) {
-            activeLink.classList.add('active');
-        }
-    }
-
     // Address dropdown functionality
     function toggleAddressDropdown(addressId) {
         const dropdown = document.getElementById('dropdown-' + addressId);
-        const isVisible = dropdown.style.display === 'block';
+        const isVisible = dropdown.classList.contains('show');
         
         // Close all dropdowns
         document.querySelectorAll('.dropdown-menu').forEach(menu => {
-            menu.style.display = 'none';
+            menu.classList.remove('show');
         });
         
         // Toggle current dropdown
-        dropdown.style.display = isVisible ? 'none' : 'block';
+        if (!isVisible) {
+            dropdown.classList.add('show');
+        }
     }
     
-    // FIXED DELETE CONFIRMATION - Updated to use correct URL pattern
+    // Delete confirmation
     function confirmDelete(addressId) {
         const deleteForm = document.getElementById('deleteForm');
         const modal = document.getElementById('deleteModal');
@@ -673,20 +938,19 @@
         deleteForm.method = 'POST';
         deleteForm.action = `{% url 'delete_address' 0 %}`.replace('0', addressId);
         
-        modal.style.display = 'block';
-        console.log('Form action set to:', deleteForm.action);
+        modal.classList.add('show');
     }
     
     function closeDeleteModal() {
         const modal = document.getElementById('deleteModal');
-        modal.style.display = 'none';
+        modal.classList.remove('show');
     }
     
     // Close dropdowns when clicking outside
     document.addEventListener('click', function(event) {
         if (!event.target.closest('.dropdown-menu') && !event.target.closest('.btn-outline-secondary')) {
             document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                menu.style.display = 'none';
+                menu.classList.remove('show');
             });
         }
     });
@@ -713,21 +977,9 @@
                 const deleteButton = this.querySelector('.modal-button-delete');
                 deleteButton.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 6px;"></i>Deleting...';
                 deleteButton.disabled = true;
+                deleteButton.style.opacity = '0.7';
             });
         }
-    });
-    
-    // Success message auto-hide
-    document.addEventListener('DOMContentLoaded', function() {
-        const successMessages = document.querySelectorAll('.alert-success');
-        successMessages.forEach(message => {
-            setTimeout(() => {
-                message.style.opacity = '0';
-                setTimeout(() => {
-                    message.remove();
-                }, 300);
-            }, 5000);
-        });
     });
 </script>
 {% endblock %}
