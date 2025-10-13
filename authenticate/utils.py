@@ -6,6 +6,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 import re
 from django.contrib.auth.password_validation import CommonPasswordValidator
+from decimal import Decimal, ROUND_HALF_UP
 
 
 def generate_otp():
@@ -83,7 +84,6 @@ def is_valid_phone_number(number):
     if not number:
         return "Phone number is required."
     
-    # Clean the number first
     cleaned_number = clean_phone_number(number)
     
     if len(cleaned_number) < 10 or len(cleaned_number) > 15:
@@ -102,22 +102,17 @@ def is_valid_phone_number(number):
     if cleaned_number in fake_patterns:
         return "Please enter a valid phone number."
     
-    # Return None if valid (no error)
     return None
 
 
 def format_phone_display(number):
-    """Format phone number for display purposes only - NOT for storage"""
     cleaned = clean_phone_number(number)
     if cleaned and len(cleaned) == 10:
-        # Only format for display, never store formatted version
         return f"{cleaned[:3]}-{cleaned[3:6]}-{cleaned[6:]}"
     return cleaned
 
 
-# Updated name validation
 def is_valid_full_name(name):
-    """Enhanced name validation supporting various name formats."""
     name = name.strip()
     
     if len(name) < 2:
@@ -126,12 +121,22 @@ def is_valid_full_name(name):
     if len(name) > 50:
         return "Name cannot exceed 50 characters."
     
-    # Allow letters, spaces, hyphens, apostrophes, and dots
     if not re.fullmatch(r"[A-Za-z]+(?: [A-Za-z]+)*(?:[-'.] ?[A-Za-z]+)*", name):
         return "Name must contain only letters, spaces, hyphens, apostrophes, and dots."
     
-    # Check for excessive spaces
     if '  ' in name:
         return "Name cannot contain multiple consecutive spaces."
     
     return None
+
+
+
+
+MONEY = Decimal('0.01')
+
+def q2(x):
+    if x is None:
+        return Decimal('0.00')
+    if not isinstance(x, Decimal):
+        x = Decimal(str(x))
+    return x.quantize(MONEY, rounding=ROUND_HALF_UP)

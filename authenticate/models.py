@@ -155,7 +155,6 @@ class Order(models.Model):
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
     payment_method = models.CharField(max_length=50, choices=PAYMENT_METHOD_CHOICES, default='cod')
     
-    # ✅ PRICING BREAKDOWN FIELDS - ADD THESE
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -164,23 +163,19 @@ class Order(models.Model):
     
     shipping_address = models.ForeignKey('UserAddress', on_delete=models.SET_NULL, null=True, blank=True)
     
-    # Order tracking
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     shipped_at = models.DateTimeField(null=True, blank=True)
     delivered_at = models.DateTimeField(null=True, blank=True)
     cancelled_at = models.DateTimeField(null=True, blank=True)
     
-    # Cancellation
     can_cancel = models.BooleanField(default=True)
     cancellation_reason = models.TextField(blank=True, null=True)
     cancelled_by = models.CharField(max_length=50, blank=True, null=True)
     
-    # Shipping details
     tracking_number = models.CharField(max_length=100, blank=True, null=True)
     shipping_carrier = models.CharField(max_length=100, blank=True, null=True)
     
-    # Return fields
     return_reason = models.TextField(blank=True, null=True)
     returned_at = models.DateTimeField(null=True, blank=True)
     returned_by = models.CharField(max_length=50, blank=True, null=True)
@@ -196,7 +191,6 @@ class Order(models.Model):
             self.order_number = 'ORD' + ''.join(random.choices(string.digits, k=8))
         super().save(*args, **kwargs)
     
-    # ✅ ADD THIS METHOD
     def calculate_totals(self):
         """Calculate subtotal, discount, tax, shipping, and total"""
         self.subtotal = Decimal('0.00')
@@ -426,3 +420,51 @@ class WishlistItem(models.Model):
     
     def __str__(self):
         return f"{self.product.name} in {self.wishlist.user.email}'s wishlist"
+    
+
+
+
+class Coupon(models.Model):
+    COUPON_TYPES = [
+        ('percentage', 'Percentage'),
+        ('fixed', 'Fixed Amount'),
+    ]
+    
+    code = models.CharField(max_length=50, unique=True)
+    discount_type = models.CharField(max_length=20, choices=COUPON_TYPES)
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2)
+    minimum_order_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    usage_limit = models.PositiveIntegerField(default=1)  # How many times can be used
+    used_count = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    valid_from = models.DateTimeField()
+    valid_until = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.code
+    
+    def is_valid(self):
+        from django.utils import timezone
+        now = timezone.now()
+        return (
+            self.is_active and 
+            self.valid_from <= now <= self.valid_until and
+            self.used_count < self.usage_limit
+        )
+    
+    def can_be_used(self, order_amount):
+        return self.is_valid() and order_amount >= self.minimum_order_amount
+
+class CouponUsage(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    coupon = models.ForeignKey(Coupon, on_delete=models.CASCADE)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    used_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('user', 'coupon')  # Each user can use a coupon only once
+
+    def __str__(self):
+        return f"{self.user.email} used {self.coupon.code}"
+

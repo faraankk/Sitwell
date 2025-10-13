@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph  
 from reportlab.lib.styles import getSampleStyleSheet  
 from django.contrib.auth.decorators import login_required
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.db.models import Q
 from .models import Order, OrderItem, OrderStatusHistory, CustomUser, UserAddress, Cart, CartItem, Wishlist, WishlistItem
 from .forms import OrderCancellationForm, OrderReturnForm, SignUpForm, OTPForm, NewPasswordForm, LoginForm, ForgotPasswordForm, UserProfileForm, EmailChangeForm, PasswordChangeForm, UserAddressForm
@@ -27,6 +27,10 @@ from decimal import Decimal
 from .utils import generate_otp, send_otp_email
 from django.contrib.auth import update_session_auth_hash
 from django.views.decorators.http import require_http_methods
+from .models import Cart, CartItem, UserAddress, Order, OrderItem, Coupon, CouponUsage
+from django.db.models import F
+from authenticate.utils import q2
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -1444,140 +1448,198 @@ def cart_item_count_view(request):
 
 
 
-
 @login_required
-@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def checkout_view(request):
-    """
-    Displays the checkout page with addresses, cart items, and order summary.
-    """
-    try:
-        cart = Cart.objects.get(user=request.user)
-        cart_items = cart.items.filter(product__status='published', product__stock_quantity__gt=0)
-
-        if not cart_items.exists():
-            messages.error(request, "Your cart is empty or contains only unavailable items. Cannot proceed to checkout.")
-            return redirect('cart')
-
-        addresses = UserAddress.objects.filter(user=request.user)
-        if not addresses.exists():
-            messages.info(request, "Please add a shipping address before proceeding to checkout.")
-            return redirect('add_address')
-
-        # Calculate order summary (consistent with HTML: 18% tax)
-        subtotal = sum(item.subtotal for item in cart_items)
-        taxes = subtotal * Decimal('0.18')  # 18% tax as per HTML
-        shipping = Decimal('50.00') if subtotal < 1000 else Decimal('0.00')  # Example: Free shipping over 1000
-        discount = Decimal('0.00')  # Placeholder; actual discount applied in place_order
-
-        grand_total = subtotal + taxes + shipping - discount
-
-        context = {
-            'addresses': addresses,
-            'cart_items': cart_items,
-            'subtotal': subtotal,
-            'taxes': taxes,
-            'shipping': shipping,
-            'discount': discount,
-            'grand_total': grand_total,
-            'user': request.user,
-        }
-        return render(request, 'store/checkout.html', context)
-    except Cart.DoesNotExist:
-        messages.error(request, "You do not have a cart.")
-        return redirect('product_list')
-    except Exception as e:
-        logger.error(f"Error in checkout_view: {str(e)}")
-        messages.error(request, "An unexpected error occurred.")
+    cart = get_object_or_404(Cart, user=request.user)
+    cart_items = cart.items.filter(
+        product__status='published',
+        product__stock_quantity__gt=0
+    )
+    if not cart_items:
+        messages.error(request, "Your cart is empty.")
         return redirect('cart')
+
+    addresses = UserAddress.objects.filter(user=request.user)
+    if not addresses:
+        messages.info(request, "Please add a shipping address first.")
+        return redirect('add_address')
+
+    # Handle coupon via PRG
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        code = (request.POST.get('coupon_code') or '').strip().upper()
+
+        if action == 'apply_coupon':
+            if not code:
+                messages.error(request, "Enter a coupon code.")
+                return redirect('checkout')
+
+            try:
+                coupon = Coupon.objects.get(code=code)
+            except Coupon.DoesNotExist:
+                messages.error(request, "Invalid coupon code.")
+                return redirect('checkout')
+
+            # Validate against current cart subtotal
+            subtotal_now = q2(sum((item.subtotal for item in cart_items), Decimal('0.00')))
+
+            if not coupon.is_valid():
+                messages.error(request, "This coupon is not valid or has expired.")
+                return redirect('checkout')
+
+            if CouponUsage.objects.filter(user=request.user, coupon=coupon).exists():
+                messages.error(request, "This coupon was already used.")
+                return redirect('checkout')
+
+            if subtotal_now < coupon.minimum_order_amount:
+                messages.error(request, f"Minimum order ₹{q2(coupon.minimum_order_amount)} required.")
+                return redirect('checkout')
+
+            request.session['applied_coupon'] = coupon.code
+            messages.success(request, f"Coupon {coupon.code} applied!")
+            return redirect('checkout')
+
+        if action == 'remove_coupon':
+            request.session.pop('applied_coupon', None)
+            messages.info(request, "Coupon removed.")
+            return redirect('checkout')
+
+        return redirect('checkout')
+
+    # GET: compute totals and reapply coupon from session
+    subtotal = q2(sum((item.subtotal for item in cart_items), Decimal('0.00')))
+    taxes = q2(subtotal * Decimal('0.18'))
+    shipping = q2(Decimal('0.00') if subtotal >= Decimal('1000.00') else Decimal('50.00'))
+
+    discount = Decimal('0.00')
+    applied_coupon = None
+
+    applied_code = request.session.get('applied_coupon')
+    if applied_code:
+        try:
+            coupon = Coupon.objects.get(code=applied_code)
+            if coupon.is_valid() and subtotal >= coupon.minimum_order_amount:
+                if coupon.discount_type == 'percentage':
+                    discount = q2(subtotal * (coupon.discount_value / Decimal('100')))
+                else:
+                    discount = q2(coupon.discount_value)
+                applied_coupon = coupon.code
+            else:
+                # No longer valid; clear to avoid stale UI
+                request.session.pop('applied_coupon', None)
+        except Coupon.DoesNotExist:
+            request.session.pop('applied_coupon', None)
+
+    grand_total = q2(subtotal + taxes + shipping - discount)
+    if grand_total < 0:
+        grand_total = Decimal('0.00')
+
+    return render(request, 'store/checkout.html', {
+        'addresses': addresses,
+        'cart_items': cart_items,
+        'subtotal': subtotal,
+        'taxes': taxes,
+        'shipping': shipping,
+        'discount': discount,
+        'grand_total': grand_total,
+        'applied_coupon': applied_coupon,
+        'coupon_error': None,  # using messages; kept for compatibility
+    })
 
 @login_required
 @transaction.atomic
 def place_order_view(request):
-    """
-    Handles placing the order with Cash on Delivery, applying coupon if valid.
-    """
     if request.method != 'POST':
         return redirect('checkout')
 
-    try:
-        cart = Cart.objects.get(user=request.user)
-        cart_items = cart.items.filter(product__status='published', product__stock_quantity__gt=0)
-        
-        if not cart_items.exists():
-            messages.error(request, "Your cart is empty or items are out of stock.")
-            return redirect('cart')
-        
-        address_id = request.POST.get('address')
-        if not address_id:
-            messages.error(request, "Please select a shipping address.")
-            return redirect('checkout')
-            
-        shipping_address = UserAddress.objects.get(id=address_id, user=request.user)
+    cart = get_object_or_404(Cart, user=request.user)
+    cart_items = cart.items.filter(
+        product__status='published',
+        product__stock_quantity__gt=0
+    )
+    if not cart_items:
+        messages.error(request, "Your cart is empty.")
+        return redirect('cart')
 
-        # Recalculate total to ensure price integrity (server-side validation)
-        subtotal = sum(item.subtotal for item in cart_items)
-        taxes = subtotal * Decimal('0.18')  # Consistent 18% tax
-        shipping = Decimal('50.00') if subtotal < 1000 else Decimal('0.00')
-        
-        # Server-side coupon validation (matching client-side predefined coupons)
-        coupon_code = request.POST.get('coupon_code', '').strip().upper()
-        discount = Decimal('0.00')
-        coupons = {
-            'SAVE10': {'discount': 0.10, 'minOrder': 500},
-            'FLAT50': {'discount': 50, 'minOrder': 1000},
-            'FIRSTORDER': {'discount': 0.15, 'minOrder': 300}
-        }
-        
-        if coupon_code in coupons:
-            coupon = coupons[coupon_code]
-            if subtotal >= coupon['minOrder']:
-                if coupon['discount'] < 1:  # Percentage
-                    discount = subtotal * Decimal(coupon['discount'])
-                else:  # Flat
-                    discount = Decimal(coupon['discount'])
-        
-        grand_total = subtotal + taxes + shipping - discount
+    address_id = request.POST.get('address')
+    if not address_id:
+        messages.error(request, "Please select a shipping address.")
+        return redirect('checkout')
+    shipping_address = get_object_or_404(UserAddress, id=address_id, user=request.user)
 
-        # Create the Order
-        order = Order.objects.create(
-            user=request.user,
-            shipping_address=shipping_address,
-            total_amount=grand_total,
-            payment_method='Cash on Delivery',
-            payment_status='Pending'
+    subtotal = q2(sum((item.subtotal for item in cart_items), Decimal('0.00')))
+    taxes = q2(subtotal * Decimal('0.18'))
+    shipping = q2(Decimal('0.00') if subtotal >= Decimal('1000.00') else Decimal('50.00'))
+
+    discount = Decimal('0.00')
+    coupon = None
+    applied_code = request.session.get('applied_coupon')
+
+    if applied_code:
+        try:
+            # Lock coupon row to enforce usage_limit under concurrency
+            coupon = Coupon.objects.select_for_update().get(code=applied_code)
+            if coupon.is_valid() and subtotal >= coupon.minimum_order_amount:
+                if coupon.discount_type == 'percentage':
+                    discount = q2(subtotal * (coupon.discount_value / Decimal('100')))
+                else:
+                    discount = q2(coupon.discount_value)
+            else:
+                coupon = None
+        except Coupon.DoesNotExist:
+            coupon = None
+
+    grand_total = q2(subtotal + taxes + shipping - discount)
+    if grand_total < 0:
+        grand_total = Decimal('0.00')
+
+    order = Order.objects.create(
+        user=request.user,
+        shipping_address=shipping_address,
+        subtotal=subtotal,
+        tax_amount=taxes,
+        shipping_charge=shipping,
+        discount_amount=discount,
+        total_amount=grand_total,
+        payment_method='cod',
+        payment_status='pending'
+    )
+
+    # Create order items and decrement stock atomically
+    for item in cart_items.select_related('product'):
+        OrderItem.objects.create(
+            order=order,
+            product=item.product,
+            product_name=item.product.name,
+            product_price=item.product.get_discounted_price(),
+            quantity=item.quantity
         )
+        item.product.stock_quantity = F('stock_quantity') - item.quantity
+        item.product.save(update_fields=['stock_quantity'])
 
-        # Create Order Items and update stock
-        for item in cart_items:
-            OrderItem.objects.create(
-                order=order,
-                product=item.product,
-                product_name=item.product.name,
-                product_price=item.product.price,
-                quantity=item.quantity
+    # Record coupon usage if applied and effective
+    if coupon and discount > 0:
+        try:
+            CouponUsage.objects.create(
+                user=request.user,
+                coupon=coupon,
+                order=order
             )
-            # Decrease stock
-            product = item.product
-            product.stock_quantity -= item.quantity
-            product.save()
+            coupon.used_count = F('used_count') + 1
+            coupon.save(update_fields=['used_count'])
+        except IntegrityError:
+            # User already used this coupon; ignore gracefully
+            pass
+        finally:
+            request.session.pop('applied_coupon', None)
 
-        # Clear the cart
-        cart.items.all().delete()
-        
-        messages.success(request, "Your order has been placed successfully!")
-        return redirect('order_success', order_id=order.order_number)
+    # Clear cart
+    cart.items.all().delete()
 
-    except UserAddress.DoesNotExist:
-        messages.error(request, "Selected address not found.")
-        return redirect('checkout')
-    except Cart.DoesNotExist:
-        messages.error(request, "Your cart was not found.")
-        return redirect('product_list')
-    except Exception as e:
-        logger.error(f"Error in place_order_view: {str(e)}")
-        messages.error(request, "An error occurred while placing your order. Please try again.")
-        return redirect('checkout')
+    messages.success(request, "Your order has been placed successfully!")
+    return redirect('order_success', order_id=order.order_number)
+
 
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True) 

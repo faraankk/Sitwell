@@ -6,10 +6,8 @@ User = get_user_model()
 
 @receiver(pre_social_login)
 def link_to_existing_user(sender, request, sociallogin, **kwargs):
-    """
-    Automatically connect a social account to an existing user
-    with the same email.
-    """
+        # Automatically connect a social account to an existing user with the same email.
+    
     email = sociallogin.account.extra_data.get("email")
     if email:
         try:

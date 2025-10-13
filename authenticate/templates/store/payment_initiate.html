@@ -1,0 +1,162 @@
+{% extends 'authenticated_base.html' %}  <!-- Use authenticated if available; else 'base.html' -->
+{% load static %}
+
+{% block title %}Razorpay Payment - Sitwell{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    .payment-container { max-width: 600px; margin: 50px auto; padding: 30px; background: white; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); font-size: 16px; }
+    .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    #payment-status { padding: 15px; border-radius: 10px; margin-bottom: 20px; display: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="payment-container">
+    <div style="margin-bottom: 20px;">
+        <i class="fas fa-credit-card" style="font-size: 48px; color: #667eea;"></i>
+    </div>
+    <h2 style="color: #1f2937; margin-bottom: 10px;">Razorpay Payment</h2>
+    <p style="color: #6b7280; margin-bottom: 20px;">Order #{{ order.order_number }}</p>
+    <p style="font-size: 24px; font-weight: 700; color: #667eea; margin-bottom: 30px;">
+        Amount: ₹{{ order.totalamount|floatformat:2 }}
+    </p>
+    <div id="payment-status"></div>
+    <button id="pay-button" class="btn">
+        <i class="fas fa-lock"></i> Pay Now
+    </button>
+    <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
+        <i class="fas fa-shield-alt"></i> Secure payment powered by Razorpay
+    </p>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const payButton = document.getElementById('pay-button');
+    const statusDiv = document.getElementById('payment-status');
+
+    // Razorpay options - amount as number (no quotes)
+    const options = {
+        "key": "{{ key }}",
+        "amount": {{ amount }},  // Numeric: e.g., 12300 (paise)
+        "currency": "{{ currency }}",
+        "name": "{{ name }}",
+        "description": "{{ description }}",
+        "order_id": "{{ razorpay_order_id }}",
+        "prefill": {
+            "name": "{{ prefill.name|default:'' }}",
+            "email": "{{ prefill.email|default:'' }}",
+            "contact": "{{ prefill.contact|default:'' }}"
+        },
+        "theme": {
+            "color": "#667eea"
+        },
+        "handler": function(response) {
+            // Show loading
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = '#dbeafe';
+            statusDiv.style.color = '#1e40af';
+            statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying payment...';
+            payButton.disabled = true;
+
+            // Get CSRF token
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+            const csrftoken = getCookie('csrftoken');
+
+            // Verify with order_id for lookup
+            fetch("{% url 'verifypayment' %}", {  // Correct URL name
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrftoken
+                },
+                body: new URLSearchParams({
+                    'razorpay_payment_id': response.razorpay_payment_id,
+                    'razorpay_order_id': response.razorpay_order_id,
+                    'razorpay_signature': response.razorpay_signature,
+                    'order_id': '{{ order.id }}'  // Add for view lookup
+                })
+            })
+            .then(resp => {
+                if (resp.ok) {
+                    statusDiv.style.background = '#d1fae5';
+                    statusDiv.style.color = '#065f46';
+                    statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> Payment successful! Redirecting...';
+                    setTimeout(() => {
+                        window.location.href = "{% url 'ordersuccess' order.order_number %}";  // Proper URL
+                    }, 1500);
+                } else {
+                    throw new Error('Payment verification failed');
+                }
+            })
+            .catch(error => {
+                console.error('Verification error:', error);
+                statusDiv.style.background = '#fee2e2';
+                statusDiv.style.color = '#991b1b';
+                statusDiv.innerHTML = '<i class="fas fa-times-circle"></i> Payment verification failed';
+                setTimeout(() => {
+                    window.location.href = "{% url 'orderfailure' order.order_number %}";  // Proper URL
+                }, 2000);
+                payButton.disabled = false;
+            });
+        },
+        "modal": {
+            "ondismiss": function() {
+                statusDiv.style.display = 'block';
+                statusDiv.style.background = '#fef3c7';
+                statusDiv.style.color = '#92400e';
+                statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Payment cancelled';
+                payButton.disabled = false;
+            }
+        }
+    };
+
+    // Initialize Razorpay
+    const rzp = new Razorpay(options);
+
+    // Handle payment errors
+    rzp.on('payment.failed', function(response) {
+        console.error('Payment failed:', response.error);
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = '#fee2e2';
+        statusDiv.style.color = '#991b1b';
+        statusDiv.innerHTML = '<i class="fas fa-times-circle"></i> Payment failed: ' + (response.error.description || 'Unknown error');
+        setTimeout(() => {
+            window.location.href = "{% url 'orderfailure' order.order_number %}";
+        }, 3000);
+    });
+
+    // Open on button click
+    payButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        try {
+            rzp.open();
+        } catch (error) {
+            console.error('Razorpay open error:', error);
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = '#fee2e2';
+            statusDiv.style.color = '#991b1b';
+            statusDiv.innerHTML = '<i class="fas fa-times-circle"></i> Payment initialization failed: ' + error.message;
+        }
+    });
+});
+</script>
+{% endblock %}

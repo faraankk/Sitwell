@@ -241,13 +241,12 @@ class CategoryForm(forms.ModelForm):
     
 
 class OrderStatusForm(forms.Form):
-    status = forms.ChoiceField(choices=())  # will be set in __init__
+    status = forms.ChoiceField(choices=())  
 
     def __init__(self, *args, order=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.order = order
 
-        # Build choices dynamically so it's never empty
         if hasattr(Order, "Status") and getattr(Order.Status, "choices", None):
             status_tuple = Order.Status.choices
         elif hasattr(Order, "ORDERSTATUSCHOICES") and getattr(Order, "ORDERSTATUSCHOICES", ()):

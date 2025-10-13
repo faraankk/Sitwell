@@ -964,4 +964,3 @@ def order_cancel(request, order_id: int):
         transaction.set_rollback(True)
         messages.error(request, f"Order {order.order_id} could not be cancelled: {e}")
     return redirect("order-detail", order_id=order.id)
-

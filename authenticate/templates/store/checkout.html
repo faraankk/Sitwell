@@ -3,6 +3,12 @@
 
 {% block title %}Checkout - Sitwell{% endblock %}
 
+
+{% block banner %}
+<!-- Banner removed for product detail page -->
+{% endblock %}
+
+
 {% block extra_css %}
 <style>
     :root {
@@ -430,6 +436,7 @@
         gap: 6px;
         margin-top: 12px;
         font-weight: 600;
+        cursor: pointer;
     }
 
     .view-coupons:hover {
@@ -454,6 +461,84 @@
         background: #fee2e2;
         color: #991b1b;
         border: 1px solid #fecaca;
+    }
+
+    /* Coupon Dropdown Styles */
+    .coupon-dropdown {
+        margin-top: 10px;
+        border: 2px solid var(--border);
+        border-radius: 10px;
+        background: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        overflow: hidden;
+        animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .coupon-option {
+        padding: 15px;
+        border-bottom: 1px solid var(--border);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .coupon-option:last-child {
+        border-bottom: none;
+    }
+
+    .coupon-option:hover {
+        background: linear-gradient(135deg, #f8f9ff 0%, #fff5f8 100%);
+        border-color: var(--primary);
+    }
+
+    .coupon-code {
+        font-weight: 700;
+        color: var(--primary);
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .coupon-code::before {
+        content: '🎫';
+        font-size: 16px;
+    }
+
+    .coupon-desc {
+        color: var(--text-muted);
+        font-size: 13px;
+        margin-left: 22px;
+    }
+
+    .coupon-applied {
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    #dropdown-arrow {
+        transition: transform 0.3s ease;
+    }
+
+    #dropdown-arrow.rotated {
+        transform: rotate(180deg);
     }
 
     .d-none {
@@ -513,12 +598,20 @@
 </nav>
 
 <div class="container">
+    <!-- Hidden coupon form -->
+    <form id="coupon-form" method="post" action="{% url 'checkout' %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" id="coupon-action-input" value="">
+        <input type="hidden" name="coupon_code" id="coupon-code-input" value="">
+    </form>
+
+
     <form method="post" action="{% url 'place_order' %}">
         {% csrf_token %}
         <div class="cols">
             <!-- Left Column -->
             <section class="left">
-                <!-- Delivery Address -->
+                <!-- Delivery Address Card -->
                 <div class="card">
                     <div class="section-head">
                         <h2><i class="fas fa-map-marker-alt"></i>Delivery Address</h2>
@@ -528,11 +621,16 @@
                     </div>
                     <div class="address-wrap">
                         {% for address in addresses %}
-                        <div class="address-card {% if address.is_default %}selected{% endif %}" onclick="selectAddress(this, {{ address.id }})">
-                            <input type="radio" name="address" value="{{ address.id }}" id="addr-{{ address.id }}" class="d-none" {% if address.is_default %}checked{% endif %}>
+                        <div class="address-card {% if address.is_default %}selected{% endif %}"
+                             onclick="selectAddress(this, {{ address.id }})">
+                            <input type="radio" name="address" value="{{ address.id }}"
+                                   id="addr-{{ address.id }}" class="d-none"
+                                   {% if address.is_default %}checked{% endif %}>
                             <div class="row">
                                 <i class="fas fa-home icon"></i>
-                                <h3>{{ address.full_name }} <span class="muted">({{ address.address_type|title }})</span></h3>
+                                <h3>{{ address.full_name }}
+                                    <span class="muted">({{ address.address_type|title }})</span>
+                                </h3>
                                 <span class="badge">{% if address.is_default %}Selected{% endif %}</span>
                                 <div class="meta">
                                     <a href="{% url 'edit_address' address.id %}?next={{ request.path }}">
@@ -541,19 +639,19 @@
                                 </div>
                             </div>
                             <div class="row muted">
-                                <i class="fas fa-phone icon"></i>
-                                {{ address.phone_number }}
+                                <i class="fas fa-phone icon"></i>{{ address.phone_number }}
                             </div>
                             <div class="row muted">
                                 <i class="fas fa-map-marker-alt icon"></i>
-                                {{ address.address_line_1 }}, {{ address.city }}, {{ address.state }} - {{ address.postal_code }}
+                                {{ address.address_line_1 }}, {{ address.city }}, {{ address.state }}
+                                - {{ address.postal_code }}
                             </div>
                         </div>
                         {% endfor %}
                     </div>
                 </div>
 
-                <!-- Payment Method -->
+                <!-- Payment Method Card -->
                 <div class="card">
                     <div class="section-head">
                         <h2><i class="fas fa-credit-card"></i>Payment Method</h2>
@@ -596,47 +694,132 @@
 
             <!-- Right Column -->
             <aside class="right">
+                <!-- Order Summary Card -->
                 <div class="card summary">
-                    <h2 style="margin-bottom: 20px;"><i class="fas fa-receipt" style="margin-right: 10px; color: var(--primary);"></i>Order Summary</h2>
+                    <h2 style="margin-bottom: 20px;">
+                        <i class="fas fa-receipt" style="margin-right: 10px; color: var(--primary);"></i>
+                        Order Summary
+                    </h2>
                     {% for item in cart_items %}
                     <div class="item">
-                        <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.name }}" class="thumb">
+                        <img src="{{ item.product.images.first.image.url }}"
+                             alt="{{ item.product.name }}" class="thumb">
                         <div style="flex: 1;">
                             <strong>{{ item.product.name }}</strong>
                             <div class="muted">Qty: {{ item.quantity }}</div>
                             <div>
-                                <strong style="color: var(--primary);">₹{{ item.subtotal|floatformat:2 }}</strong>
+                                <strong style="color: var(--primary);">
+                                    ₹{{ item.subtotal|floatformat:2 }}
+                                </strong>
                                 {% if item.product.original_price %}
-                                <span class="muted" style="text-decoration: line-through; margin-left: 6px;">₹{{ item.product.original_price }}</span>
+                                <span class="muted" style="text-decoration: line-through; margin-left: 6px;">
+                                    ₹{{ item.product.original_price }}
+                                </span>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
                     {% endfor %}
-                    
+
+                    <!-- Coupon Section -->
                     <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border);">
                         <h3 style="margin-bottom: 12px;">Apply Coupon</h3>
-                        <div class="coupon">
-                            <input class="input" id="coupon-input" placeholder="Enter coupon code">
-                            <button class="btn-gray" type="button" onclick="applyCoupon()">Apply</button>
-                        </div>
-                        <div id="coupon-message" class="coupon-message" style="display: none;"></div>
-                        <a href="#" class="view-coupons">
-                            <i class="fas fa-tags"></i>View Available Coupons
-                        </a>
-                    </div>
-                </div>
 
+                        {% if applied_coupon %}
+                            <div class="coupon-applied"
+                                style="background: #d1fae5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="color: #065f46; font-weight: 600;">
+                                <i class="fas fa-check-circle"></i> {{ applied_coupon }} Applied!
+                                </span>
+                                <button
+                                type="submit"
+                                form="coupon-form"
+                                class="btn-gray"
+                                style="padding: 6px 12px; font-size: 12px;"
+                                onclick="document.getElementById('coupon-action-input').value='remove_coupon'">
+                                Remove
+                                </button>
+                            </div>
+                            </div>
+                        {% else %}
+                            <div class="coupon">
+                            <input class="input"
+                                    id="coupon-input"
+                                    placeholder="Enter coupon code"
+                                    form="coupon-form"
+                                    oninput="document.getElementById('coupon-code-input').value = this.value.trim().toUpperCase()">
+                            <button
+                                type="submit"
+                                form="coupon-form"
+                                class="btn-gray"
+                                id="apply-btn"
+                                onclick="document.getElementById('coupon-action-input').value='apply_coupon'">
+                                Apply
+                            </button>
+                            </div>
+
+                            {% if coupon_error %}
+                            <div class="coupon-message error" style="display: block;">
+                                {{ coupon_error }}
+                            </div>
+                            {% endif %}
+
+                            <div style="margin-top: 12px;">
+                            <a href="#" class="view-coupons" onclick="toggleCouponDropdown()">
+                                <i class="fas fa-tags"></i>View Available Coupons
+                                <i class="fas fa-chevron-down" id="dropdown-arrow"></i>
+                            </a>
+                            <div id="coupon-dropdown" class="coupon-dropdown" style="display: none;">
+                                <div class="coupon-option" onclick="selectCoupon('SAVE10')">
+                                <div class="coupon-code">SAVE10</div>
+                                <div class="coupon-desc">10% off on orders above ₹500</div>
+                                </div>
+                                <div class="coupon-option" onclick="selectCoupon('FLAT50')">
+                                <div class="coupon-code">FLAT50</div>
+                                <div class="coupon-desc">₹50 off on orders above ₹1000</div>
+                                </div>
+                                <div class="coupon-option" onclick="selectCoupon('FIRSTORDER')">
+                                <div class="coupon-code">FIRSTORDER</div>
+                                <div class="coupon-desc">15% off for first orders above ₹300</div>
+                                </div>
+                            </div>
+                            </div>
+                        {% endif %}
+                    </div>
+
+
+                <!-- Price Details & Place Order -->
                 <div class="card">
                     <h2 style="margin-bottom: 20px;">Price Details</h2>
-                    <div class="price-row muted"><span>Subtotal ({{ cart_items|length }} items)</span><span>₹{{ subtotal|floatformat:2 }}</span></div>
+                    <div class="price-row muted">
+                        <span>Subtotal ({{ cart_items|length }} items)</span>
+                        <span>₹{{ subtotal|floatformat:2 }}</span>
+                    </div>
                     {% if discount > 0 %}
-                    <div class="price-row discount"><span>Discount</span><span>-₹{{ discount|floatformat:2 }}</span></div>
+                    <div class="price-row discount">
+                        <span>Coupon Discount</span>
+                        <span>-₹{{ discount|floatformat:2 }}</span>
+                    </div>
                     {% endif %}
-                    <div class="price-row muted"><span>Tax (18%)</span><span>₹{{ taxes|floatformat:2 }}</span></div>
-                    <div class="price-row muted"><span>Shipping</span><span style="color: var(--success); font-weight: 600;">Free</span></div>
-                    <div class="price-row total"><span>Total Amount</span><span id="total-amount" style="color: var(--primary);">₹{{ grand_total|floatformat:2 }}</span></div>
-                    <input type="hidden" name="coupon_code" id="coupon-code" value="">
+                    <div class="price-row muted">
+                        <span>Tax (18%)</span>
+                        <span>₹{{ taxes|floatformat:2 }}</span>
+                    </div>
+                    <div class="price-row muted">
+                        <span>Shipping</span>
+                        <span style="{% if shipping == 0 %}color: var(--success); font-weight: 600;{% endif %}">
+                            {% if shipping == 0 %}Free{% else %}₹{{ shipping|floatformat:2 }}{% endif %}
+                        </span>
+                    </div>
+                    <div class="price-row total">
+                        <span>Total Amount</span>
+                        <span id="total-amount" style="color: var(--primary);">
+                            ₹{{ grand_total|floatformat:2 }}
+                        </span>
+                    </div>
+                    <input type="hidden" name="coupon_code" id="coupon-code"
+                           value="{% if applied_coupon %}{{ applied_coupon }}{% endif %}">
                     <button type="submit" class="cta">
                         <i class="fas fa-lock" style="margin-right: 8px;"></i>Place Order Securely
                     </button>
@@ -649,92 +832,35 @@
 
 {% block extra_js %}
 <script>
-const coupons = {
-    'SAVE10': { discount: 0.10, minOrder: 500, description: '10% off on orders above ₹500' },
-    'FLAT50': { discount: 50, minOrder: 1000, description: '₹50 off on orders above ₹1000' },
-    'FIRSTORDER': { discount: 0.15, minOrder: 300, description: '15% off for first orders above ₹300' }
-};
-
-function selectAddress(element, addressId) {
-    document.querySelectorAll('.address-card').forEach(card => {
-        card.classList.remove('selected');
-        const badge = card.querySelector('.badge');
-        if (badge) badge.textContent = '';
-    });
-    
-    element.classList.add('selected');
-    const badge = element.querySelector('.badge');
-    if (badge) badge.textContent = 'Selected';
-    
-    document.getElementById('addr-' + addressId).checked = true;
-}
-
-function applyCoupon() {
-    const couponInput = document.getElementById('coupon-input');
-    const couponMessage = document.getElementById('coupon-message');
-    const couponCodeInput = document.getElementById('coupon-code');
-    const totalAmountElement = document.getElementById('total-amount');
-    const code = couponInput.value.trim().toUpperCase();
-    const subtotal = {{ subtotal|floatformat:2 }};
-    let grandTotal = {{ grand_total|floatformat:2 }};
-
-    couponMessage.style.display = 'none';
-    couponMessage.textContent = '';
-    couponMessage.classList.remove('error');
-    couponCodeInput.value = '';
-
-    if (!code) {
-        couponMessage.textContent = 'Please enter a coupon code';
-        couponMessage.classList.add('error');
-        couponMessage.style.display = 'block';
-        return;
-    }
-
-    if (coupons[code]) {
-        const coupon = coupons[code];
-        
-        if (subtotal < coupon.minOrder) {
-            couponMessage.textContent = `Minimum order of ₹${coupon.minOrder} required for this coupon`;
-            couponMessage.classList.add('error');
-            couponMessage.style.display = 'block';
-            return;
-        }
-
-        let discountAmount = 0;
-        if (coupon.discount < 1) {
-            discountAmount = subtotal * coupon.discount;
-        } else {
-            discountAmount = coupon.discount;
-        }
-
-        grandTotal = subtotal + {{ taxes|floatformat:2 }} + {{ shipping|floatformat:2 }} - discountAmount;
-        
-        couponMessage.textContent = `✓ ${coupon.description} applied! ₹${discountAmount.toFixed(2)} saved`;
-        couponMessage.style.display = 'block';
-        totalAmountElement.textContent = `₹${grandTotal.toFixed(2)}`;
-        couponCodeInput.value = code;
-    } else {
-        couponMessage.textContent = 'Invalid coupon code';
-        couponMessage.classList.add('error');
-        couponMessage.style.display = 'block';
-    }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    const defaultAddress = document.querySelector('input[name="address"]:checked');
-    if (defaultAddress) {
-        const card = defaultAddress.closest('.address-card');
-        card.classList.add('selected');
-        const badge = card.querySelector('.badge');
+    function selectAddress(element, addressId) {
+        document.querySelectorAll('.address-card').forEach(card => {
+            card.classList.remove('selected');
+            const badge = card.querySelector('.badge');
+            if (badge) badge.textContent = '';
+        });
+        element.classList.add('selected');
+        const badge = element.querySelector('.badge');
         if (badge) badge.textContent = 'Selected';
+        document.getElementById('addr-' + addressId).checked = true;
     }
 
-    document.getElementById('coupon-input').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            applyCoupon();
+    function toggleCouponDropdown() {
+        const dropdown = document.getElementById('coupon-dropdown');
+        const arrow = document.getElementById('dropdown-arrow');
+        if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+            dropdown.style.display = 'block';
+            arrow.classList.add('rotated');
+        } else {
+            dropdown.style.display = 'none';
+            arrow.classList.remove('rotated');
         }
-    });
-});
+    }
+
+    function selectCoupon(couponCode) {
+        document.getElementById('coupon-input').value = couponCode;
+        document.getElementById('coupon-code-input').value = couponCode;
+        toggleCouponDropdown();
+        document.getElementById('coupon-input').focus();
+    }
 </script>
 {% endblock %}

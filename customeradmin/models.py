@@ -9,19 +9,16 @@ from django.utils import timezone
 from decimal import Decimal
 
 class SoftDeleteManager(models.Manager):
-    """Manager that excludes soft-deleted objects by default"""
     def get_queryset(self):
         return super().get_queryset().filter(is_deleted=False)
 
 
 class AllObjectsManager(models.Manager):
-    """Manager that includes all objects, even soft-deleted ones"""
     def get_queryset(self):
         return super().get_queryset()
 
 
 class CustomerVisibleManager(SoftDeleteManager):
-    """Manager for customer-visible products only"""
     def get_queryset(self):
         return super().get_queryset().filter(
             is_blocked=False,
@@ -117,7 +114,6 @@ class Product(models.Model):
         return self.name
     
     def soft_delete(self, deleted_by=None):
-        """Soft delete the product"""
         from django.utils import timezone
         self.is_deleted = True
         self.deleted_at = timezone.now()
@@ -125,18 +121,15 @@ class Product(models.Model):
         self.save()
     
     def restore(self):
-        """Restore a soft-deleted product"""
         self.is_deleted = False
         self.deleted_at = None
         self.deleted_by = None
         self.save()
     
     def hard_delete(self):
-        """Permanently delete the product"""
         super().delete()
     
     def block_product(self, blocked_by=None):
-        """Block the product from customer view"""
         from django.utils import timezone
         self.is_blocked = True
         self.blocked_at = timezone.now()
@@ -146,7 +139,6 @@ class Product(models.Model):
         self.save(update_fields=['is_blocked', 'blocked_at', 'blocked_by', 'status'])
     
     def unblock_product(self):
-        """Unblock the product and restore appropriate status"""
         self.is_blocked = False
         self.blocked_at = None
         self.blocked_by = None
@@ -162,7 +154,6 @@ class Product(models.Model):
         self.save(update_fields=['is_blocked', 'blocked_at', 'blocked_by', 'status'])
     
     def is_visible_to_customers(self):
-        """Check if product should be visible to customers"""
         return (
             not self.is_deleted and 
             not self.is_blocked and 
@@ -170,7 +161,6 @@ class Product(models.Model):
         )
     
     def is_available_for_purchase(self):
-        """Check if product is available for customer purchase"""
         return (
             not self.is_deleted and 
             not self.is_blocked and 
@@ -179,14 +169,12 @@ class Product(models.Model):
         )
     
     def get_status_display_admin(self):
-        """Get status display for admin with blocking indicator"""
         status_display = self.get_status_display()
         if self.is_blocked:
             return f"🚫 {status_display}"
         return status_display
     
     def get_main_image(self):
-        """Get the primary image or first available image"""
         primary_images = self.images.filter(is_primary=True)
         if primary_images.exists():
             return primary_images.first()
@@ -195,14 +183,12 @@ class Product(models.Model):
         return None
     
     def get_main_image_url(self):
-        """Get the URL of the main image"""
         main_image = self.get_main_image()
         if main_image and main_image.image:
             return main_image.image.url
         return None
     
     def get_discounted_price(self):
-        """Calculate the price after discount"""
         if self.discount_type == 'percentage' and self.discount_value > 0:
             discount_amount = self.price * (self.discount_value / 100)
             return self.price - discount_amount
@@ -211,7 +197,6 @@ class Product(models.Model):
         return self.price
     
     def get_final_price_with_tax(self):
-        """Calculate final price including tax"""
         discounted_price = self.get_discounted_price()
         if self.tax_type == 'taxable' and self.vat_percentage > 0:
             tax_amount = discounted_price * (self.vat_percentage / 100)
@@ -219,20 +204,15 @@ class Product(models.Model):
         return discounted_price
     
     def get_discount_amount(self):
-        """Get the discount amount"""
         return self.price - self.get_discounted_price()
     
     def is_low_stock(self):
-        """Check if product is low on stock"""
         return self.stock_quantity <= self.low_stock_threshold
     
-    # NEW: Override save method for auto status updates
     def save(self, *args, **kwargs):
-        """Override save to auto-update status based on stock quantity and other conditions"""
         
-        # First, handle stock-based status changes
         if hasattr(self, 'stock_quantity') and self.stock_quantity is not None:
-            # Don't change status if product is blocked or soft-deleted
+        
             if not self.is_blocked and not self.is_deleted:
                 if self.stock_quantity == 0:
                     
@@ -258,13 +238,11 @@ class ProductImage(models.Model):
         ordering = ['order', 'created_at']
     
     def save(self, *args, **kwargs):
-        """Resize image before saving"""
         if self.image:
             self.image = self.resize_image(self.image, 800, 600)
         super().save(*args, **kwargs)
     
     def resize_image(self, image_file, max_width, max_height):
-        """Resize image to specified dimensions"""
         img = PILImage.open(image_file)
         
         if img.mode in ('RGBA', 'LA', 'P'):
@@ -285,6 +263,27 @@ class ProductImage(models.Model):
     
     def __str__(self):
         return f"{self.product.name} - Image {self.order + 1}"
+
+class ProductVariant(models.Model):
+    product = models.ForeignKey(Product, related_name='variants', on_delete=models.CASCADE)
+    sku = models.CharField(max_length=50, unique=True)
+    wood_type = models.CharField(
+        max_length=50,
+        choices=[
+            ('oak', 'Oak'),
+            ('mahogany', 'Mahogany'),
+            ('walnut', 'Walnut'),
+        ]
+    )
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    stock_quantity = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.product.name} - {self.get_wood_type_display()}"
+
 
 
 class Category(models.Model):
@@ -316,7 +315,6 @@ class Category(models.Model):
         return self.name
     
     def soft_delete(self, deleted_by=None):
-        """Soft delete the category"""
         from django.utils import timezone
         self.is_deleted = True
         self.deleted_at = timezone.now()
@@ -324,7 +322,6 @@ class Category(models.Model):
         self.save()
     
     def restore(self):
-        """Restore a soft-deleted category"""
         self.is_deleted = False
         self.deleted_at = None
         self.deleted_by = None
