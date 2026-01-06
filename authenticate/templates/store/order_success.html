@@ -284,7 +284,7 @@
         <!-- Order Number Box -->
         <div class="order-number-box">
             <div class="order-label">Your Order ID</div>
-            <div class="order-number">{{ order.order_number }}</div>
+            <div class="order-number">{{ order.order_number  }}</div>
         </div>
 
         <!-- Info Text -->
@@ -302,15 +302,15 @@
             </div>
             <div class="preview-item">
                 <span class="preview-label">Total Amount:</span>
-                <span class="preview-value">₹{{ order.totalamount|floatformat:2 }}</span>  <!-- Fixed field name -->
+                <span class="preview-value">₹{{ order.totalamount|floatformat:2 }}</span>
             </div>
             <div class="preview-item">
                 <span class="preview-label">Payment Status:</span>
-                <span class="preview-value">{{ order.get_payment_status_display }}</span>
+                <span class="preview-value">{{ order.get_paymentstatus_display }}</span>
             </div>
             <div class="preview-item">
                 <span class="preview-label">Order Status:</span>
-                <span class="preview-value">{{ order.get_status_display }}</span>  <!-- Added for clarity -->
+                <span class="preview-value">{{ order.get_status_display }}</span>
             </div>
             <div class="preview-item">
                 <span class="preview-label">Items:</span>
@@ -318,7 +318,7 @@
             </div>
             <div class="preview-item">
                 <span class="preview-label">Order Date:</span>
-                <span class="preview-value">{{ order.created_at|date:"F d, Y g:i A" }}</span>
+                <span class="preview-value">{{ order.createdat|date:"F d, Y g:i A" }}</span>
             </div>
             
             <!-- Optional: Quick Items List -->
@@ -327,8 +327,8 @@
                 <div style="font-size: 12px; color: #6c757d; margin-top: 10px;">Items Ordered:</div>
                 {% for item in order.items.all %}
                 <div class="preview-item-row">
-                    <span class="preview-item-name">{{ item.product.name }} (x{{ item.quantity }})</span>
-                    <span class="preview-item-price">₹{{ item.price|floatformat:2 }}</span>
+                    <span class="preview-item-name">{{ item.productname }} (x{{ item.quantity }})</span>
+                    <span class="preview-item-price">₹{{ item.productprice|floatformat:2 }}</span>
                 </div>
                 {% endfor %}
             </div>
@@ -348,7 +348,7 @@
 
         <!-- Action Buttons -->
         <div class="action-buttons">
-            <a href="{% url 'order_detail' order.order_number %}" class="btn-primary">
+            <a href="{% url 'order_detail' order.order_number  %}" class="btn-primary">
                 <i class="fas fa-eye"></i>View Order Details
             </a>
             <a href="{% url 'product_list' %}" class="btn-outline-secondary">

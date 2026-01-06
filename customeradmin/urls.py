@@ -1,6 +1,8 @@
 from django.urls import path
 from customeradmin import views 
 
+app_name = 'customeradmin'  
+
 urlpatterns = [
     path('adminlogin/', views.login_to_account, name='login_to_account'),
     path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
@@ -32,4 +34,27 @@ urlpatterns = [
     path("orders/<int:order_id>/", views.order_detail, name="order-detail"),
     path("orders/<int:order_id>/status", views.order_update_status, name="order-update-status"),
     path("orders/<int:order_id>/cancel", views.order_cancel, name="order-cancel"),
+
+
+    path('admin/verify-return/<str:order_id>/', views.verify_return_request, name='verify_return'),
+    path('return-requests/', views.return_requests_list, name='return_requests_list'),
+
+    path('return-requests/<int:return_id>/', views.return_request_detail, name='return_request_detail'),
+
+    path('coupons/', views.coupon_list, name='coupon-list'),
+    path('coupons/add/', views.coupon_add,  name='coupon-add'),
+    path('coupons/delete/<int:coupon_id>/', views.coupon_delete, name='coupon-delete'),
+    path('coupons/edit/<int:coupon_id>/', views.coupon_edit, name='coupon-edit'),
+    path('coupons/export/<str:format>/', views.coupon_export, name='coupon-export'),   # optional bonus
+
+    path('reports/sales/', views.sales_report, name='sales-report'),
+    path('reports/sales/download/<str:format>/', views.sales_report_download, name='sales-report-download'),
+
+    #     # Banner management URLs
+    # path('banners/', views.banner_list, name='banner-list'),
+    # path('banners/add/', views.banner_add, name='banner-add'),
+    # path('banners/edit/<int:banner_id>/', views.banner_edit, name='banner-edit'),
+    # path('banners/delete/<int:banner_id>/', views.banner_delete, name='banner-delete'),
+    # path('banners/toggle/<int:banner_id>/', views.banner_toggle_status, name='banner-toggle-status'),
+    # path('banners/track-click/<int:banner_id>/', views.banner_track_click, name='banner-track-click'),
 ]

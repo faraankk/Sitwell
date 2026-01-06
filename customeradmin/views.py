@@ -1,5 +1,4 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.contrib.auth import login, logout, get_user_model
 from django.contrib import messages
@@ -11,11 +10,31 @@ from django.db import transaction
 from django.utils import timezone
 from django.contrib.sessions.models import Session
 import logging
-
+from authenticate.models import Order, Wallet
+from django.contrib.admin.views.decorators import staff_member_required
 from .forms import CustomAuthenticationForm, ProductForm, ProductImageFormSet, OrderStatusForm
 from .models import Product, ProductImage, Category
 from .utils import process_image
 from authenticate.models import Order, OrderItem
+import io, csv, openpyxl
+from datetime import datetime, timedelta
+from decimal import Decimal
+from django.db.models import Sum, Value
+from django.db.models.functions import TruncDate, TruncWeek, TruncMonth
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.timezone import make_aware, now
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
+
+from authenticate.models import Coupon, Order
+from .forms import CouponForm
+from django.urls import reverse
+from django.views.decorators.cache import never_cache
+from django.template.response import TemplateResponse
+
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -24,7 +43,7 @@ User = get_user_model()
 def login_to_account(request):
     if request.user.is_authenticated and request.user.is_superuser:
         print("User is authenticated and superuser, redirecting to admin_dashboard")
-        return redirect('admin_dashboard')
+        return redirect("customeradmin:admin_dashboard")
     if request.method == 'POST':
         print("POST data received:", request.POST)  
         form = CustomAuthenticationForm(data=request.POST)
@@ -43,7 +62,7 @@ def login_to_account(request):
             username = user.first_name.title() if user.first_name else user.username
             messages.success(request, f"Login Successful. Welcome, {username}!")
             print("Login successful, redirecting to admin_dashboard")
-            return redirect('admin_dashboard')
+            return redirect("customeradmin:admin_dashboard")
         else:
             print("Form errors:", form.errors)  
             messages.error(request, 'Invalid username or password. Please try again.')
@@ -215,7 +234,7 @@ def add_product(request):
                         print(f"Image {index + 1} saved for product {product.name}")
                     
                     messages.success(request, f"Product '{product.name}' with {len(images)} images added successfully!")
-                    return redirect('product-list')
+                    return redirect("customeradmin:product-list")
                     
             except Exception as e:
                 error_msg = f"Error saving product: {str(e)}"
@@ -318,7 +337,7 @@ def edit_product(request, product_id):
                             print(f"New image {index + 1} added to product {product.name}")
                     
                     messages.success(request, f"Product '{updated_product.name}' updated successfully!")
-                    return redirect('product-list')
+                    return redirect("customeradmin:product-list")
                     
             except Exception as e:
                 error_msg = f"Error updating product: {str(e)}"
@@ -412,7 +431,7 @@ def restore_product(request, product_id):
         
         if not product.is_deleted:
             messages.warning(request, f"Product '{product.name}' is not deleted.")
-            return redirect('product-list')
+            return redirect("customeradmin:product-list")
         
         product.restore()
         messages.success(request, f"Product '{product.name}' has been restored successfully.")
@@ -421,7 +440,7 @@ def restore_product(request, product_id):
         logger.error(f"Error restoring product: {str(e)}")
         messages.error(request, f"Error restoring product: {str(e)}")
     
-    return redirect('product-list')
+    return redirect("customeradmin:product-list")
 
 @login_required
 def deleted_products_view(request):
@@ -804,7 +823,7 @@ def order_list(request):
 
     # Clear filters shortcut
     if request.GET.get("clear"):
-        return redirect("order-list")
+        return redirect("customeradmin:order-list")
 
     # Pagination
     paginator = Paginator(orders, 10)
@@ -861,7 +880,7 @@ def order_detail(request, order_id: int):
 def order_update_status(request, order_id: int):
     if not request.user.is_superuser:
         messages.error(request, "Permission denied.")
-        return redirect("order-list")
+        return redirect("customeradmin:order-list")
 
     order = get_object_or_404(Order, id=order_id)
     form = OrderStatusForm(request.POST, order=order)
@@ -881,18 +900,18 @@ def order_update_status(request, order_id: int):
             product = item.product
             if not getattr(product, "manage_stock", True):
                 continue
-            # Only deduct once: if order is moving from PENDING to PAID
+            
             if product.stock_quantity < item.quantity:
                 raise ValueError(f"Insufficient stock for {product.name} (SKU {product.sku}).")
             product.stock_quantity -= item.quantity
-            product.save()  # Product.save updates published/low-stock/out-of-stock
+            product.save() 
 
     def restock_for_cancel():
         for item in order.items.select_related("product").all():
             product = item.product
             if not getattr(product, "manage_stock", True):
                 continue
-            remaining = item.remaining_qty  # quantity - delivered - cancelled
+            remaining = item.remaining_qty 
             if remaining > 0:
                 product.stock_quantity += remaining
                 item.cancelled_qty += remaining
@@ -901,7 +920,6 @@ def order_update_status(request, order_id: int):
 
     def mark_shipped_full():
         for item in order.items.all():
-            # If partial shipments are planned, replace with item-level qty UI and mark_shipped(qty)
             if item.remaining_qty > 0:
                 item.mark_shipped_full()
 
@@ -911,14 +929,12 @@ def order_update_status(request, order_id: int):
                 item.mark_delivered_full()
 
     try:
-        # Stock effects
         if old_status == "pending" and new_status == "paid":
             deduct_for_paid()
 
         if new_status == "cancelled":
             restock_for_cancel()
 
-        # Persist order status and timestamp
         print(order.status)
         order.status =new_status
         order.updated_at = timezone.now() 
@@ -927,7 +943,8 @@ def order_update_status(request, order_id: int):
         print(e)
         transaction.set_rollback(True)
         messages.error(request, f"Error updating order: {e}")
-    return redirect("order-list")
+    return redirect("customeradmin:order-list")
+
 
 
 @login_required
@@ -937,7 +954,8 @@ def order_update_status(request, order_id: int):
 def order_cancel(request, order_id: int):
     if not request.user.is_superuser:
         messages.error(request, "Permission denied.")
-        return redirect("order-list")
+        return redirect("customeradmin:order-list")
+
 
     order = get_object_or_404(Order, id=order_id)
     if not order.can_be_cancelled():
@@ -945,7 +963,6 @@ def order_cancel(request, order_id: int):
         return redirect("order-detail", order_id=order.id)
 
     try:
-        # Restock only the remaining, not yet delivered or previously cancelled
         for item in order.items.select_related("product").all():
             product = item.product
             if not getattr(product, "manage_stock", True):
@@ -964,3 +981,694 @@ def order_cancel(request, order_id: int):
         transaction.set_rollback(True)
         messages.error(request, f"Order {order.order_id} could not be cancelled: {e}")
     return redirect("order-detail", order_id=order.id)
+
+
+
+
+@login_required
+@require_POST
+def verify_return_request(request, order_id):
+    if not request.user.is_superuser:
+        messages.error(request, "Permission denied.")
+        return redirect("customeradmin:order-list")
+
+    order = get_object_or_404(Order, order_number=order_id)
+
+    if order.status != 'refund_pending':
+        messages.error(request, "Order is not pending refund verification.")
+        return redirect("customeradmin:order-list")
+
+    order.status = 'refunded'
+    order.payment_status = 'refunded'
+    order.refund_processed_at = timezone.now()
+    order.refund_processed_by = request.user.email
+    order.save()
+
+    wallet, _ = Wallet.objects.get_or_create(user=order.user)
+    wallet.credit(
+        order.total_amount,
+        order,
+        f"Refund for returned order {order.order_number}"
+    )
+
+    messages.success(
+        request,
+        f"Return verified & ₹{order.total_amount} refunded to customer wallet."
+    )
+
+    return redirect("customeradmin:order-list")
+
+
+
+@login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+def return_requests_list(request):
+    """List all pending (or all) return requests for staff."""
+    if not request.user.is_superuser:
+        messages.error(request, "You do not have permission to view this page.")
+        return redirect('/')
+
+    qs = ReturnRequest.objects.select_related('order', 'processed_by')   
+
+    status = request.GET.get('status', 'pending')
+    if status != 'all':
+        qs = qs.filter(status=status)
+
+    search = request.GET.get('search', '').strip()
+    if search:
+        qs = qs.filter(
+            Q(order__order_number__icontains=search) |
+            Q(order__user__email__icontains=search)
+        )
+
+    paginator = Paginator(qs, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    context = {
+        'return_requests': page_obj,
+        'page_obj': page_obj,
+        'current_status': status,
+        'search_query': search,
+        'status_choices': ReturnRequest.STATUS_CHOICES,
+
+    }
+    return render(request, 'orders/return_requests_list.html', context)
+
+
+
+@login_required
+@never_cache
+def return_request_detail(request, return_id):
+    """
+    Admin view to show return request details and allow refund processing
+    """
+    return_request = get_object_or_404(ReturnRequest, id=return_id)
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'approve':
+            try:
+                return_request.status = 'approved'
+                return_request.processed_at = timezone.now()
+                return_request.processed_by = request.user
+                return_request.save()
+                
+                wallet, created = Wallet.objects.get_or_create(
+                    user=return_request.order.user,
+                    defaults={'balance': 0}
+                )
+                
+                wallet.balance += return_request.refund_amount
+                wallet.save()
+                
+                WalletTransaction.objects.create(
+                    wallet=wallet,
+                    amount=return_request.refund_amount,
+                    transaction_type='refund',
+                    description=f"Refund for return request #{return_request.id}",
+                    order=return_request.order,
+                    status='completed'
+                )
+                
+                return_request.order.status = 'refunded'
+                return_request.order.save()
+                
+                messages.success(
+                    request, 
+                    f"Return request approved. ₹{return_request.refund_amount} refunded to customer's wallet."
+                )
+                
+                return redirect('customeradmin:return_requests_list')
+                
+            except Exception as e:
+                messages.error(request, f"Error processing refund: {str(e)}")
+                
+        elif action == 'reject':
+            return_request.status = 'rejected'
+            return_request.processed_at = timezone.now()
+            return_request.processed_by = request.user
+            return_request.save()
+            
+            messages.info(request, "Return request rejected.")
+            return redirect('customeradmin:return_requests_list')
+    
+    context = {
+        'return_request': return_request,
+        'order': return_request.order,
+        'items': return_request.items.all(),
+        'customer': return_request.order.user,
+    }
+    
+    return TemplateResponse(
+        request, 
+        'customeradmin/templates/return_request_detail.html', 
+        context
+    )
+
+
+
+@login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+def coupon_list(request):
+    if not request.user.is_superuser:
+        messages.error(request, "Permission denied.")
+        return redirect("/")
+    
+    qs = Coupon.objects.all().order_by("-created_at")
+    
+    search_query = request.GET.get('search', '').strip()
+    if search_query:
+        qs = qs.filter(
+            Q(code__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+
+    today = timezone.now().date()
+    
+    active_count = qs.filter(is_active=True, valid_to__gte=timezone.now()).count()
+    
+    expired_count = qs.filter(valid_to__lt=timezone.now()).count()
+    
+    total_usage = qs.aggregate(total=Sum("used_count"))["total"] or 0
+
+    paginator = Paginator(qs, 20)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    return render(request, "coupons/coupon_list.html", {
+        "coupons": page_obj,
+        "page_obj": page_obj,
+        "active_count": active_count,
+        "expired_count": expired_count,
+        "total_usage": total_usage,
+        "search_query": search_query,
+        "today": today,  
+    })
+@login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+def coupon_add(request):
+    if not request.user.is_superuser:
+        messages.error(request, "Permission denied.")
+        return redirect("/")
+    
+    if request.method == "POST":
+        form = CouponForm(request.POST)
+        if form.is_valid():
+            coupon = form.save(commit=False)
+            coupon.created_by = request.user
+            coupon.save()
+            messages.success(request, f"Coupon {coupon.code} created successfully.")
+            return redirect("customeradmin:coupon-list")
+    else:
+        form = CouponForm()
+    
+    return render(request, "coupons/coupon_form.html", {"form": form})
+
+@login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+def coupon_edit(request, coupon_id):
+    if not request.user.is_superuser:
+        messages.error(request, "Permission denied.")
+        return redirect("/")
+    
+    coupon = get_object_or_404(Coupon, id=coupon_id)
+    
+    if request.method == "POST":
+        form = CouponForm(request.POST, instance=coupon)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Coupon {coupon.code} updated successfully.")
+            return redirect("customeradmin:coupon-list")
+    else:
+        form = CouponForm(instance=coupon)
+    
+    return render(request, "coupons/coupon_form.html", {
+        "form": form, 
+        "coupon": coupon
+    })
+
+
+
+@login_required
+@require_POST
+def coupon_delete(request, coupon_id):
+    if not request.user.is_superuser:
+        return JsonResponse({"success": False, "error": "Permission denied"})
+    coupon = get_object_or_404(Coupon, id=coupon_id)
+    coupon.delete()
+    return JsonResponse({"success": True})
+
+def _sales_qs(start, end):
+    """Paid orders between two aware datetimes."""
+    return Order.objects.filter(
+        created_at__gte=start,
+        created_at__lt=end,
+        payment_status="paid"
+    )
+
+
+def _aggregate(qs):
+    """Dict with gross, discount, coupon, net, count."""
+    gross = qs.aggregate(total=Sum("total_amount"))["total"] or Decimal("0")
+    discount = qs.aggregate(total=Sum("discount_amount"))["total"] or Decimal("0")
+    coupon = qs.aggregate(total=Sum("coupon_discount"))["total"] or Decimal("0")
+    return {
+        "gross": gross,
+        "discount": discount,
+        "coupon": coupon,
+        "net": gross - discount - coupon,
+        "count": qs.count(),
+    }
+
+
+@login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+def sales_report(request):
+    if not request.user.is_superuser:
+        messages.error(request, "Permission denied.")
+        return redirect("/")
+
+    filter_type = request.GET.get("filter", "day")  
+    today = now().replace(hour=0, minute=0, second=0, microsecond=0)
+
+    if filter_type == "day":
+        start, end = today, today + timedelta(days=1)
+    elif filter_type == "week":
+        start = today - timedelta(days=today.weekday())
+        end = start + timedelta(days=7)
+    elif filter_type == "month":
+        start = today.replace(day=1)
+        end = (start + timedelta(days=32)).replace(day=1)
+    elif filter_type == "year":  
+        start = today.replace(month=1, day=1)
+        end = today.replace(month=12, day=31) + timedelta(days=1)
+    else: 
+        try:
+            start_str = request.GET.get("from")
+            end_str = request.GET.get("to")
+            start = make_aware(datetime.strptime(start_str, "%Y-%m-%d"))
+            end = make_aware(datetime.strptime(end_str, "%Y-%m-%d")) + timedelta(days=1)
+        except Exception:
+            messages.error(request, "Invalid date range.")
+            return redirect("customeradmin:sales-report")
+
+    qs = _sales_qs(start, end)
+    summary = _aggregate(qs)
+    daily = (
+        qs.annotate(period=TruncDate("created_at"))
+        .values("period")
+        .annotate(
+            gross=Sum("total_amount"),
+            discount=Sum("discount_amount"),
+            coupon=Sum("coupon_discount"),
+            count=Sum(Value(1)),
+        )
+        .order_by("period")
+    )
+
+    request.session["report_filters"] = {
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+    }
+
+    context = {
+        "summary": summary,
+        "daily": daily,
+        "filter_type": filter_type,
+        "start": start.date(),
+        "end": (end - timedelta(seconds=1)).date(),  
+    }
+    
+    try:
+        return render(request, "reports/sales_report.html", context)
+    except Exception as e:
+        print(f"Template error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise
+
+def _pdf_response(data, title="Sales Report"):
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    elements = []
+    styles = getSampleStyleSheet()
+    elements.append(Paragraph(title, styles["Title"]))
+    table_data = [["Date", "Orders", "Gross", "Discount", "Coupon", "Net"]]
+    for row in data:
+        net = row["gross"] - row["discount"] - row["coupon"]
+        table_data.append(
+            [
+                str(row["period"]),
+                str(row["count"]),
+                f"₹{row['gross']}",
+                f"₹{row['discount']}",
+                f"₹{row['coupon']}",
+                f"₹{net}",
+            ]
+        )
+    t = Table(table_data, hAlign="CENTER")
+    t.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, 0), 10),
+                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                ("GRID", (0, 0), (-1, -1), 1, colors.black),
+            ]
+        )
+    )
+    elements.append(t)
+    doc.build(elements)
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="{title.replace(" ", "_")}.pdf"'
+    return response
+
+
+def _excel_response(data, title="Sales Report"):
+    from openpyxl.utils import get_column_letter
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = title
+    headers = ["Date", "Orders", "Gross", "Discount", "Coupon", "Net"]
+    ws.append(headers)
+    for row in data:
+        net = row["gross"] - row["discount"] - row["coupon"]
+        ws.append([row["period"], row["count"], row["gross"], row["discount"], row["coupon"], net])
+
+    for col in range(1, len(headers) + 1):
+        ws.column_dimensions[get_column_letter(col)].auto_size = True
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response["Content-Disposition"] = f'attachment; filename="{title.replace(" ", "_")}.xlsx"'
+    return response
+
+@login_required
+def sales_report_download(request, format):
+    if not request.user.is_superuser:
+        return HttpResponse("Forbidden", status=403)
+    
+    print("=== SALES REPORT DOWNLOAD DEBUG ===")
+    print(f"Format: {format}")
+    
+    filters = request.session.get("report_filters")
+    if not filters:
+        return HttpResponse("No report filters found", status=400)
+    
+    start = make_aware(datetime.fromisoformat(filters["start"]))
+    end = make_aware(datetime.fromisoformat(filters["end"]))
+    qs = _sales_qs(start, end)
+    daily = (
+        qs.annotate(period=TruncDate("created_at"))
+        .values("period")
+        .annotate(
+            gross=Sum("total_amount"),
+            discount=Sum("discount_amount"),
+            coupon=Sum("coupon_discount"),
+            count=Sum(Value(1)),
+        )
+        .order_by("period")
+    )
+    
+    if format == "pdf":
+        return _pdf_response(daily)
+    if format == "excel":
+        return _excel_response(daily)
+    return HttpResponse("Bad format", status=400)
+
+
+
+@login_required
+def coupon_export(request, format):
+    """Bonus: export coupon list to PDF / Excel"""
+    if not request.user.is_superuser:
+        return HttpResponse("Forbidden", status=403)
+    coupons = Coupon.objects.all().order_by("-created_at")
+    if format == "pdf":
+        return _coupon_pdf(coupons)
+    if format == "excel":
+        return _coupon_excel(coupons)
+    return HttpResponse("Bad format", status=400)
+
+
+
+def _coupon_pdf(coupons):
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    elements = []
+    styles = getSampleStyleSheet()
+    elements.append(Paragraph("Coupon Report", styles["Title"]))
+    data = [["Code", "Discount", "Min Order", "Used", "Expiry"]]
+    for c in coupons:
+        if hasattr(c, 'discount_type'):
+            discount_display = f"{c.discount_percent}{'%' if c.discount_type == 'percentage' else ''}"
+        else:
+            discount_display = f"{c.discount_percent}%"
+        
+        data.append([c.code, discount_display,
+                     f"₹{c.min_order_amount}", c.used_count, c.valid_to.date()])
+    t = Table(data, hAlign="CENTER")
+    t.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                           ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                           ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                           ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                           ("FONTSIZE", (0, 0), (-1, 0), 10),
+                           ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                           ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                           ("GRID", (0, 0), (-1, -1), 1, colors.black)]))
+    elements.append(t)
+    doc.build(elements)
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="Coupons.pdf"'
+    return response
+
+
+def _coupon_excel(coupons):
+    from openpyxl.utils import get_column_letter
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Coupons"
+    headers = ["Code", "Description", "Discount Type", "Discount", "Min Order", "Usage Limit", "Used", "Expiry", "Active"]
+    ws.append(headers)
+    for c in coupons:
+        description = getattr(c, 'description', '') or ''
+        
+        if hasattr(c, 'discount_type'):
+            discount_type_display = c.get_discount_type_display() if hasattr(c, 'get_discount_type_display') else c.discount_type
+        else:
+            discount_type_display = 'Percentage'
+        
+        ws.append([c.code, description, discount_type_display, c.discount_percent,
+                   c.min_order_amount, c.max_usage, c.used_count, c.valid_to.date(), c.is_active])
+    for col in range(1, len(headers) + 1):
+        ws.column_dimensions[get_column_letter(col)].auto_size = True
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response["Content-Disposition"] = 'attachment; filename="Coupons.xlsx"'
+    return response
+
+
+# # ---------- BANNER MANAGEMENT ----------
+# @login_required
+# @cache_control(no_cache=True, must_revalidate=True, no_store=True)
+# def banner_list(request):
+#     """List all banners with search and filters"""
+#     if not request.user.is_superuser:
+#         messages.error(request, "Permission denied.")
+#         return redirect("/")
+    
+#     qs = Banner.objects.all().order_by('-priority', '-created_at')
+    
+#     # Search functionality
+#     search_query = request.GET.get('search', '').strip()
+#     if search_query:
+#         qs = qs.filter(
+#             Q(title__icontains=search_query) |
+#             Q(headline__icontains=search_query) |
+#             Q(description__icontains=search_query)
+#         )
+    
+#     # Filter by type
+#     banner_type = request.GET.get('type', '')
+#     if banner_type:
+#         qs = qs.filter(banner_type=banner_type)
+    
+#     # Filter by status
+#     status_filter = request.GET.get('status', '')
+#     if status_filter == 'active':
+#         qs = qs.filter(is_active=True)
+#     elif status_filter == 'inactive':
+#         qs = qs.filter(is_active=False)
+    
+#     # Filter by validity
+#     validity_filter = request.GET.get('validity', '')
+#     today = timezone.now()
+#     if validity_filter == 'valid':
+#         qs = qs.filter(is_active=True, valid_from__lte=today, valid_to__gte=today)
+#     elif validity_filter == 'expired':
+#         qs = qs.filter(valid_to__lt=today)
+#     elif validity_filter == 'upcoming':
+#         qs = qs.filter(valid_from__gt=today)
+    
+#     # Get banner statistics
+#     total_banners = qs.count()
+#     active_banners = qs.filter(is_active=True).count()
+#     valid_banners = qs.filter(is_active=True, valid_from__lte=today, valid_to__gte=today).count()
+#     expired_banners = qs.filter(valid_to__lt=today).count()
+    
+#     paginator = Paginator(qs, 20)
+#     page_obj = paginator.get_page(request.GET.get("page"))
+
+#     context = {
+#         "banners": page_obj,
+#         "page_obj": page_obj,
+#         "search_query": search_query,
+#         "banner_types": Banner.BANNER_TYPES,
+#         "current_type": banner_type,
+#         "current_status": status_filter,
+#         "current_validity": validity_filter,
+#         "total_banners": total_banners,
+#         "active_banners": active_banners,
+#         "valid_banners": valid_banners,
+#         "expired_banners": expired_banners,
+#         "today": today,
+#     }
+#     return render(request, "banners/banner_list.html", context)
+
+
+# @login_required
+# @cache_control(no_cache=True, must_revalidate=True, no_store=True)
+# def banner_add(request):
+#     """Add new banner"""
+#     if not request.user.is_superuser:
+#         messages.error(request, "Permission denied.")
+#         return redirect("/")
+    
+#     if request.method == "POST":
+#         form = BannerForm(request.POST, request.FILES)
+#         if form.is_valid():
+#             banner = form.save(commit=False)
+#             banner.created_by = request.user
+#             banner.save()
+#             messages.success(request, f"Banner '{banner.title}' created successfully.")
+#             return redirect("customeradmin:banner-list")
+#     else:
+#         form = BannerForm()
+    
+#     return render(request, "banners/banner_form.html", {"form": form})
+
+
+# @login_required
+# @cache_control(no_cache=True, must_revalidate=True, no_store=True)
+# def banner_edit(request, banner_id):
+#     """Edit existing banner"""
+#     if not request.user.is_superuser:
+#         messages.error(request, "Permission denied.")
+#         return redirect("/")
+    
+#     banner = get_object_or_404(Banner, id=banner_id)
+    
+#     if request.method == "POST":
+#         form = BannerForm(request.POST, request.FILES, instance=banner)
+#         if form.is_valid():
+#             form.save()
+#             messages.success(request, f"Banner '{banner.title}' updated successfully.")
+#             return redirect("customeradmin:banner-list")
+#     else:
+#         form = BannerForm(instance=banner)
+    
+#     return render(request, "banners/banner_form.html", {
+#         "form": form, 
+#         "banner": banner
+#     })
+
+
+# @login_required
+# @require_POST
+# def banner_delete(request, banner_id):
+#     """Delete banner"""
+#     if not request.user.is_superuser:
+#         return JsonResponse({"success": False, "error": "Permission denied"})
+    
+#     banner = get_object_or_404(Banner, id=banner_id)
+#     banner.delete()
+#     return JsonResponse({"success": True})
+
+
+# @login_required
+# @require_POST
+# def banner_toggle_status(request, banner_id):
+#     """Toggle banner active/inactive status"""
+#     if not request.user.is_superuser:
+#         return JsonResponse({"success": False, "error": "Permission denied"})
+    
+#     banner = get_object_or_404(Banner, id=banner_id)
+#     banner.is_active = not banner.is_active
+#     banner.save()
+    
+#     status = "activated" if banner.is_active else "deactivated"
+#     return JsonResponse({
+#         "success": True, 
+#         "message": f"Banner '{banner.title}' {status}."
+#     })
+
+
+# @login_required
+# @require_POST
+# def banner_track_click(request, banner_id):
+#     """Track banner clicks via AJAX"""
+#     banner = get_object_or_404(Banner, id=banner_id)
+#     banner.increment_clicks()
+#     return JsonResponse({"success": True})
+
+
+# # Helper function to get valid banners
+# def get_valid_banners(banner_type=None, category=None, page_path=None):
+#     """Get valid banners for display"""
+#     today = timezone.now()
+#     qs = Banner.objects.filter(
+#         is_active=True,
+#         valid_from__lte=today,
+#         valid_to__gte=today
+#     )
+    
+#     if banner_type:
+#         qs = qs.filter(banner_type=banner_type)
+    
+#     if category:
+#         qs = qs.filter(
+#             models.Q(target_category=category) | 
+#             models.Q(target_category='')
+#         )
+    
+#     if page_path:
+#         qs = qs.filter(
+#             models.Q(target_page=page_path) | 
+#             models.Q(target_page='')
+#         )
+    
+#     # Filter by device
+#     # This is a simplified version - you'd implement proper device detection
+#     qs = qs.filter(show_on_desktop=True)  # Default to desktop
+    
+#     return qs.order_by('-priority', '-created_at')
+
+
+# @login_required
+# @require_POST
+# def banner_track_impression(request, banner_id):
+#     """Track banner impressions via AJAX"""
+#     banner = get_object_or_404(Banner, id=banner_id)
+#     banner.increment_impressions()
+#     return JsonResponse({"success": True})

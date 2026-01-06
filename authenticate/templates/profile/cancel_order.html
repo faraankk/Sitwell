@@ -1,9 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-
 {% block title %}Cancel Order - Sitwell{% endblock %}
-
 
 {% block extra_css %}
 <style>
@@ -25,7 +23,7 @@
         gap: 8px;
         list-style: none;
     }
-    
+
     .breadcrumb-item {
         display: flex;
         align-items: center;
@@ -38,30 +36,26 @@
         text-decoration: none;
         transition: all 0.3s ease;
     }
-    
-    .breadcrumb-item a:hover {
-        color: #dc3545;
-    }
-    
+
+    .breadcrumb-item a:hover { color: #dc3545; }
+
     .breadcrumb-item.active {
         color: #dc3545;
         font-weight: 600;
     }
-    
+
     .breadcrumb-item::after {
         content: '/';
         margin: 0 10px;
         color: #ddd;
     }
-    
+
     .breadcrumb-item:last-child::after {
         content: '';
         margin: 0;
     }
 
-    .breadcrumb-item i {
-        margin-right: 6px;
-    }
+    .breadcrumb-item i { margin-right: 6px; }
 
     .content-card {
         background: white;
@@ -72,14 +66,8 @@
     }
 
     @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     /* Warning Header */
@@ -104,18 +92,11 @@
     }
 
     @keyframes pulse {
-        0%, 100% {
-            transform: scale(1);
-        }
-        50% {
-            transform: scale(1.05);
-        }
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
     }
 
-    .warning-icon i {
-        font-size: 2.5rem;
-        color: white;
-    }
+    .warning-icon i { font-size: 2.5rem; color: white; }
 
     .cancel-header h4 {
         color: #dc3545;
@@ -129,7 +110,7 @@
         margin: 0;
         font-size: 15px;
     }
-    
+
     .order-info {
         background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         padding: 25px;
@@ -148,9 +129,7 @@
         gap: 8px;
     }
 
-    .order-info h6 i {
-        color: #dc3545;
-    }
+    .order-info h6 i { color: #dc3545; }
 
     .order-info-grid {
         display: grid;
@@ -179,10 +158,8 @@
         font-size: 15px;
         font-weight: 500;
     }
-    
-    .form-group {
-        margin-bottom: 30px;
-    }
+
+    .form-group { margin-bottom: 30px; }
 
     .form-group label {
         font-weight: 600;
@@ -192,11 +169,8 @@
         font-size: 15px;
     }
 
-    .form-group label i {
-        margin-right: 8px;
-        color: #dc3545;
-    }
-    
+    .form-group label i { margin-right: 8px; color: #dc3545; }
+
     .form-check {
         margin-bottom: 12px;
         display: flex;
@@ -236,7 +210,7 @@
         color: #dc3545;
         font-weight: 600;
     }
-    
+
     .form-control {
         width: 100%;
         padding: 14px 16px;
@@ -249,7 +223,7 @@
         min-height: 120px;
         font-family: inherit;
     }
-    
+
     .form-control:focus {
         border-color: #dc3545;
         outline: none;
@@ -257,9 +231,7 @@
         background: white;
     }
 
-    .form-control::placeholder {
-        color: #adb5bd;
-    }
+    .form-control::placeholder { color: #adb5bd; }
 
     .char-count {
         text-align: right;
@@ -267,7 +239,7 @@
         color: #6c757d;
         margin-top: 6px;
     }
-    
+
     .btn-danger {
         background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
         border: none;
@@ -286,10 +258,6 @@
         box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
     }
 
-    .btn-danger:active {
-        transform: translateY(0);
-    }
-    
     .btn-secondary {
         background-color: transparent;
         border: 2px solid #6c757d;
@@ -310,7 +278,7 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
     }
-    
+
     .error {
         color: #dc3545;
         font-size: 13px;
@@ -321,10 +289,7 @@
         gap: 5px;
     }
 
-    .error::before {
-        content: '⚠';
-        font-size: 14px;
-    }
+    .error::before { content: '⚠'; font-size: 14px; }
 
     .warning-notice {
         background: #fff3cd;
@@ -358,25 +323,24 @@
         border-top: 2px solid #f0f0f0;
     }
 
+    /* Inline “no popup” message area */
+    #inlineMsg {
+        display: none;
+        margin-bottom: 18px;
+        padding: 14px 16px;
+        border-radius: 10px;
+        border: 1px solid #f5c6cb;
+        background: #f8d7da;
+        color: #721c24;
+        font-size: 14px;
+    }
+
     @media (max-width: 768px) {
-        .content-card {
-            padding: 25px 20px;
-        }
-
-        .cancel-header h4 {
-            font-size: 22px;
-        }
-
-        .order-info-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .form-actions {
-            flex-direction: column-reverse;
-        }
-
-        .btn-secondary,
-        .btn-danger {
+        .content-card { padding: 25px 20px; }
+        .cancel-header h4 { font-size: 22px; }
+        .order-info-grid { grid-template-columns: 1fr; }
+        .form-actions { flex-direction: column-reverse; }
+        .btn-secondary, .btn-danger {
             width: 100%;
             margin: 0;
             margin-bottom: 10px;
@@ -385,13 +349,10 @@
 </style>
 {% endblock %}
 
-
 {% block banner %}{% endblock %}
-
 
 {% block content %}
 <div class="cancel-container">
-    <!-- Breadcrumb -->
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item">
@@ -414,7 +375,6 @@
     </nav>
 
     <div class="content-card">
-        <!-- Warning Header -->
         <div class="cancel-header">
             <div class="warning-icon">
                 <i class="fas fa-exclamation-triangle"></i>
@@ -423,13 +383,25 @@
             <p>Please review your order details and select a cancellation reason</p>
         </div>
 
-        <!-- Warning Notice -->
         <div class="warning-notice">
             <i class="fas fa-info-circle"></i>
             <p><strong>Important:</strong> Once cancelled, this action cannot be undone. Please ensure you want to proceed before confirming.</p>
         </div>
-        
-        <!-- Order Information -->
+
+        {# ✅ Django messages (server-side) #}
+        {% if messages %}
+            <div style="margin-bottom: 18px;">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}" style="border-radius:10px; margin-bottom:10px;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {# ✅ Inline client-side validation (no popup) #}
+        <div id="inlineMsg"></div>
+
         <div class="order-info">
             <h6><i class="fas fa-receipt"></i>Order Details</h6>
             <div class="order-info-grid">
@@ -451,11 +423,10 @@
                 </div>
             </div>
         </div>
-        
-        <!-- Cancellation Form -->
+
         <form method="post" id="cancelForm">
             {% csrf_token %}
-            
+
             <div class="form-group">
                 <label for="{{ form.reason.id_for_label }}">
                     <i class="fas fa-list-ul"></i>{{ form.reason.label }}
@@ -470,7 +441,7 @@
                     <div class="error">{{ form.reason.errors.0 }}</div>
                 {% endif %}
             </div>
-            
+
             <div class="form-group">
                 <label for="{{ form.additional_notes.id_for_label }}">
                     <i class="fas fa-comment-alt"></i>{{ form.additional_notes.label }}
@@ -483,13 +454,12 @@
                     <div class="error">{{ form.additional_notes.errors.0 }}</div>
                 {% endif %}
             </div>
-            
-            <!-- Form Actions -->
+
             <div class="form-actions">
                 <a href="{% url 'order_detail' order.order_number %}" class="btn-secondary">
                     <i class="fas fa-arrow-left" style="margin-right: 8px;"></i>Go Back
                 </a>
-                <button type="submit" class="btn-danger">
+                <button type="submit" class="btn-danger" id="submitBtn">
                     <i class="fas fa-times-circle" style="margin-right: 8px;"></i>Cancel Order
                 </button>
             </div>
@@ -498,81 +468,69 @@
 </div>
 {% endblock %}
 
-
 {% block extra_js %}
 <script>
     // Character counter for additional notes
-    const textarea = document.getElementById('{{ form.additional_notes.id_for_label }}');
+    const textarea = document.querySelector('textarea[name="additional_notes"]');
     const charCount = document.getElementById('charCount');
 
     if (textarea && charCount) {
         textarea.addEventListener('input', function() {
             const count = this.value.length;
             charCount.textContent = count;
-            
-            if (count > 450) {
-                charCount.style.color = '#dc3545';
-            } else if (count > 400) {
-                charCount.style.color = '#ffc107';
-            } else {
-                charCount.style.color = '#6c757d';
-            }
+
+            if (count > 450) charCount.style.color = '#dc3545';
+            else if (count > 400) charCount.style.color = '#ffc107';
+            else charCount.style.color = '#6c757d';
         });
 
-        // Initialize count
         charCount.textContent = textarea.value.length;
     }
 
-    // Form submission confirmation
+    // NO popup. Validate reason selected, then submit normally.
     const cancelForm = document.getElementById('cancelForm');
-    const submitBtn = cancelForm.querySelector('.btn-danger');
+    const submitBtn = document.getElementById('submitBtn');
+    const inlineMsg = document.getElementById('inlineMsg');
 
     cancelForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Check if a reason is selected
+        inlineMsg.style.display = 'none';
+        inlineMsg.textContent = '';
+
         const selectedReason = document.querySelector('input[name="reason"]:checked');
         if (!selectedReason) {
-            alert('Please select a cancellation reason');
+            e.preventDefault();
+            inlineMsg.style.display = 'block';
+            inlineMsg.innerHTML = '<strong>Required:</strong> Please select a cancellation reason.';
+            inlineMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
 
-        // Confirmation dialog
-        if (confirm('Are you sure you want to cancel this order? This action cannot be undone.')) {
-            // Show loading state
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Cancelling...';
-            submitBtn.disabled = true;
-            submitBtn.style.opacity = '0.7';
-            
-            // Submit the form
-            this.submit();
-        }
+        // show loading state, then allow normal POST
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Cancelling...';
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.7';
     });
 
-    // Radio button click animation
+    // Radio option highlight + click-to-select
     const radioOptions = document.querySelectorAll('.form-check');
     radioOptions.forEach(option => {
         option.addEventListener('click', function() {
             const radio = this.querySelector('input[type="radio"]');
             if (radio && !radio.disabled) {
                 radio.checked = true;
-                
-                // Remove selection from other options
+
                 radioOptions.forEach(opt => {
-                    if (opt !== this) {
-                        opt.style.background = '#f8f9fa';
-                        opt.style.borderColor = 'transparent';
-                    }
+                    opt.style.background = '#f8f9fa';
+                    opt.style.borderColor = 'transparent';
                 });
-                
-                // Highlight selected option
+
                 this.style.background = '#fff';
                 this.style.borderColor = '#dc3545';
             }
         });
     });
 
-    // Smooth scroll to first error
+    // Smooth scroll to first server-side error (if any)
     const firstError = document.querySelector('.error');
     if (firstError) {
         firstError.closest('.form-group').scrollIntoView({ behavior: 'smooth', block: 'center' });

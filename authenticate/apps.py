@@ -15,3 +15,11 @@ class AuthenticateConfig(AppConfig):
 
     def ready(self):
         import authenticate.signals 
+
+
+
+class AuthenticateConfig(AppConfig):
+    name = 'authenticate'
+
+    def ready(self):
+        import authenticate.signals  # Adjust path if in another app

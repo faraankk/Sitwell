@@ -6,6 +6,9 @@ from customeradmin.models import Product
 import random
 import string 
 from decimal import Decimal
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class CustomUserManager(BaseUserManager):
@@ -80,14 +83,20 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         self.save()
 
     def clean_phone_number(self):
-        """Remove all non-digit characters from phone number"""
         if self.phone_number:
             self.phone_number = re.sub(r'[^\d]', '', self.phone_number)
     
+    # def save(self, *args, **kwargs):
+    #     self.clean_phone_number()
+    #     super().save(*args, **kwargs)
+    
+    
     def save(self, *args, **kwargs):
         self.clean_phone_number()
+        is_new = self.pk is None
         super().save(*args, **kwargs)
-
+        if is_new:
+            Referral.objects.get_or_create(referrer=self, defaults={'code': generate_ref_code()})
 
 class UserAddress(models.Model):
     ADDRESS_TYPES = [
@@ -134,6 +143,7 @@ class Order(models.Model):
         ('delivered', 'Delivered'),
         ('cancelled', 'Cancelled'),
         ('refunded', 'Refunded'),
+        ('refund_pending', 'Refund Pending'),
     ]
     
     PAYMENT_STATUS_CHOICES = [
@@ -141,12 +151,14 @@ class Order(models.Model):
         ('paid', 'Paid'),
         ('failed', 'Failed'),
         ('refunded', 'Refunded'),
+        ('partially_refunded', 'Partially Refunded'),
     ]
     
     PAYMENT_METHOD_CHOICES = [
         ('cod', 'Cash on Delivery'),
         ('card', 'Credit/Debit Card'),
         ('paypal', 'PayPal'),
+        ('wallet', 'Wallet'),
     ]
     
     user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, related_name='orders')
@@ -179,6 +191,17 @@ class Order(models.Model):
     return_reason = models.TextField(blank=True, null=True)
     returned_at = models.DateTimeField(null=True, blank=True)
     returned_by = models.CharField(max_length=50, blank=True, null=True)
+
+    razorpay_order_id   = models.CharField(max_length=90, blank=True, null=True)
+    razorpay_payment_id = models.CharField(max_length=90, blank=True, null=True)
+    
+    coupon = models.ForeignKey('Coupon', on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
+    coupon_discount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    wallet_payment_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    refund_requested_at = models.DateTimeField(null=True, blank=True)
+    refund_processed_at = models.DateTimeField(null=True, blank=True)
+    refund_processed_by = models.CharField(max_length=100, blank=True, null=True)
     
     class Meta:
         ordering = ['-created_at']
@@ -192,29 +215,18 @@ class Order(models.Model):
         super().save(*args, **kwargs)
     
     def calculate_totals(self):
-        """Calculate subtotal, discount, tax, shipping, and total"""
         self.subtotal = Decimal('0.00')
         original_total = Decimal('0.00')
-        
         for item in self.items.all():
             self.subtotal += item.total_price
-            
             if item.product:
                 original_price = item.product.price
                 original_total += original_price * item.quantity
-        
         self.discount_amount = original_total - self.subtotal
         self.tax_amount = self.subtotal * Decimal('0.18')
-        
-        if self.subtotal >= Decimal('500.00'):
-            self.shipping_charge = Decimal('0.00')
-        else:
-            self.shipping_charge = Decimal('50.00')
-        
+        self.shipping_charge = Decimal('0.00') if self.subtotal >= Decimal('500.00') else Decimal('50.00')
         self.total_amount = self.subtotal + self.tax_amount + self.shipping_charge
-        
         self.save(update_fields=['subtotal', 'discount_amount', 'tax_amount', 'shipping_charge', 'total_amount'])
-        
         return {
             'subtotal': self.subtotal,
             'discount_amount': self.discount_amount,
@@ -225,17 +237,30 @@ class Order(models.Model):
     
     @property
     def can_be_cancelled(self):
-        """Check if order can be cancelled"""
         cancellable_statuses = ['pending', 'confirmed']
         return self.status in cancellable_statuses and self.can_cancel
     
     @property
     def can_be_returned(self):
-        """Check if order can be returned (only if delivered)"""
         return self.status == 'delivered'
     
+    def process_wallet_refund(self, amount=None, processed_by="System"):
+        """Refund order amount to user's wallet."""
+        if amount is None:
+            amount = self.total_amount
+        try:
+            wallet, created = Wallet.objects.get_or_create(user=self.user)
+            wallet.credit(amount, self, f"Refund for order {self.order_number}")
+            self.refund_processed_at = timezone.now()
+            self.refund_processed_by = processed_by
+            self.save(update_fields=['refund_processed_at', 'refund_processed_by'])
+            return True
+        except Exception as e:
+            logger.error(f"Wallet refund error for order {self.order_number}: {e}")
+            return False
+    
     def cancel_order(self, reason=None, cancelled_by='user'):
-        """Cancel the order"""
+        """Cancel order + instant wallet refund for paid orders."""
         if self.can_be_cancelled:
             self.status = 'cancelled'
             self.can_cancel = False
@@ -248,16 +273,20 @@ class Order(models.Model):
                 if item.product:
                     item.product.stock_quantity += item.quantity
                     item.product.save()
+           
+            if self.payment_status == 'paid':
+                self.process_wallet_refund(processed_by=cancelled_by)
             return True
         return False
     
     def return_order(self, reason, returned_by='user'):
-        """Return the order (only if delivered)"""
+        """Return order -> status = refund_pending (admin must confirm)."""
         if self.can_be_returned:
-            self.status = 'refunded'
+            self.status = 'refund_pending'
             self.return_reason = reason
             self.returned_at = timezone.now()
             self.returned_by = returned_by
+            self.refund_requested_at = timezone.now()
             self.save()
             
             for item in self.items.all():
@@ -280,12 +309,9 @@ class OrderItem(models.Model):
     product_price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.PositiveIntegerField()
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
-    
     product = models.ForeignKey('customeradmin.Product', on_delete=models.SET_NULL, null=True, blank=True)
-    
     status = models.CharField(max_length=20, choices=ITEM_STATUS_CHOICES, default='pending')
     is_cancelled = models.BooleanField(default=False)
-    
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
@@ -296,20 +322,15 @@ class OrderItem(models.Model):
         super().save(*args, **kwargs)
     
     def cancel_item(self):
-        """Cancel a specific item in the order"""
         if not self.is_cancelled and self.order.can_be_cancelled:
             self.is_cancelled = True
             self.status = 'cancelled'
             self.save()
-            self.increment_stock()
+            if self.product:
+                self.product.stock_quantity += self.quantity
+                self.product.save()
             return True
         return False
-    
-    def increment_stock(self):
-        """Increment product stock by this item's quantity"""
-        if self.product:
-            self.product.stock_quantity += self.quantity
-            self.product.save()
 
 
 class OrderStatusHistory(models.Model):
@@ -328,7 +349,6 @@ class OrderStatusHistory(models.Model):
 
 
 class Cart(models.Model):
-    """User's shopping cart"""
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='cart')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -338,12 +358,10 @@ class Cart(models.Model):
     
     @property
     def total_items(self):
-        """Get total number of items in cart"""
         return self.items.aggregate(total=models.Sum('quantity'))['total'] or 0
     
     @property
     def total_amount(self):
-        """Calculate total cart amount"""
         total = 0
         for item in self.items.all():
             total += item.subtotal
@@ -351,12 +369,10 @@ class Cart(models.Model):
     
     @property
     def is_valid_for_checkout(self):
-        """Check if cart can proceed to checkout"""
         return all(item.is_available for item in self.items.all())
 
 
 class CartItem(models.Model):
-    """Individual items in shopping cart"""
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey('customeradmin.Product', on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
@@ -372,12 +388,10 @@ class CartItem(models.Model):
     
     @property
     def subtotal(self):
-        """Calculate subtotal for this cart item (using discounted price)"""
         return self.quantity * self.product.get_discounted_price()
     
     @property
     def is_available(self):
-        """Check if product is available for purchase"""
         return (
             self.product.status == 'published' and
             self.product.stock_quantity >= self.quantity and
@@ -386,20 +400,11 @@ class CartItem(models.Model):
     
     @property
     def max_quantity_allowed(self):
-        """Maximum quantity that can be ordered"""
         MAX_CART_QUANTITY = 10
         return min(self.product.stock_quantity, MAX_CART_QUANTITY)
-    
-    def clean(self):
-        """Validate cart item before saving"""
-        if self.quantity > self.max_quantity_allowed:
-            raise models.ValidationError(
-                f"Quantity cannot exceed {self.max_quantity_allowed} for {self.product.name}"
-            )
 
 
 class Wishlist(models.Model):
-    """User's wishlist"""
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='wishlist')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -409,7 +414,6 @@ class Wishlist(models.Model):
 
 
 class WishlistItem(models.Model):
-    """Individual items in wishlist"""
     wishlist = models.ForeignKey(Wishlist, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey('customeradmin.Product', on_delete=models.CASCADE)
     added_at = models.DateTimeField(auto_now_add=True)
@@ -420,51 +424,141 @@ class WishlistItem(models.Model):
     
     def __str__(self):
         return f"{self.product.name} in {self.wishlist.user.email}'s wishlist"
-    
-
 
 
 class Coupon(models.Model):
-    COUPON_TYPES = [
-        ('percentage', 'Percentage'),
-        ('fixed', 'Fixed Amount'),
-    ]
-    
-    code = models.CharField(max_length=50, unique=True)
-    discount_type = models.CharField(max_length=20, choices=COUPON_TYPES)
-    discount_value = models.DecimalField(max_digits=10, decimal_places=2)
-    minimum_order_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    usage_limit = models.PositiveIntegerField(default=1)  # How many times can be used
+    code = models.CharField(max_length=50, unique=True, db_index=True)
+    discount_percent = models.PositiveIntegerField(default=10)  # 1-100
+    min_order_amount = models.DecimalField(max_digits=10, decimal_places=2, default=500)
+    max_usage = models.PositiveIntegerField(default=100)
     used_count = models.PositiveIntegerField(default=0)
+    valid_from = models.DateTimeField(default=timezone.now)
+    valid_to = models.DateTimeField()
     is_active = models.BooleanField(default=True)
-    valid_from = models.DateTimeField()
-    valid_until = models.DateTimeField()
+
+    # audit
     created_at = models.DateTimeField(auto_now_add=True)
-    
+    created_by = models.ForeignKey(
+        "CustomUser", on_delete=models.SET_NULL, null=True, blank=True, related_name="coupons_created"
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
     def __str__(self):
-        return self.code
-    
+        return f"{self.code} – {self.discount_percent}% off"
+
+    @property
     def is_valid(self):
-        from django.utils import timezone
         now = timezone.now()
         return (
-            self.is_active and 
-            self.valid_from <= now <= self.valid_until and
-            self.used_count < self.usage_limit
+            self.is_active
+            and self.valid_from <= now <= self.valid_to
+            and self.used_count < self.max_usage
         )
-    
-    def can_be_used(self, order_amount):
-        return self.is_valid() and order_amount >= self.minimum_order_amount
+
+    def calculate_discount(self, order_amount: Decimal) -> Decimal:
+        """
+        Return discount amount (never more than order_amount).
+        """
+        try:
+            if not self.is_valid:
+                return Decimal("0.00")
+            if order_amount < self.min_order_amount:
+                return Decimal("0.00")
+
+            if isinstance(order_amount, (int, float)):
+                order_amount = Decimal(str(order_amount))
+
+            discount = order_amount * (Decimal(self.discount_percent) / Decimal("100"))
+            return min(discount, order_amount)
+        except Exception as exc:
+            logger.exception("Coupon discount error")
+            return Decimal("0.00")
+
+    #  model validation 
+    def clean(self):
+        super().clean()
+        if self.valid_to <= self.valid_from:
+            raise ValidationError("Valid-to must be after valid-from.")
+        if not (1 <= self.discount_percent <= 100):
+            raise ValidationError("Discount % must be between 1 and 100.")
+        if self.max_usage <= 0:
+            raise ValidationError("Max usage must be positive.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
 
 class CouponUsage(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     coupon = models.ForeignKey(Coupon, on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     used_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
-        unique_together = ('user', 'coupon')  # Each user can use a coupon only once
+        unique_together = ['coupon', 'user']  
+
+
+#  WALLET 
+class Wallet(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='wallet')
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)   # ← NEW
+    updated_at = models.DateTimeField(auto_now=True)       # ← NEW (optional but useful)
 
     def __str__(self):
-        return f"{self.user.email} used {self.coupon.code}"
+        return f"{self.user.email} – ₹{self.balance}"
+
+    def credit(self, amount, order=None, note=''):
+        from decimal import Decimal
+        amount = Decimal(str(amount))
+        self.balance += amount
+        self.save(update_fields=['balance'])
+        WalletTransaction.objects.create(
+            wallet=self,
+            order=order,
+            amount=amount,
+            txn_type='credit',
+            note=note or f"Refund for {order.order_number}" if order else "Wallet credited"
+        )
+
+    def debit(self, amount, order=None, note=''):
+        from decimal import Decimal
+        amount = Decimal(str(amount))
+        if amount > self.balance:
+            raise ValueError("Insufficient wallet balance")
+        self.balance -= amount
+        self.save(update_fields=['balance'])
+        WalletTransaction.objects.create(
+            wallet=self,
+            order=order,
+            amount=amount,
+            txn_type='debit',
+            note=note or f"Used for {order.order_number}" if order else "Wallet debited"
+        )
+
+    
+    def can_pay(self, amount):
+        from decimal import Decimal
+        amount = Decimal(str(amount))
+        return self.balance >= amount
+
+
+class WalletTransaction(models.Model):
+    TXN_TYPES = [('credit', 'Credit'), ('debit', 'Debit')]
+    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='transactions')
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, null=True, blank=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    txn_type = models.CharField(max_length=10, choices=TXN_TYPES, default='credit')
+    note = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.txn_type.title()} ₹{self.amount} – {self.wallet.user.email}"
+    
 

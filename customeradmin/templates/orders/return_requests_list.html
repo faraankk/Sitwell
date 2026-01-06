@@ -1,0 +1,44 @@
+{% extends 'admin_base.html' %}
+{% block content %}
+<h2>Return Requests</h2>
+
+<form method="get" class="form-inline mb-3">
+  <select name="status" class="form-control mr-2">
+    <option value="all" {% if current_status == 'all' %}selected{% endif %}>All</option>
+    {% for val, label in status_choices %}
+      <option value="{{ val }}" {% if current_status == val %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <input type="text" name="search" value="{{ search_query }}" placeholder="Order No / Email" class="form-control mr-2">
+  <button class="btn btn-primary">Filter</button>
+</form>
+
+<table class="table table-sm">
+  <thead>
+    <tr>
+      <th>Order</th><th>User</th><th>Reason</th><th>Amount</th><th>Status</th><th>Requested</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for rq in return_requests %}
+    <tr>
+      <td>{{ rq.order.order_number }}</td>
+      <td>{{ rq.order.user.email }}</td>
+      <td>{{ rq.get_reason_display }}</td>
+      <td>₹{{ rq.refund_amount }}</td>
+      <td>{{ rq.get_status_display }}</td>
+      <td>{{ rq.created_at|date:"d M Y H:i" }}</td>
+      <td>
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'customeradmin:return_request_detail' rq.id %}">
+          Review
+        </a>
+      </td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="7" class="text-center">No return requests found.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% include "pagination.html" with page_obj=page_obj %}
+{% endblock %}

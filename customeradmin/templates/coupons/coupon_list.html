@@ -1,0 +1,313 @@
+{% extends "admin/base_admin.html" %}
+{% load static %}
+{% block title %}Coupon Management – Sitwell Admin{% endblock %}
+
+{% block body %}
+  <!-- ===== HEADER ===== -->
+  <header class="bg-white shadow-sm border-b border-gray-100 px-8 py-5 flex-shrink-0">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          Coupon Management
+        </h1>
+        <nav class="flex items-center space-x-2 text-sm text-gray-500 mt-2">
+          <a href="{% url 'customeradmin:admin_dashboard' %}" class="text-purple-600 hover:text-purple-800 font-medium">
+            <i class="fas fa-home mr-1"></i>Dashboard
+          </a>
+          <i class="fas fa-chevron-right text-xs"></i>
+          <span class="font-medium">Coupons</span>
+        </nav>
+      </div>
+      <div class="flex items-center space-x-3 bg-gradient-to-r from-blue-50 to-purple-50 px-4 py-2 rounded-xl">
+        <div class="w-2 h-2 bg-green-500 rounded-full pulse"></div>
+        <span class="text-sm font-bold text-gray-700">Farhaan</span>
+        <span class="text-xs text-gray-500 font-medium">Admin</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="flex-1 overflow-auto p-8">
+    <div class="max-w-7xl mx-auto space-y-8">
+
+      <!-- STATS CARDS -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-bold text-gray-500 uppercase mb-2">Total Coupons</p>
+              <p class="text-3xl font-black text-gray-900">{{ coupons|length }}</p>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center shadow-lg">
+              <i class="fas fa-ticket-alt text-white text-2xl"></i>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in" style="animation-delay: 0.1s;">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-bold text-gray-500 uppercase mb-2">Active</p>
+              <p class="text-3xl font-black text-green-600">{{ active_count|default:0 }}</p>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+              <i class="fas fa-check-circle text-white text-2xl"></i>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in" style="animation-delay: 0.2s;">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-bold text-gray-500 uppercase mb-2">Expired</p>
+              <p class="text-3xl font-black text-orange-600">{{ expired_count|default:0 }}</p>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+              <i class="fas fa-clock text-white text-2xl"></i>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in" style="animation-delay: 0.3s;">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-bold text-gray-500 uppercase mb-2">Total Usage</p>
+              <p class="text-3xl font-black text-purple-600">{{ total_usage|default:0 }}</p>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+              <i class="fas fa-fire text-white text-2xl"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADD BUTTON + EXPORT + SEARCH -->
+      <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 fade-in" style="animation-delay: 0.4s;">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div class="flex flex-wrap items-center gap-3">
+            <a href="{% url 'customeradmin:coupon-add' %}"
+               class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:shadow-lg transition-all inline-flex items-center gap-2">
+              <i class="fas fa-plus mr-2"></i>Create Coupon
+            </a>
+            <a href="{% url 'customeradmin:coupon-export' 'pdf' %}"
+               class="px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-bold hover:shadow-lg transition-all inline-flex items-center gap-2">
+              <i class="fas fa-file-pdf mr-2"></i>Export PDF
+            </a>
+            <a href="{% url 'customeradmin:coupon-export' 'excel' %}"
+               class="px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold hover:shadow-lg transition-all inline-flex items-center gap-2">
+              <i class="fas fa-file-excel mr-2"></i>Export Excel
+            </a>
+          </div>
+          <form method="get" class="relative w-full md:w-96">
+            <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <input type="text" name="search" value="{{ search_query|default:'' }}" placeholder="Search code, description..."
+                   class="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-all font-medium">
+            {% if search_query %}
+              <a href="{% url 'customeradmin:coupon-list' %}" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+              </a>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+
+      <!-- COUPON TABLE -->
+      <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden fade-in" style="animation-delay: 0.5s;">
+        <div class="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+          <h2 class="text-2xl font-black text-gray-900">All Coupons</h2>
+          <p class="text-sm text-gray-500 mt-1">Click code to copy, hover row for actions</p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b-2 border-gray-200">
+              <tr>
+                <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Code</th>
+                <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Description</th>
+                <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Discount</th>
+                <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Min Order</th>
+                <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Usage</th>
+                <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Expires</th>
+                <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-4 text-center text-xs font-black text-gray-700 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              {% for coupon in coupons %}
+                <tr class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all">
+                  <td class="px-6 py-4">
+                    <span class="code-badge cursor-pointer" onclick="navigator.clipboard.writeText('{{ coupon.code }}')">
+                      {{ coupon.code }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-700">{{ coupon.description|default:"-" }}</td>
+                  <td class="px-6 py-4">
+                    {% if coupon.discount_type == 'percentage' %}
+                      <span class="text-green-600 font-bold">{{ coupon.discount_percent }}%</span>
+                    {% else %}
+                      <span class="text-purple-600 font-bold">₹{{ coupon.discount_percent }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-700">₹{{ coupon.min_order_amount|default:"0" }}</td>
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-2">
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full"
+                             style="width: {% if coupon.max_usage > 0 %}{% widthratio coupon.used_count coupon.max_usage 100 %}{% else %}0{% endif %}%"></div>
+                      </div>
+                      <span class="text-xs font-bold text-gray-600">{{ coupon.used_count }} / {{ coupon.max_usage|default:"∞" }}</span>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 text-sm {% if coupon.valid_to.date < today %}text-red-600{% else %}text-gray-600{% endif %}">
+                    {{ coupon.valid_to|date:"d M Y" }}
+                  </td>
+                  <td class="px-6 py-4">
+                    {% if coupon.is_active %}
+                      <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">Active</span>
+                    {% else %}
+                      <span class="px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full">Inactive</span>
+                    {% endif %}
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <div class="flex items-center justify-center gap-2">
+                      <a href="{% url 'customeradmin:coupon-edit' coupon.id %}" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Edit">
+                        <i class="fas fa-edit"></i>
+                      </a>
+                      <button onclick="confirmDelete('{{ coupon.code }}', {{ coupon.id }})"
+                              class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Delete">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="8" class="px-6 py-20 text-center">
+                    <div class="inline-flex items-center justify-center w-24 h-24 bg-gray-100 rounded-full mb-6">
+                      <i class="fas fa-ticket-alt text-4xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">No Coupons Found</h3>
+                    <p class="text-gray-500 mb-4">Create your first coupon to get started</p>
+                    <a href="{% url 'customeradmin:coupon-add' %}"
+                       class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:shadow-lg transition-all inline-block">
+                      <i class="fas fa-plus mr-2"></i>Create Coupon
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- PAGINATION -->
+        {% if page_obj.paginator.num_pages > 1 %}
+          <div class="px-8 py-4 border-t border-gray-100 bg-gray-50">
+            <div class="flex items-center justify-between">
+              <p class="text-sm text-gray-600">
+                Showing <span class="font-bold text-purple-600">{{ page_obj.start_index }}</span> to
+                <span class="font-bold text-purple-600">{{ page_obj.end_index }}</span> of
+                <span class="font-bold text-purple-600">{{ page_obj.paginator.count }}</span> entries
+              </p>
+              <div class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                  <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                     class="px-4 py-2 border-2 border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-100 transition-all">
+                    <i class="fas fa-chevron-left"></i>
+                  </a>
+                {% endif %}
+                <span class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold">
+                  {{ page_obj.number }}
+                </span>
+                {% if page_obj.has_next %}
+                  <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
+                     class="px-4 py-2 border-2 border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-100 transition-all">
+                    <i class="fas fa-chevron-right"></i>
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== TOAST + CONFIRM ===== -->
+  <div id="toast-container" style="position:fixed; top:16px; right:16px; z-index:9999; display:flex; flex-direction:column; gap:8px;"></div>
+  <div id="confirm-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:9998;">
+    <div style="background:#fff; width:460px; max-width:92vw; border-radius:20px; box-shadow:0 25px 60px rgba(0,0,0,0.3); overflow:hidden;">
+      <div style="padding:24px; border-bottom:2px solid #e5e7eb; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <h3 style="margin:0; font-size:20px; font-weight:900; color:#fff;">
+          <i class="fas fa-exclamation-triangle mr-2"></i>Confirm Action
+        </h3>
+      </div>
+      <div id="confirm-message" style="padding:24px; color:#374151; font-size:15px; line-height:1.6;"></div>
+      <div style="display:flex; gap:12px; justify-content:flex-end; padding:20px 24px; background:#f9fafb; border-top:2px solid #e5e7eb;">
+        <button id="confirm-cancel" type="button" class="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50 font-bold transition-all">
+          <i class="fas fa-times mr-2"></i>Cancel
+        </button>
+        <button id="confirm-ok" type="button" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-lg font-bold transition-all">
+          <i class="fas fa-check mr-2"></i>Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .fade-in { animation:fadeIn 0.6s ease-out; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    .pulse { animation:pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    .code-badge {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .code-badge:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+  </style>
+
+  <script>
+    function showToast(msg, type='info', t=3000){
+      const css={
+        success:{bg:'linear-gradient(135deg,#d1fae5,#a7f3d0)',c:'#166534',icon:'fa-check-circle'},
+        error  :{bg:'linear-gradient(135deg,#fef2f2,#fecaca)',c:'#b91c1c',icon:'fa-times-circle'}
+      };
+      const s=css[type]||css.success;
+      const el=document.createElement('div');
+      el.style.cssText=`padding:16px 20px;border-radius:12px;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.15);display:flex;align-items:center;gap:12px;background:${s.bg};color:${s.c};font-weight:600;border:2px solid ${s.c}33;animation:slideIn .3s;min-width:300px;`;
+      el.innerHTML=`<i class="fas ${s.icon}" style="font-size:20px"></i><div style="flex:1">${msg}</div><button onclick="this.parentElement.remove()" style="border:none;background:transparent;cursor:pointer;color:${s.c};font-size:18px"><i class="fas fa-times"></i></button>`;
+      document.getElementById('toast-container').appendChild(el);
+      if(t) setTimeout(()=>el.remove(),t);
+    }
+    function confirmDialog(msg){
+      return new Promise(resolve=>{
+        const overlay=document.getElementById('confirm-overlay');
+        document.getElementById('confirm-message').textContent=msg;
+        overlay.style.display='flex';
+        const ok=document.getElementById('confirm-ok'), cancel=document.getElementById('confirm-cancel');
+        const clean=()=>{ overlay.style.display='none'; ok.onclick=cancel.onclick=null; };
+        ok.onclick=()=>{ clean(); resolve(true); };
+        cancel.onclick=()=>{ clean(); resolve(false); };
+      });
+    }
+    async function confirmDelete(code,id){
+      const ok=await confirmDialog(`🗑️  Delete coupon "${code}" ?\n\nThis action cannot be undone.`);
+      if(!ok) return;
+      showToast('Deleting…','info',1500);
+      fetch(`/staff/coupons/delete/${id}/`,{
+        method:'POST',
+        headers:{'X-CSRFToken':'{{ csrf_token }}','Content-Type':'application/json'}
+      }).then(r=>r.json()).then(d=>{
+        if(d.success){ showToast('✅ Coupon deleted','success'); setTimeout(()=>location.reload(),700); }
+        else showToast('❌ '+d.error,'error');
+      }).catch(()=>showToast('Network error','error'));
+    }
+  </script>
+{% endblock %}

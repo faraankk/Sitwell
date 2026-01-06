@@ -3,6 +3,8 @@ from django.contrib.auth.forms import AuthenticationForm
 from django import forms
 from .models import Product, ProductImage, Category
 from authenticate.models import Order
+from django.core.exceptions import ValidationError
+from authenticate.models import Coupon
 
 
 
@@ -271,3 +273,37 @@ class OrderStatusForm(forms.Form):
             if not self.order.can_transition_to(new_status):
                 raise forms.ValidationError("Invalid status transition for this order.")
         return new_status
+    
+
+  
+
+class CouponForm(forms.ModelForm):
+    class Meta:
+        model = Coupon
+        fields = ["code", "discount_percent", "min_order_amount",
+                  "max_usage", "valid_from", "valid_to", "is_active"]
+        widgets = {
+            "valid_from": forms.DateTimeInput(
+                attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"
+            ),
+            "valid_to": forms.DateTimeInput(
+                attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"
+            ),
+        }
+
+    def clean_code(self):
+        code = self.cleaned_data["code"].upper()
+        qs = Coupon.objects.filter(code=code)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise ValidationError("Code already exists.")
+        return code
+    
+
+
+
+
+
+
+    

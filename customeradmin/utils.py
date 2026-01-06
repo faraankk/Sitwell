@@ -2,7 +2,9 @@ from PIL import Image
 import io
 from django.core.files.uploadedfile import InMemoryUploadedFile
 import sys
-
+from decimal import Decimal
+from django.utils import timezone
+from .models import Offer, ProductOffer, CategoryOffer
 
 def process_image(uploaded_file, max_width=800, max_height=600, quality=85, crop=True):
     try:
@@ -78,3 +80,46 @@ def crop_image(image_data, crop_data):
     except Exception as e:
         print(f"Error cropping image: {str(e)}")
         return image_data
+    
+
+from decimal import Decimal
+from .models import Offer, ProductOffer, CategoryOffer
+
+def get_best_offer_for_product(product):
+    """
+    Returns (offer_object, discount_amount) that gives highest discount for the product.
+    If no offers -> (None, 0)
+    """
+    price = product.price
+    now = timezone.now()
+
+    prod_offers = ProductOffer.objects.filter(
+        products=product,
+        offer__is_active=True,
+        offer__start_date__lte=now,
+        offer__end_date__gte=now
+    ).select_related('offer')
+
+    cat_offers = CategoryOffer.objects.filter(
+        category=product.category,
+        offer__is_active=True,
+        offer__start_date__lte=now,
+        offer__end_date__gte=now
+    ).select_related('offer')
+
+    best_offer = None
+    best_disc = Decimal('0')
+
+    for po in prod_offers:
+        disc = po.offer.calculate_discount(raw_price=price)
+        if disc > best_disc:
+            best_disc = disc
+            best_offer = po.offer
+
+    for co in cat_offers:
+        disc = co.offer.calculate_discount(raw_price=price)
+        if disc > best_disc:
+            best_disc = disc
+            best_offer = co.offer
+
+    return best_offer, best_disc

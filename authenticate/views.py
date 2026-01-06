@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph  
 from reportlab.lib.styles import getSampleStyleSheet  
 from django.contrib.auth.decorators import login_required
-from django.db import transaction, IntegrityError
+from django.db import transaction
 from django.db.models import Q
 from .models import Order, OrderItem, OrderStatusHistory, CustomUser, UserAddress, Cart, CartItem, Wishlist, WishlistItem
 from .forms import OrderCancellationForm, OrderReturnForm, SignUpForm, OTPForm, NewPasswordForm, LoginForm, ForgotPasswordForm, UserProfileForm, EmailChangeForm, PasswordChangeForm, UserAddressForm
@@ -27,15 +27,20 @@ from decimal import Decimal
 from .utils import generate_otp, send_otp_email
 from django.contrib.auth import update_session_auth_hash
 from django.views.decorators.http import require_http_methods
-from .models import Cart, CartItem, UserAddress, Order, OrderItem, Coupon, CouponUsage
-from django.db.models import F
-from authenticate.utils import q2
-
+from .models import Coupon, CouponUsage
 import logging
+import razorpay
+from django.views.decorators.csrf import csrf_exempt
+from django.views import View
+from django.http import JsonResponse
+from django.utils.decorators import method_decorator
+from django.urls import reverse
+from django.utils.http import urlencode
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
-
-@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def signup_view(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
@@ -43,14 +48,38 @@ def signup_view(request):
             try:
                 user = form.save(commit=False)
                 user.set_password(form.cleaned_data['password1'])
-                user.is_active = False 
+                user.is_active = False
                 user.otp = generate_otp()
                 user.otp_created_at = timezone.now()
-                user.save()
+                user.save()                       # ← must be AFTER this line
+
+                # ---------- REFFERAL REWARD ----------
+                referral_code = form.cleaned_data.get('referral_code')
+                if referral_code:                 # optional field can be empty
+                    from customeradmin.models import Referral, ReferralOffer
+                    try:
+                        ref = Referral.objects.select_related('referrer').get(code=referral_code.upper())
+                        # create usage record
+                        from customeradmin.models import ReferralUsage
+                        ReferralUsage.objects.create(referral=ref, referee=user)
+
+                        # reward referrer (wallet credit)
+                        wallet, _ = Wallet.objects.get_or_create(user=ref.referrer)
+                        ref_offer = ReferralOffer.objects.filter(offer__is_active=True).first()
+                        if ref_offer:
+                            reward = ref_offer.referrer_reward
+                            wallet.credit(reward, note=f"Referral reward for {user.email}")
+                            messages.success(request, f"Referral accepted! ₹{reward} credited to referrer.")
+                    except Exception:
+                        # invalid code → silently ignore (or add message if you want)
+                        pass
+                # ---------- END REFFERAL REWARD ----------
+
                 send_otp_email(user.email, user.otp)
                 request.session['otp_user_id'] = user.id
                 messages.success(request, 'OTP sent to your email.')
                 return redirect('verify_otp_signup')
+
             except Exception as e:
                 logger.error(f"Error during signup: {e}")
                 messages.error(request, 'An error occurred during signup.')
@@ -504,99 +533,246 @@ def dummy_home_view(request):
         }
         return render(request, 'dummy.html', context)
 
-@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
-def product_list_view(request):
-    try:
-        total_products = Product.objects.count()
-        published_products = Product.objects.filter(status='published').count()
+# @cache_control(no_cache=True, must_revalidate=True, no_store=True) 
+# def product_list_view(request):
+#     """Enhanced product list with advanced search and filtering"""
+#     try:
+#         # Base queryset with optimized queries
+#         products = Product.objects.filter(
+#             status='published'
+#         ).select_related('category').prefetch_related('images')
         
+#         # Get filter parameters
+#         search_query = request.GET.get('search', '').strip()
+#         category_filter = request.GET.get('category')
+#         brand_filter = request.GET.get('brand')
+#         min_price = request.GET.get('min_price')
+#         max_price = request.GET.get('max_price')
+#         sort_by = request.GET.get('sort', 'newest')
+#         availability = request.GET.get('availability')
+        
+#         # Enhanced Search - search in multiple fields
+#         if search_query:
+#             products = products.filter(
+#                 Q(name__icontains=search_query) |
+#                 Q(description__icontains=search_query) |
+#                 Q(brand__icontains=search_query) |
+#                 Q(category__name__icontains=search_query) |
+#                 Q(sku__icontains=search_query)
+#             )
+        
+#         # Category filtering
+#         if category_filter and category_filter != 'all':
+#             products = products.filter(category__name__iexact=category_filter)
+        
+#         # Brand filtering
+#         if brand_filter and brand_filter != 'all':
+#             products = products.filter(brand__icontains=brand_filter)
+        
+#         # Price range filtering
+#         if min_price:
+#             try:
+#                 min_price_float = float(min_price)
+#                 products = products.filter(price__gte=min_price_float)
+#             except (ValueError, TypeError):
+#                 pass
+        
+#         if max_price:
+#             try:
+#                 max_price_float = float(max_price)
+#                 products = products.filter(price__lte=max_price_float)
+#             except (ValueError, TypeError):
+#                 pass
+        
+#         # Availability filtering
+#         if availability == 'in_stock':
+#             products = products.filter(stock_quantity__gt=0)
+#         elif availability == 'out_of_stock':
+#             products = products.filter(stock_quantity__lte=0)
+        
+#         # Sorting options
+#         sort_options = {
+#             'price_low': 'price',
+#             'price_high': '-price',
+#             'name_az': 'name',
+#             'name_za': '-name',
+#             'newest': '-created_at',
+#             'oldest': 'created_at',
+#         }
+        
+#         if sort_by in sort_options:
+#             products = products.order_by(sort_options[sort_by])
+#         else:
+#             products = products.order_by('-created_at')
+        
+#         # Pagination
+#         paginator = Paginator(products, 12)
+#         page_number = request.GET.get('page')
+#         page_obj = paginator.get_page(page_number)
+        
+#         # Get available filters for template
+#         all_published = Product.objects.filter(status='published')
+#         available_categories = all_published.values_list('category__name', flat=True).distinct()
+#         available_brands = all_published.exclude(brand__iexact='').values_list('brand', flat=True).distinct()
+        
+#         context = {
+#             'page_obj': page_obj,
+#             'products': page_obj,
+#             'available_categories': available_categories,
+#             'available_brands': available_brands,
+#             'search_query': search_query,
+#             'current_category': category_filter,
+#             'current_brand': brand_filter,
+#             'current_sort': sort_by,
+#             'min_price': min_price,
+#             'max_price': max_price,
+#             'current_availability': availability,
+#             'total_products': paginator.count,
+#         }
+        
+#         return render(request, 'product_list.html', context)
+        
+#     except Exception as e:
+#         logger.error(f"Error in product_list_view: {str(e)}")
+#         messages.error(request, f'Error loading products: {str(e)}')
+#         context = {
+#             'page_obj': None,
+#             'products': [],
+#             'available_categories': [],
+#             'available_brands': [],
+#             'search_query': request.GET.get('search', ''),
+#             'current_category': request.GET.get('category'),
+#             'current_brand': request.GET.get('brand'),
+#             'current_sort': request.GET.get('sort', 'newest'),
+#             'min_price': request.GET.get('min_price'),
+#             'max_price': request.GET.get('max_price'),
+#             'current_availability': request.GET.get('availability'),
+#             'total_products': 0,
+#         }
+#         return render(request, 'product_list.html', context)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+def product_list_view(request):
+    """Enhanced product list with advanced search and filtering"""
+    try:
+        # Base queryset with optimized queries
         products = Product.objects.filter(
             status='published'
-        ).select_related().prefetch_related('images')
-        
+        ).prefetch_related('images')
+
+        # Get filter parameters
         search_query = request.GET.get('search', '').strip()
         category_filter = request.GET.get('category')
         brand_filter = request.GET.get('brand')
         min_price = request.GET.get('min_price')
         max_price = request.GET.get('max_price')
         sort_by = request.GET.get('sort', 'newest')
-        
+        availability = request.GET.get('availability')
+
+        # Enhanced Search - search in multiple fields
         if search_query:
-            products = products.filter(name__icontains=search_query)
-        
+            products = products.filter(
+                Q(name__icontains=search_query) |
+                Q(description__icontains=search_query) |
+                Q(brand__icontains=search_query) |
+                Q(sku__icontains=search_query)
+            )
+
+        # Category filtering (CharField)
         if category_filter and category_filter != 'all':
             products = products.filter(category__iexact=category_filter)
-        
+
+        # Brand filtering
         if brand_filter and brand_filter != 'all':
             products = products.filter(brand__icontains=brand_filter)
-        
+
+        # Price range filtering
         if min_price:
             try:
                 min_price_float = float(min_price)
                 products = products.filter(price__gte=min_price_float)
             except (ValueError, TypeError):
                 pass
-        
+
         if max_price:
             try:
                 max_price_float = float(max_price)
                 products = products.filter(price__lte=max_price_float)
             except (ValueError, TypeError):
                 pass
-        
+
+        # Availability filtering
+        if availability == 'in_stock':
+            products = products.filter(stock_quantity__gt=0)
+        elif availability == 'out_of_stock':
+            products = products.filter(stock_quantity__lte=0)
+
+        # Sorting options
         sort_options = {
             'price_low': 'price',
             'price_high': '-price',
             'name_az': 'name',
             'name_za': '-name',
-            'popularity': '-created_at',
-            'featured': '-created_at',
             'newest': '-created_at',
+            'oldest': 'created_at',
         }
-        
+
         if sort_by in sort_options:
             products = products.order_by(sort_options[sort_by])
         else:
             products = products.order_by('-created_at')
-        
+
+        # Pagination
         paginator = Paginator(products, 12)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
-        
+
+        # Get available filters for template (NO JOINS)
         all_published = Product.objects.filter(status='published')
         available_categories = all_published.values_list('category', flat=True).distinct()
         available_brands = all_published.exclude(brand__iexact='').values_list('brand', flat=True).distinct()
-        
+
+        # ---- wishlist heart support ----
+        if request.user.is_authenticated:
+            wishlist, _ = Wishlist.objects.get_or_create(user=request.user)
+            user_wishlist_ids = list(wishlist.items.values_list('product_id', flat=True))
+        else:
+            user_wishlist_ids = []
+
         context = {
             'page_obj': page_obj,
+            'products': page_obj,
             'available_categories': available_categories,
             'available_brands': available_brands,
-            'category_choices': getattr(Product, 'CATEGORY_CHOICES', []),
             'search_query': search_query,
             'current_category': category_filter,
             'current_brand': brand_filter,
             'current_sort': sort_by,
             'min_price': min_price,
             'max_price': max_price,
+            'current_availability': availability,
             'total_products': paginator.count,
+            'user_wishlist_ids': user_wishlist_ids,
         }
-        
+
         return render(request, 'product_list.html', context)
-        
+
     except Exception as e:
+        logger.error(f"Error in product_list_view: {str(e)}")
         messages.error(request, f'Error loading products: {str(e)}')
         context = {
             'page_obj': None,
+            'products': [],
             'available_categories': [],
             'available_brands': [],
-            'category_choices': [],
             'search_query': request.GET.get('search', ''),
             'current_category': request.GET.get('category'),
             'current_brand': request.GET.get('brand'),
             'current_sort': request.GET.get('sort', 'newest'),
             'min_price': request.GET.get('min_price'),
             'max_price': request.GET.get('max_price'),
+            'current_availability': request.GET.get('availability'),
             'total_products': 0,
+            'user_wishlist_ids': [],
         }
         return render(request, 'product_list.html', context)
 
@@ -1137,82 +1313,152 @@ def cancel_order_view(request, order_id, item_id=None):
 '''Cart management '''
 # CART MANAGEMENT VIEWS
 
+# @login_required
+# def add_to_cart_view(request, product_id):
+#     """Add product to cart or increase quantity"""
+#     if request.method != 'POST':
+#         return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+#     try:
+#         with transaction.atomic():
+#             # Get product and validate availability
+#             product = get_object_or_404(Product, id=product_id)
+            
+#             # Check if product or category is blocked/unlisted
+#             if product.status != 'published':
+#                 return JsonResponse({
+#                     'success': False, 
+#                     'message': 'This product is no longer available'
+#                 })
+            
+#             # Check if category is blocked (assuming you have this field)
+#             if hasattr(product, 'category') and hasattr(product.category, 'is_blocked'):
+#                 if product.category.is_blocked:
+#                     return JsonResponse({
+#                         'success': False, 
+#                         'message': 'This product category is currently unavailable'
+#                     })
+            
+#             # Check stock availability
+#             if product.stock_quantity <= 0:
+#                 return JsonResponse({
+#                     'success': False, 
+#                     'message': 'This product is out of stock'
+#                 })
+            
+#             # Get or create user's cart
+#             cart, created = Cart.objects.get_or_create(user=request.user)
+            
+#             # Get requested quantity (default to 1)
+#             quantity = int(request.POST.get('quantity', 1))
+            
+#             # Check if item already exists in cart
+#             cart_item, item_created = CartItem.objects.get_or_create(
+#                 cart=cart,
+#                 product=product,
+#                 defaults={'quantity': 0}
+#             )
+            
+#             # Calculate new quantity
+#             new_quantity = cart_item.quantity + quantity
+            
+#             # Validate maximum quantity constraints
+#             MAX_CART_QUANTITY = 10  # Configurable limit per product
+#             max_allowed = min(product.stock_quantity, MAX_CART_QUANTITY)
+            
+#             if new_quantity > max_allowed:
+#                 return JsonResponse({
+#                     'success': False, 
+#                     'message': f'Cannot add more than {max_allowed} items of this product'
+#                 })
+            
+#             # Update quantity
+#             cart_item.quantity = new_quantity
+#             cart_item.save()
+            
+#             # Remove from wishlist if it exists
+#             try:
+#                 wishlist = Wishlist.objects.get(user=request.user)
+#                 WishlistItem.objects.filter(
+#                     wishlist=wishlist, 
+#                     product=product
+#                 ).delete()
+#                 removed_from_wishlist = True
+#             except Wishlist.DoesNotExist:
+#                 removed_from_wishlist = False
+            
+#             # Prepare response data
+#             response_data = {
+#                 'success': True,
+#                 'message': f'Added {product.name} to cart',
+#                 'cart_total_items': cart.total_items,
+#                 'cart_total_amount': float(cart.total_amount),
+#                 'item_quantity': cart_item.quantity,
+#                 'item_subtotal': float(cart_item.subtotal),
+#                 'removed_from_wishlist': removed_from_wishlist
+#             }
+            
+#             return JsonResponse(response_data)
+            
+#     except Product.DoesNotExist:
+#         return JsonResponse({
+#             'success': False, 
+#             'message': 'Product not found'
+#         })
+#     except ValueError:
+#         return JsonResponse({
+#             'success': False, 
+#             'message': 'Invalid quantity specified'
+#         })
+#     except Exception as e:
+#         return JsonResponse({
+#             'success': False, 
+#             'message': 'An error occurred while adding to cart'
+#         })
+
 @login_required
 def add_to_cart_view(request, product_id):
     """Add product to cart or increase quantity"""
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
-    
+
     try:
         with transaction.atomic():
-            # Get product and validate availability
             product = get_object_or_404(Product, id=product_id)
-            
-            # Check if product or category is blocked/unlisted
+
+            # availability / status checks
             if product.status != 'published':
-                return JsonResponse({
-                    'success': False, 
-                    'message': 'This product is no longer available'
-                })
-            
-            # Check if category is blocked (assuming you have this field)
-            if hasattr(product, 'category') and hasattr(product.category, 'is_blocked'):
-                if product.category.is_blocked:
-                    return JsonResponse({
-                        'success': False, 
-                        'message': 'This product category is currently unavailable'
-                    })
-            
-            # Check stock availability
+                return JsonResponse({'success': False, 'message': 'This product is no longer available'})
+            if hasattr(product, 'category') and getattr(product.category, 'is_blocked', False):
+                return JsonResponse({'success': False, 'message': 'This product category is currently unavailable'})
             if product.stock_quantity <= 0:
-                return JsonResponse({
-                    'success': False, 
-                    'message': 'This product is out of stock'
-                })
-            
-            # Get or create user's cart
-            cart, created = Cart.objects.get_or_create(user=request.user)
-            
-            # Get requested quantity (default to 1)
+                return JsonResponse({'success': False, 'message': 'This product is out of stock'})
+
+            cart, _ = Cart.objects.get_or_create(user=request.user)
             quantity = int(request.POST.get('quantity', 1))
-            
-            # Check if item already exists in cart
-            cart_item, item_created = CartItem.objects.get_or_create(
+
+            cart_item, created = CartItem.objects.get_or_create(
                 cart=cart,
                 product=product,
                 defaults={'quantity': 0}
             )
-            
-            # Calculate new quantity
-            new_quantity = cart_item.quantity + quantity
-            
-            # Validate maximum quantity constraints
-            MAX_CART_QUANTITY = 10  # Configurable limit per product
-            max_allowed = min(product.stock_quantity, MAX_CART_QUANTITY)
-            
-            if new_quantity > max_allowed:
-                return JsonResponse({
-                    'success': False, 
-                    'message': f'Cannot add more than {max_allowed} items of this product'
-                })
-            
-            # Update quantity
-            cart_item.quantity = new_quantity
+
+            new_qty = cart_item.quantity + quantity
+            max_allowed = min(product.stock_quantity, 10)          # global limit per product
+            if new_qty > max_allowed:
+                return JsonResponse({'success': False, 'message': f'Cannot add more than {max_allowed} items of this product'})
+
+            cart_item.quantity = new_qty
             cart_item.save()
-            
-            # Remove from wishlist if it exists
-            try:
-                wishlist = Wishlist.objects.get(user=request.user)
-                WishlistItem.objects.filter(
-                    wishlist=wishlist, 
-                    product=product
-                ).delete()
-                removed_from_wishlist = True
-            except Wishlist.DoesNotExist:
-                removed_from_wishlist = False
-            
-            # Prepare response data
-            response_data = {
+
+            # --- STEP-2 tweak: remove from wishlist if present ---
+            removed_from_wishlist = False
+            wishlist = Wishlist.objects.filter(user=request.user).first()
+            if wishlist:
+                deleted = WishlistItem.objects.filter(wishlist=wishlist, product=product).delete()[0]
+                removed_from_wishlist = bool(deleted)
+
+            return JsonResponse({
                 'success': True,
                 'message': f'Added {product.name} to cart',
                 'cart_total_items': cart.total_items,
@@ -1220,25 +1466,14 @@ def add_to_cart_view(request, product_id):
                 'item_quantity': cart_item.quantity,
                 'item_subtotal': float(cart_item.subtotal),
                 'removed_from_wishlist': removed_from_wishlist
-            }
-            
-            return JsonResponse(response_data)
-            
+            })
+
     except Product.DoesNotExist:
-        return JsonResponse({
-            'success': False, 
-            'message': 'Product not found'
-        })
+        return JsonResponse({'success': False, 'message': 'Product not found'})
     except ValueError:
-        return JsonResponse({
-            'success': False, 
-            'message': 'Invalid quantity specified'
-        })
-    except Exception as e:
-        return JsonResponse({
-            'success': False, 
-            'message': 'An error occurred while adding to cart'
-        })
+        return JsonResponse({'success': False, 'message': 'Invalid quantity specified'})
+    except Exception:
+        return JsonResponse({'success': False, 'message': 'An error occurred while adding to cart'})
 
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True) 
@@ -1448,197 +1683,181 @@ def cart_item_count_view(request):
 
 
 
+
 @login_required
-@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def checkout_view(request):
-    cart = get_object_or_404(Cart, user=request.user)
-    cart_items = cart.items.filter(
-        product__status='published',
-        product__stock_quantity__gt=0
-    )
-    if not cart_items:
-        messages.error(request, "Your cart is empty.")
-        return redirect('cart')
+    """Checkout with coupon support - handles both HTML and AJAX requests"""
+    try:
+        cart = Cart.objects.get(user=request.user)
+        cart_items = cart.items.filter(product__status='published', product__stock_quantity__gt=0)
 
-    addresses = UserAddress.objects.filter(user=request.user)
-    if not addresses:
-        messages.info(request, "Please add a shipping address first.")
-        return redirect('add_address')
+        if not cart_items.exists():
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': 'Your cart is empty'})
+            messages.error(request, "Your cart is empty or contains only unavailable items.")
+            return redirect('cart')
 
-    # Handle coupon via PRG
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        code = (request.POST.get('coupon_code') or '').strip().upper()
-
-        if action == 'apply_coupon':
-            if not code:
-                messages.error(request, "Enter a coupon code.")
-                return redirect('checkout')
-
+        addresses = UserAddress.objects.filter(user=request.user)
+        wallet, _ = Wallet.objects.get_or_create(user=request.user)
+        
+        # Calculate totals
+        subtotal = sum(item.subtotal for item in cart_items)
+        taxes = subtotal * Decimal('0.18')
+        shipping = Decimal('50.00') if subtotal < 1000 else Decimal('0.00')
+        
+        # Handle coupon from session
+        coupon_discount = Decimal('0.00')
+        applied_coupon = None
+        
+        if 'applied_coupon_id' in request.session:
             try:
-                coupon = Coupon.objects.get(code=code)
+                coupon = Coupon.objects.get(id=request.session['applied_coupon_id'])
+                if coupon.is_valid:
+                    coupon_discount = coupon.calculate_discount(subtotal)
+                    applied_coupon = coupon
             except Coupon.DoesNotExist:
-                messages.error(request, "Invalid coupon code.")
-                return redirect('checkout')
+                del request.session['applied_coupon_id']
 
-            # Validate against current cart subtotal
-            subtotal_now = q2(sum((item.subtotal for item in cart_items), Decimal('0.00')))
+        grand_total = subtotal + taxes + shipping - coupon_discount
 
-            if not coupon.is_valid():
-                messages.error(request, "This coupon is not valid or has expired.")
-                return redirect('checkout')
+        # Handle AJAX requests for price updates
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'subtotal': float(subtotal),
+                'taxes': float(taxes),
+                'shipping': float(shipping),
+                'coupon_discount': float(coupon_discount),
+                'grand_total': float(grand_total),
+                'applied_coupon': applied_coupon.code if applied_coupon else None
+            })
 
-            if CouponUsage.objects.filter(user=request.user, coupon=coupon).exists():
-                messages.error(request, "This coupon was already used.")
-                return redirect('checkout')
-
-            if subtotal_now < coupon.minimum_order_amount:
-                messages.error(request, f"Minimum order ₹{q2(coupon.minimum_order_amount)} required.")
-                return redirect('checkout')
-
-            request.session['applied_coupon'] = coupon.code
-            messages.success(request, f"Coupon {coupon.code} applied!")
-            return redirect('checkout')
-
-        if action == 'remove_coupon':
-            request.session.pop('applied_coupon', None)
-            messages.info(request, "Coupon removed.")
-            return redirect('checkout')
-
-        return redirect('checkout')
-
-    # GET: compute totals and reapply coupon from session
-    subtotal = q2(sum((item.subtotal for item in cart_items), Decimal('0.00')))
-    taxes = q2(subtotal * Decimal('0.18'))
-    shipping = q2(Decimal('0.00') if subtotal >= Decimal('1000.00') else Decimal('50.00'))
-
-    discount = Decimal('0.00')
-    applied_coupon = None
-
-    applied_code = request.session.get('applied_coupon')
-    if applied_code:
-        try:
-            coupon = Coupon.objects.get(code=applied_code)
-            if coupon.is_valid() and subtotal >= coupon.minimum_order_amount:
-                if coupon.discount_type == 'percentage':
-                    discount = q2(subtotal * (coupon.discount_value / Decimal('100')))
-                else:
-                    discount = q2(coupon.discount_value)
-                applied_coupon = coupon.code
-            else:
-                # No longer valid; clear to avoid stale UI
-                request.session.pop('applied_coupon', None)
-        except Coupon.DoesNotExist:
-            request.session.pop('applied_coupon', None)
-
-    grand_total = q2(subtotal + taxes + shipping - discount)
-    if grand_total < 0:
-        grand_total = Decimal('0.00')
-
-    return render(request, 'store/checkout.html', {
-        'addresses': addresses,
-        'cart_items': cart_items,
-        'subtotal': subtotal,
-        'taxes': taxes,
-        'shipping': shipping,
-        'discount': discount,
-        'grand_total': grand_total,
-        'applied_coupon': applied_coupon,
-        'coupon_error': None,  # using messages; kept for compatibility
-    })
+        context = {
+            'addresses': addresses,
+            'cart_items': cart_items,
+            'subtotal': subtotal,
+            'taxes': taxes,
+            'shipping': shipping,
+            'coupon_discount': coupon_discount,
+            'applied_coupon': applied_coupon,
+            'grand_total': grand_total,
+            'user': request.user,
+            'wallet': wallet, 
+        }
+        return render(request, 'store/checkout.html', context)
+        
+    except Cart.DoesNotExist:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'message': 'Cart not found'})
+        messages.error(request, "You do not have a cart.")
+        return redirect('product_list')
+    except Exception as e:
+        logger.error(f"Error in checkout_view: {str(e)}")
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'message': 'An error occurred'})
+        messages.error(request, "An unexpected error occurred.")
+        return redirect('cart')
 
 @login_required
 @transaction.atomic
 def place_order_view(request):
+    """Handles placing the order with Cash on Delivery, including coupon support"""
     if request.method != 'POST':
         return redirect('checkout')
 
-    cart = get_object_or_404(Cart, user=request.user)
-    cart_items = cart.items.filter(
-        product__status='published',
-        product__stock_quantity__gt=0
-    )
-    if not cart_items:
-        messages.error(request, "Your cart is empty.")
-        return redirect('cart')
+    try:
+        cart = Cart.objects.get(user=request.user)
+        cart_items = cart.items.filter(product__status='published', product__stock_quantity__gt=0)
+        
+        if not cart_items.exists():
+            messages.error(request, "Your cart is empty or items are out of stock.")
+            return redirect('cart')
+        
+        address_id = request.POST.get('address')
+        if not address_id:
+            messages.error(request, "Please select a shipping address.")
+            return redirect('checkout')
+            
+        shipping_address = UserAddress.objects.get(id=address_id, user=request.user)
 
-    address_id = request.POST.get('address')
-    if not address_id:
-        messages.error(request, "Please select a shipping address.")
-        return redirect('checkout')
-    shipping_address = get_object_or_404(UserAddress, id=address_id, user=request.user)
-
-    subtotal = q2(sum((item.subtotal for item in cart_items), Decimal('0.00')))
-    taxes = q2(subtotal * Decimal('0.18'))
-    shipping = q2(Decimal('0.00') if subtotal >= Decimal('1000.00') else Decimal('50.00'))
-
-    discount = Decimal('0.00')
-    coupon = None
-    applied_code = request.session.get('applied_coupon')
-
-    if applied_code:
-        try:
-            # Lock coupon row to enforce usage_limit under concurrency
-            coupon = Coupon.objects.select_for_update().get(code=applied_code)
-            if coupon.is_valid() and subtotal >= coupon.minimum_order_amount:
-                if coupon.discount_type == 'percentage':
-                    discount = q2(subtotal * (coupon.discount_value / Decimal('100')))
+        # Recalculate total to ensure price integrity
+        subtotal = sum(item.subtotal for item in cart_items)
+        taxes = subtotal * Decimal('0.18')  # 18% tax
+        shipping = Decimal('50.00') if subtotal < 1000 else Decimal('0.00')
+        
+        # Handle coupon from session
+        coupon = None
+        coupon_discount = Decimal('0.00')
+        
+        if 'applied_coupon_id' in request.session:
+            try:
+                coupon = Coupon.objects.get(id=request.session['applied_coupon_id'])
+                if coupon.is_valid:
+                    coupon_discount = coupon.calculate_discount(subtotal)
+                    # Validate that user hasn't used this coupon before
+                    if not CouponUsage.objects.filter(coupon=coupon, user=request.user).exists():
+                        coupon.mark_as_used(request.user, None)  # We'll update with order later
+                    else:
+                        messages.warning(request, "You have already used this coupon.")
+                        coupon = None
+                        coupon_discount = Decimal('0.00')
                 else:
-                    discount = q2(coupon.discount_value)
-            else:
-                coupon = None
-        except Coupon.DoesNotExist:
-            coupon = None
+                    messages.warning(request, "Coupon is no longer valid.")
+                    del request.session['applied_coupon_id']
+                    coupon = None
+            except Coupon.DoesNotExist:
+                del request.session['applied_coupon_id']
 
-    grand_total = q2(subtotal + taxes + shipping - discount)
-    if grand_total < 0:
-        grand_total = Decimal('0.00')
+        grand_total = subtotal + taxes + shipping - coupon_discount
 
-    order = Order.objects.create(
-        user=request.user,
-        shipping_address=shipping_address,
-        subtotal=subtotal,
-        tax_amount=taxes,
-        shipping_charge=shipping,
-        discount_amount=discount,
-        total_amount=grand_total,
-        payment_method='cod',
-        payment_status='pending'
-    )
-
-    # Create order items and decrement stock atomically
-    for item in cart_items.select_related('product'):
-        OrderItem.objects.create(
-            order=order,
-            product=item.product,
-            product_name=item.product.name,
-            product_price=item.product.get_discounted_price(),
-            quantity=item.quantity
+        # Create the Order
+        order = Order.objects.create(
+            user=request.user,
+            shipping_address=shipping_address,
+            total_amount=grand_total,
+            payment_method='Cash on Delivery',
+            payment_status='Pending',
+            coupon=coupon,
+            coupon_discount=coupon_discount,
+            subtotal=subtotal,
+            tax_amount=taxes,
+            shipping_charge=shipping,
+            discount_amount=coupon_discount
         )
-        item.product.stock_quantity = F('stock_quantity') - item.quantity
-        item.product.save(update_fields=['stock_quantity'])
 
-    # Record coupon usage if applied and effective
-    if coupon and discount > 0:
-        try:
-            CouponUsage.objects.create(
-                user=request.user,
-                coupon=coupon,
-                order=order
+        # Create Order Items and update stock
+        for item in cart_items:
+            OrderItem.objects.create(
+                order=order,
+                product=item.product,
+                product_name=item.product.name,
+                product_price=item.product.price,
+                quantity=item.quantity
             )
-            coupon.used_count = F('used_count') + 1
-            coupon.save(update_fields=['used_count'])
-        except IntegrityError:
-            # User already used this coupon; ignore gracefully
-            pass
-        finally:
-            request.session.pop('applied_coupon', None)
+            # Decrease stock
+            product = item.product
+            product.stock_quantity -= item.quantity
+            product.save()
 
-    # Clear cart
-    cart.items.all().delete()
+        # Clear the cart and coupon session
+        cart.items.all().delete()
+        if 'applied_coupon_id' in request.session:
+            del request.session['applied_coupon_id']
+        
+        messages.success(request, "Your order has been placed successfully!")
+        return redirect('order_success', order_id=order.order_number)
 
-    messages.success(request, "Your order has been placed successfully!")
-    return redirect('order_success', order_id=order.order_number)
+    except UserAddress.DoesNotExist:
+        messages.error(request, "Selected address not found.")
+        return redirect('checkout')
+    except Cart.DoesNotExist:
+        messages.error(request, "Your cart was not found.")
+        return redirect('product_list')
+    except Exception as e:
+        logger.error(f"Error in place_order_view: {str(e)}")
+        messages.error(request, "An error occurred while placing your order. Please try again.")
+        return redirect('checkout')
 
 
 @login_required
@@ -1786,3 +2005,629 @@ def contact_submit(request):
 def about(request):
     """Display about page"""
     return render(request, 'about.html')
+
+
+
+@login_required
+@transaction.atomic
+def razorpay_create_order(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False}, status=405)
+
+    try:
+        cart = Cart.objects.get(user=request.user)
+        items  = cart.items.filter(product__status='published', product__stock_quantity__gt=0)
+        if not items.exists():
+            return JsonResponse({'success': False, 'message': 'Cart empty'})
+
+        subtotal = sum(i.subtotal for i in items)
+        tax      = subtotal * Decimal('0.18')
+        shipping = Decimal('50.00') if subtotal < 1000 else 0
+        coupon   = request.POST.get('coupon', '').strip().upper()
+        discount = Decimal('0.00')
+        coupons  = {'SAVE10': 0.10, 'FLAT50': 50, 'FIRSTORDER': 0.15}
+        if coupon in coupons:
+            disc_val = coupons[coupon]
+            discount = subtotal * Decimal(disc_val) if disc_val < 1 else Decimal(disc_val)
+        amount_paise = int((subtotal + tax + shipping - discount) * 100)
+
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID,
+                                       settings.RAZORPAY_KEY_SECRET))
+        rz_order = client.order.create({
+            'amount'   : amount_paise,
+            'currency' : 'INR',
+            'payment_capture': '1'
+        })
+
+        address = UserAddress.objects.get(id=request.POST['address'], user=request.user)
+        order = Order.objects.create(
+            user=request.user,
+            shipping_address=address,
+            total_amount=(amount_paise/100),
+            payment_method='card',
+            payment_status='pending',
+            razorpay_order_id=rz_order['id'],
+            subtotal=subtotal,
+            tax_amount=tax,
+            shipping_charge=shipping,
+            discount_amount=discount
+        )
+
+        for item in items:
+            OrderItem.objects.create(
+                order=order,
+                product=item.product,
+                product_name=item.product.name,
+                product_price=item.product.get_discounted_price(),
+                quantity=item.quantity
+            )
+
+        return JsonResponse({
+            'success': True,
+            'order_id': rz_order['id'],
+            'amount'  : amount_paise,
+            'razorpay_key': settings.RAZORPAY_KEY_ID,
+            'user_name'  : request.user.full_name,
+            'user_email' : request.user.email,
+            'user_phone' : request.user.phone_number
+        })
+    except Exception as e:
+        print("🔥 RAZORPAY ERROR:", e)
+
+        if hasattr(e, 'error'):
+            print("CODE:", e.error.get('code'))
+            print("DESCRIPTION:", e.error.get('description'))
+
+            return JsonResponse({
+                'success': False,
+                'error_code': e.error.get('code'),
+                'error_message': e.error.get('description'),
+            }, status=400)
+
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        }, status=500)
+
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class RazorpayCallbackView(View):
+    def post(self, request, *args, **kwargs):
+        rz_order_id = request.POST.get("razorpay_order_id")
+        rz_payment_id = request.POST.get("razorpay_payment_id")
+        rz_signature = request.POST.get("razorpay_signature")
+
+        try:
+            client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+            client.utility.verify_payment_signature({
+                "razorpay_order_id": rz_order_id,
+                "razorpay_payment_id": rz_payment_id,
+                "razorpay_signature": rz_signature
+            })
+
+            order = Order.objects.get(razorpay_order_id=rz_order_id)
+            order.payment_status = "paid"
+            order.status = "confirmed"
+            order.razorpay_payment_id = rz_payment_id
+            order.save()
+            Cart.objects.filter(user=order.user).delete()
+
+            if request.GET.get("retry") == "1":
+                return redirect('order_success', order_id=order.order_number)
+
+            return JsonResponse({
+                "success": True,
+                "order_number": order.order_number
+            })
+
+        except Exception:
+            try:
+                order = Order.objects.get(razorpay_order_id=rz_order_id)
+                order.payment_status = "failed"
+                order.save()
+            except:
+                pass
+
+            if request.GET.get("retry") == "1":
+                return redirect(f"{reverse('order_failure')}?rzorderid={rz_order_id}")
+
+            return JsonResponse({"success": False}, status=400)
+
+        
+
+
+@login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+def order_failure_view(request):
+    orderid = request.GET.get("orderid")
+    rzorderid = request.GET.get("rzorderid")
+
+    order = None
+    if orderid:
+        order = get_object_or_404(Order, order_number=orderid, user=request.user)
+    elif rzorderid:
+        order = get_object_or_404(Order, razorpay_order_id=rzorderid, user=request.user)
+
+    return render(request, "store/order_failure.html", {"order": order})
+
+
+@login_required
+@require_http_methods(["POST"])
+def retry_razorpay_payment(request, orderid):
+    """
+    Create a fresh Razorpay order_id and attach it to an existing Order (failed/pending),
+    then return data to open Razorpay checkout again on the frontend.
+    """
+    order = get_object_or_404(Order, order_number=orderid, user=request.user)
+
+    if order.payment_status == "paid":
+        return JsonResponse({"success": False, "message": "Order is already paid."}, status=400)
+
+    try:
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        amount_paise = int(order.total_amount * 100)
+
+        rz_order = client.order.create({
+            "amount": amount_paise,
+            "currency": "INR",
+            "payment_capture": 1,
+            "notes": {
+                "order_number": order.order_number,
+                "user": getattr(request.user, "email", "")
+            }
+        })
+
+        order.razorpay_order_id = rz_order["id"]
+        order.payment_status = "pending"
+        order.payment_method = "card"
+        order.save(update_fields=["razorpay_order_id", "payment_status", "payment_method"])
+
+        callback_url = request.build_absolute_uri(reverse("razorpay_callback")) + "?retry=1"
+
+        return JsonResponse({
+            "success": True,
+            "order_number": order.order_number,
+            "rz_order_id": order.razorpay_order_id,
+            "amount": amount_paise,
+            "razorpay_key": settings.RAZORPAY_KEY_ID,
+            "callback_url": callback_url,
+            "prefill": {
+                "name": getattr(request.user, "full_name", ""),
+                "email": getattr(request.user, "email", ""),
+                "contact": getattr(request.user, "phone_number", ""),
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error in retry_razorpay_payment: {str(e)}")
+        return JsonResponse({"success": False, "message": "Error creating payment. Please try again."}, status=500)
+
+
+@login_required
+def apply_coupon_view(request):
+    """Apply coupon to cart - returns JSON"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request'})
+
+    code = request.POST.get('code', '').upper().strip()
+    print(f"Applying coupon: {code}")  
+    
+    try:
+        coupon = Coupon.objects.get(code=code, is_active=True)
+        print(f"Found coupon: {coupon.code}")  
+    except Coupon.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Invalid coupon code'})
+
+    if not coupon.is_valid:
+        print(f"Coupon not valid")  
+        return JsonResponse({'success': False, 'message': 'Coupon expired or invalid'})
+
+    if CouponUsage.objects.filter(coupon=coupon, user=request.user).exists():
+        return JsonResponse({'success': False, 'message': 'You already used this coupon'})
+
+    request.session['applied_coupon_id'] = coupon.id
+
+    try:
+        cart = Cart.objects.get(user=request.user)
+        cart_items = cart.items.filter(product__status='published', product__stock_quantity__gt=0)
+        
+        if not cart_items.exists():
+            return JsonResponse({
+                'success': False, 
+                'message': 'Your cart is empty'
+            })
+        
+        subtotal = sum(item.subtotal for item in cart_items)
+        print(f"Subtotal: {subtotal}")  
+        
+        if not isinstance(subtotal, Decimal):
+            subtotal = Decimal(str(subtotal))
+        
+        discount = coupon.calculate_discount(subtotal)
+        print(f"Final discount: {discount}")  
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Coupon "{coupon.code}" applied!',
+            'coupon_code': coupon.code,
+            'discount': float(discount),
+            'new_total': float(subtotal - discount)
+        })
+        
+    except Cart.DoesNotExist:
+        return JsonResponse({
+            'success': False, 
+            'message': 'Cart not found'
+        })
+    except Exception as e:
+        print(f"Error in apply_coupon_view: {e}") 
+        return JsonResponse({
+            'success': False, 
+            'message': 'Error applying coupon'
+        })
+
+@login_required
+def remove_coupon_view(request):
+    """Remove applied coupon"""
+    if 'applied_coupon_id' in request.session:
+        del request.session['applied_coupon_id']
+    
+    try:
+        cart = Cart.objects.get(user=request.user)
+        cart_items = cart.items.filter(product__status='published', product__stock_quantity__gt=0)
+        subtotal = sum(item.subtotal for item in cart_items)
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Coupon removed',
+            'new_total': float(subtotal)
+        })
+    except Cart.DoesNotExist:
+        return JsonResponse({
+            'success': True,
+            'message': 'Coupon removed'
+        })
+    
+    return JsonResponse({
+        'success': False,
+        'message': 'No coupon to remove'
+    })
+
+
+@login_required
+def wishlist_view(request):
+    """Render wishlist page (already supplied template works)"""
+    wishlist, _ = Wishlist.objects.get_or_create(user=request.user)
+    items = wishlist.items.select_related('product').prefetch_related('product__images')
+    available, unavailable = [], []
+    for item in items:
+        (available if item.product.status == 'published' and item.product.stock_quantity > 0 else unavailable).append(item)
+    return render(request, 'wishlist/wishlist.html', {
+        'available_items': available,
+        'unavailable_items': unavailable,
+        'total_items': len(available) + len(unavailable),
+    })
+
+
+@login_required
+def add_to_wishlist_view(request, product_id):
+    """AJAX add -> returns JSON"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid method'})
+    product = get_object_or_404(Product, id=product_id, status='published')
+    wishlist, _ = Wishlist.objects.get_or_create(user=request.user)
+    obj, created = WishlistItem.objects.get_or_create(wishlist=wishlist, product=product)
+    return JsonResponse({
+        'success': True,
+        'created': created,          # False = already existed
+        'message': 'Added to wishlist' if created else 'Already in wishlist',
+        'wishlist_count': wishlist.items.count()
+    })
+
+
+@login_required
+def remove_from_wishlist_view(request, product_id):
+    """AJAX remove -> returns JSON"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid method'})
+    wishlist = get_object_or_404(Wishlist, user=request.user)
+    WishlistItem.objects.filter(wishlist=wishlist, product_id=product_id).delete()
+    return JsonResponse({
+        'success': True,
+        'message': 'Removed from wishlist',
+        'wishlist_count': wishlist.items.count()
+    })
+
+@login_required
+def wishlist_item_count(request):
+    """Return JSON {count: n} for header badge"""
+    wishlist = Wishlist.objects.filter(user=request.user).first()
+    count = wishlist.items.count() if wishlist else 0
+    return JsonResponse({'count': count})   
+
+from .models import Wallet
+from django.views.decorators.http import require_POST
+logger = logging.getLogger(__name__)
+
+@login_required
+def wallet_balance(request):
+    """AJAX: return current balance + max usable amount for checkout."""
+    wallet, _ = Wallet.objects.get_or_create(user=request.user)
+    return JsonResponse({'balance': float(wallet.balance)})
+
+
+@login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+def wallet_view(request):
+    """Display user's wallet with transaction history"""
+    try:
+        wallet, created = Wallet.objects.get_or_create(user=request.user)
+        transactions = wallet.transactions.all()[:20]  # Last 20 transactions
+        
+        context = {
+            'wallet': wallet,
+            'transactions': transactions,
+        }
+        return render(request, 'wallet/wallet.html', context)
+    except Exception as e:
+        logger.error(f"Error loading wallet: {e}")
+        messages.error(request, "Error loading wallet")
+        return redirect('user_profile')
+
+
+@login_required
+@require_POST
+def wallet_payment_view(request):
+    """Pay with wallet – redirects to order-success on success"""
+    try:
+        cart = Cart.objects.get(user=request.user)
+        cart_items = cart.items.filter(product__status='published', product__stock_quantity__gt=0)
+        if not cart_items.exists():
+            messages.error(request, 'Your cart is empty')
+            return redirect('checkout')
+
+        subtotal = sum(item.subtotal for item in cart_items)
+        taxes = subtotal * Decimal('0.18')
+        shipping = Decimal('50.00') if subtotal < 1000 else Decimal('0.00')
+
+        coupon_discount = Decimal('0.00')
+        applied_coupon = None
+        if 'applied_coupon_id' in request.session:
+            try:
+                coupon = Coupon.objects.get(id=request.session['applied_coupon_id'])
+                if coupon.is_valid:
+                    coupon_discount = coupon.calculate_discount(subtotal)
+                    applied_coupon = coupon
+            except Coupon.DoesNotExist:
+                del request.session['applied_coupon_id']
+
+        grand_total = subtotal + taxes + shipping - coupon_discount
+
+        wallet, _ = Wallet.objects.get_or_create(user=request.user)
+        if not wallet.can_pay(grand_total):
+            messages.error(request, f'Insufficient wallet balance (₹{wallet.balance})')
+            return redirect('checkout')
+
+        address_id = request.POST.get('address')
+        if not address_id:
+            messages.error(request, 'Please select a delivery address')
+            return redirect('checkout')
+
+        shipping_address = get_object_or_404(UserAddress, id=address_id, user=request.user)
+
+        with transaction.atomic():
+            order = Order.objects.create(
+                user=request.user,
+                shipping_address=shipping_address,
+                total_amount=grand_total,
+                payment_method='wallet',
+                payment_status='paid',
+                subtotal=subtotal,
+                tax_amount=taxes,
+                shipping_charge=shipping,
+                discount_amount=coupon_discount,
+                coupon=applied_coupon,
+                coupon_discount=coupon_discount,
+                wallet_payment_amount=grand_total
+            )
+
+            for item in cart_items:
+                OrderItem.objects.create(
+                    order=order,
+                    product=item.product,
+                    product_name=item.product.name,
+                    product_price=item.product.get_discounted_price(),
+                    quantity=item.quantity
+                )
+                product = item.product
+                product.stock_quantity -= item.quantity
+                product.save()
+
+            wallet.debit(grand_total, order, f"Payment for order {order.order_number}")
+
+            if applied_coupon:
+                CouponUsage.objects.create(coupon=applied_coupon, user=request.user, order=order)
+                del request.session['applied_coupon_id']
+
+            cart.items.all().delete()
+
+        messages.success(request, 'Order placed successfully!')
+        return redirect('order_success', order_id=order.order_number)   # ← redirect
+
+    except Exception as e:
+        logger.error(f"Wallet payment error: {e}")
+        messages.error(request, 'Error processing wallet payment')
+        return redirect('checkout')
+            
+    except UserAddress.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Selected address not found'
+        })
+    except Cart.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Cart not found'
+        })
+    except Exception as e:
+        logger.error(f"Error in wallet payment: {e}")
+        return JsonResponse({
+            'success': False,
+            'message': 'Error processing wallet payment'
+        })
+
+
+@login_required
+@require_POST
+def process_return_refund_view(request, order_id):
+    """Process return refund to wallet (requires admin confirmation)"""
+    try:
+        order = get_object_or_404(Order, order_number=order_id, user=request.user)
+        
+        if not order.can_be_returned:
+            return JsonResponse({
+                'success': False,
+                'message': 'This order cannot be returned'
+            })
+        
+        if order.status == 'refund_pending':
+            return JsonResponse({
+                'success': False,
+                'message': 'Refund already requested and pending approval'
+            })
+        
+        order.status = 'refund_pending'
+        order.refund_requested_at = timezone.now()
+        order.save()
+        
+        OrderStatusHistory.objects.create(
+            order=order,
+            old_status='delivered',
+            new_status='refund_pending',
+            changed_by=request.user.email,
+            notes="Return requested – refund pending admin approval"
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Return request submitted. Refund will be processed after admin approval.'
+        })
+        
+    except Order.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Order not found'
+        })
+    except Exception as e:
+        logger.error(f"Error processing return refund: {e}")
+        return JsonResponse({
+            'success': False,
+            'message': 'Error processing return request'
+        })
+
+
+@login_required
+def confirm_return_refund_view(request, order_id):
+    """Admin confirmation for return refunds"""
+    if not request.user.is_staff:
+        messages.error(request, "You don't have permission to perform this action")
+        return redirect('admin:index')
+    
+    try:
+        order = get_object_or_404(Order, order_number=order_id)
+        
+        if order.status != 'refund_pending':
+            messages.error(request, "This order is not pending refund")
+            return redirect('admin:authenticate_order_changelist')
+        
+        if order.process_wallet_refund(processed_by=request.user.email):
+            messages.success(request, f"Refund processed successfully for order {order.order_number}")
+        else:
+            messages.error(request, "Error processing refund")
+        
+        return redirect('admin:authenticate_order_changelist')
+        
+    except Order.DoesNotExist:
+        messages.error(request, "Order not found")
+        return redirect('admin:authenticate_order_changelist')
+    except Exception as e:
+        logger.error(f"Error confirming return refund: {e}")
+        messages.error(request, "Error processing refund")
+        return redirect('admin:authenticate_order_changelist')
+
+
+@login_required
+@require_POST
+def wallet_add(request):
+    """Manual wallet top-up for testing / admin use."""
+    try:
+        amount = float(request.POST.get('amount', 0))
+        if amount <= 0:
+            return JsonResponse({'success': False, 'message': 'Amount must be > 0'})
+        wallet, _ = Wallet.objects.get_or_create(user=request.user)
+        wallet.credit(amount, note='Manual top-up')
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
+
+@login_required
+@require_POST
+def place_order_cod_view(request):
+    """Cash on Delivery – re-use existing COD logic."""
+    return place_order_view(request)
+
+
+
+
+
+@login_required
+def wallet_topup_order(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False}, status=405)
+    try:
+        amount = float(request.POST.get('amount', 0))
+        if amount <= 0:
+            return JsonResponse({'success': False, 'message': 'Amount must be > 0'})
+        amount_paise = int(amount * 100)
+
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID,
+                                       settings.RAZORPAY_KEY_SECRET))
+        rz_order = client.order.create({
+            'amount': amount_paise,
+            'currency': 'INR',
+            'payment_capture': '1'
+        })
+        return JsonResponse({
+            'success': True,
+            'order_id': rz_order['id'],
+            'amount': amount_paise,
+            'razorpay_key': settings.RAZORPAY_KEY_ID,
+            'prefill': {
+                'name': request.user.full_name,
+                'email': request.user.email,
+                'contact': request.user.phone_number
+            }
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
+@method_decorator(csrf_exempt, name='dispatch')
+class WalletTopupCallback(View):
+    def post(self, request, *args, **kwargs):
+        try:
+            client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID,
+                                           settings.RAZORPAY_KEY_SECRET))
+            client.utility.verify_payment_signature({
+                'razorpay_order_id': request.POST.get('razorpay_order_id'),
+                'razorpay_payment_id': request.POST.get('razorpay_payment_id'),
+                'razorpay_signature': request.POST.get('razorpay_signature')
+            })
+            rz_order = client.order.fetch(request.POST.get('razorpay_order_id'))
+            amount_rs = Decimal(rz_order['amount']) / 100
+
+            wallet, _ = Wallet.objects.get_or_create(user=request.user)
+            wallet.credit(amount_rs, note=f'Topup {request.POST.get("razorpay_payment_id")}')
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)}, status=400)

@@ -1,0 +1,224 @@
+{% extends "admin/base_admin.html" %}
+{% load static %}
+
+{% block title %}Return Request #{{ return_request.id }} - Sitwell Admin{% endblock %}
+
+{% block body %}
+<!-- Header -->
+<header class="bg-white shadow-sm border-b border-gray-100 px-8 py-5 flex-shrink-0">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl font-black" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Return Request Details</h1>
+      <nav class="flex items-center space-x-2 text-sm text-gray-500 mt-2">
+        <a href="{% url 'customeradmin:admin_dashboard' %}" class="text-purple-600 hover:text-purple-800 font-medium transition-colors">
+          <i class="fas fa-home mr-1"></i>Dashboard
+        </a>
+        <i class="fas fa-chevron-right text-xs"></i>
+        <a href="{% url 'customeradmin:return_requests_list' %}" class="text-purple-600 hover:text-purple-800 font-medium transition-colors">Return Requests</a>
+        <i class="fas fa-chevron-right text-xs"></i>
+        <span class="font-medium">#{{ return_request.id }}</span>
+      </nav>
+    </div>
+    <div class="flex items-center space-x-3">
+      <a href="{% url 'customeradmin:return_requests_list' %}" class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-bold transition-all">
+        <i class="fas fa-arrow-left mr-2"></i>Back to Return Requests
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main class="flex-1 overflow-auto p-8">
+  <!-- Return Request Header Card -->
+  <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-8 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-4">
+        <p class="text-sm font-bold text-gray-500 uppercase mb-2">Request ID</p>
+        <p class="text-2xl font-black text-gray-900">#{{ return_request.id }}</p>
+      </div>
+
+      <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4">
+        <p class="text-sm font-bold text-gray-500 uppercase mb-2">Status</p>
+        {% if return_request.status == 'pending' %}
+          <span class="inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-bold rounded-full">
+            <i class="fas fa-clock mr-2"></i>Pending
+          </span>
+        {% elif return_request.status == 'approved' %}
+          <span class="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 text-sm font-bold rounded-full">
+            <i class="fas fa-check mr-2"></i>Approved
+          </span>
+        {% elif return_request.status == 'rejected' %}
+          <span class="inline-flex items-center px-3 py-1 bg-red-100 text-red-800 text-sm font-bold rounded-full">
+            <i class="fas fa-times mr-2"></i>Rejected
+          </span>
+        {% endif %}
+      </div>
+
+      <div class="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-4">
+        <p class="text-sm font-bold text-gray-500 uppercase mb-2">Refund Amount</p>
+        <p class="text-2xl font-black text-purple-600">₹{{ return_request.refund_amount|floatformat:2 }}</p>
+      </div>
+
+      <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4">
+        <p class="text-sm font-bold text-gray-500 uppercase mb-2">Request Date</p>
+        <p class="text-lg font-bold text-gray-900">{{ return_request.created_at|date:"d M Y" }}</p>
+        <p class="text-sm text-gray-600 mt-1">{{ return_request.created_at|date:"h:i A" }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer and Order Information -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Customer Information -->
+    <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6">
+      <h2 class="text-xl font-black text-gray-900 mb-4">
+        <i class="fas fa-user mr-2 text-purple-600"></i>Customer Information
+      </h2>
+      <div class="space-y-3">
+        <div class="flex justify-between">
+          <span class="text-gray-600">Name:</span>
+          <span class="font-bold">{{ customer.first_name }} {{ customer.last_name }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Email:</span>
+          <span class="font-bold">{{ customer.email }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Phone:</span>
+          <span class="font-bold">{{ customer.phone|default:"N/A" }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Information -->
+    <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6">
+      <h2 class="text-xl font-black text-gray-900 mb-4">
+        <i class="fas fa-shopping-bag mr-2 text-purple-600"></i>Order Information
+      </h2>
+      <div class="space-y-3">
+        <div class="flex justify-between">
+          <span class="text-gray-600">Order Number:</span>
+          <span class="font-bold">{{ order.order_number }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Order Date:</span>
+          <span class="font-bold">{{ order.created_at|date:"d M Y" }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Payment Method:</span>
+          <span class="font-bold">{{ order.payment_method|title }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Order Total:</span>
+          <span class="font-bold text-purple-600">₹{{ order.total_amount|floatformat:2 }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Return Items -->
+  <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden mb-8">
+    <div class="px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
+      <h2 class="text-xl font-black text-gray-900">
+        <i class="fas fa-box mr-2 text-purple-600"></i>Return Items
+      </h2>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Product</th>
+            <th class="px-6 py-3 text-right text-xs font-black text-gray-700 uppercase tracking-wider">Quantity</th>
+            <th class="px-6 py-3 text-right text-xs font-black text-gray-700 uppercase tracking-wider">Unit Price</th>
+            <th class="px-6 py-3 text-right text-xs font-black text-gray-700 uppercase tracking-wider">Total</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for item in items %}
+          <tr>
+            <td class="px-6 py-4">
+              <div class="flex items-center">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold mr-3">
+                  <i class="fas fa-box text-sm"></i>
+                </div>
+                <span class="font-bold text-gray-900">{{ item.product_name }}</span>
+              </div>
+            </td>
+            <td class="px-6 py-4 text-right text-sm font-bold text-gray-700">{{ item.quantity }}</td>
+            <td class="px-6 py-4 text-right text-sm font-bold text-gray-700">₹{{ item.unit_price|floatformat:2 }}</td>
+            <td class="px-6 py-4 text-right text-lg font-black text-purple-600">₹{{ item.total_price|floatformat:2 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Return Reason -->
+  <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 mb-8">
+    <h2 class="text-xl font-black text-gray-900 mb-4">
+      <i class="fas fa-comment mr-2 text-purple-600"></i>Return Reason
+    </h2>
+    <div class="bg-gray-50 rounded-xl p-4">
+      <p class="text-gray-700">{{ return_request.reason|linebreaks }}</p>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  {% if return_request.status == 'pending' %}
+  <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6">
+    <h2 class="text-xl font-black text-gray-900 mb-4">
+      <i class="fas fa-cogs mr-2 text-purple-600"></i>Process Return Request
+    </h2>
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      
+      <div class="flex flex-wrap gap-4">
+        <button type="submit" name="action" value="approve" 
+                class="px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-bold hover:shadow-lg transition-all">
+          <i class="fas fa-check mr-2"></i>Approve & Refund to Wallet
+        </button>
+        
+        <button type="submit" name="action" value="reject" 
+                class="px-8 py-4 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-bold hover:shadow-lg transition-all">
+          <i class="fas fa-times mr-2"></i>Reject Return Request
+        </button>
+        
+        <a href="{% url 'customeradmin:return_requests_list' %}" 
+           class="px-8 py-4 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-bold transition-all">
+          <i class="fas fa-arrow-left mr-2"></i>Back to List
+        </a>
+      </div>
+    </form>
+  </div>
+  {% else %}
+  <!-- Already Processed -->
+  <div class="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-6">
+    <div class="flex items-center">
+      <div class="w-12 h-12 bg-yellow-500 rounded-xl flex items-center justify-center mr-4">
+        <i class="fas fa-info text-white text-xl"></i>
+      </div>
+      <div>
+        <h3 class="text-lg font-black text-gray-900">Return Request Already Processed</h3>
+        <p class="text-gray-600">
+          This return request was {{ return_request.status }} on {{ return_request.processed_at|date:"d M Y at h:i A" }}
+          {% if return_request.processed_by %}by {{ return_request.processed_by.first_name }} {{ return_request.processed_by.last_name }}{% endif %}
+        </p>
+      </div>
+    </div>
+    <div class="mt-4">
+      <a href="{% url 'customeradmin:return_requests_list' %}" 
+         class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:shadow-lg transition-all">
+        <i class="fas fa-arrow-left mr-2"></i>Back to Return Requests
+      </a>
+    </div>
+  </div>
+  {% endif %}
+</main>
+
+<style>
+  .fade-in { animation: fadeIn 0.6s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+{% endblock %}

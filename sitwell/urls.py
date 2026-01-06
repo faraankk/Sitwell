@@ -22,7 +22,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('authenticate.urls')),
-    path('staff/', include('customeradmin.urls')),
+    path('staff/', include('customeradmin.urls', namespace='customeradmin')),
     path('accounts/', include('allauth.urls')),
     # path("wishlist/", views.wishlist, name="wishlist"), 
 ]

@@ -1,0 +1,374 @@
+{% comment %} {% extends "admin/base_admin.html" %}
+{% load static %}
+{% block title %}Banner Management – Sitwell Admin{% endblock %}
+
+{% block body %}
+  <!-- ===== HEADER ===== -->
+  <header class="bg-white shadow-sm border-b border-gray-100 px-8 py-5 flex-shrink-0">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          Banner Management
+        </h1>
+        <nav class="flex items-center space-x-2 text-sm text-gray-500 mt-2">
+          <a href="{% url 'customeradmin:admin_dashboard' %}" class="text-purple-600 hover:text-purple-800 font-medium">
+            <i class="fas fa-home mr-1"></i>Dashboard
+          </a>
+          <i class="fas fa-chevron-right text-xs"></i>
+          <span class="font-medium">Banners</span>
+        </nav>
+      </div>
+      <div class="flex items-center space-x-3 bg-gradient-to-r from-blue-50 to-purple-50 px-4 py-2 rounded-xl">
+        <div class="w-2 h-2 bg-green-500 rounded-full pulse"></div>
+        <span class="text-sm font-bold text-gray-700">Farhaan</span>
+        <span class="text-xs text-gray-500 font-medium">Admin</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="flex-1 overflow-auto p-8">
+    <div class="max-w-7xl mx-auto space-y-8">
+
+      <!-- STATS CARDS -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-bold text-gray-500 uppercase mb-2">Total Banners</p>
+              <p class="text-3xl font-black text-gray-900">{{ total_banners }}</p>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <i class="fas fa-image text-white text-2xl"></i>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in" style="animation-delay: 0.1s;">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-bold text-gray-500 uppercase mb-2">Active</p>
+              <p class="text-3xl font-black text-green-600">{{ active_banners }}</p>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+              <i class="fas fa-check-circle text-white text-2xl"></i>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in" style="animation-delay: 0.2s;">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-bold text-gray-500 uppercase mb-2">Valid Now</p>
+              <p class="text-3xl font-black text-blue-600">{{ valid_banners }}</p>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
+              <i class="fas fa-clock text-white text-2xl"></i>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in" style="animation-delay: 0.3s;">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-bold text-gray-500 uppercase mb-2">Expired</p>
+              <p class="text-3xl font-black text-orange-600">{{ expired_banners }}</p>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+              <i class="fas fa-calendar-times text-white text-2xl"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADD BUTTON + SEARCH + FILTERS -->
+      <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 fade-in" style="animation-delay: 0.4s;">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div class="flex flex-wrap items-center gap-3">
+            <a href="{% url 'customeradmin:banner-add' %}"
+               class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:shadow-lg transition-all inline-flex items-center gap-2">
+              <i class="fas fa-plus mr-2"></i>Add Banner
+            </a>
+          </div>
+          
+          <!-- Search and Filters -->
+          <form method="get" class="flex flex-col sm:flex-row gap-3 flex-1 lg:justify-end">
+            <!-- Search -->
+            <div class="relative flex-1 sm:max-w-xs">
+              <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <input type="text" name="search" value="{{ search_query|default:'' }}" 
+                     placeholder="Search banners..." 
+                     class="w-full pl-11 pr-4 py-2 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-all text-sm">
+              {% if search_query %}
+                <a href="{% url 'customeradmin:banner-list' %}" 
+                   class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <i class="fas fa-times"></i>
+                </a>
+              {% endif %}
+            </div>
+            
+            <!-- Type Filter -->
+            <select name="type" onchange="this.form.submit()" 
+                    class="px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-all text-sm">
+              <option value="">All Types</option>
+              {% for type_value, type_label in banner_types %}
+                <option value="{{ type_value }}" {% if current_type == type_value %}selected{% endif %}>
+                  {{ type_label }}
+                </option>
+              {% endfor %}
+            </select>
+            
+            <!-- Status Filter -->
+            <select name="status" onchange="this.form.submit()" 
+                    class="px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-all text-sm">
+              <option value="">All Status</option>
+              <option value="active" {% if current_status == 'active' %}selected{% endif %}>Active</option>
+              <option value="inactive" {% if current_status == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+            
+            <!-- Validity Filter -->
+            <select name="validity" onchange="this.form.submit()" 
+                    class="px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-all text-sm">
+              <option value="">All Validity</option>
+              <option value="valid" {% if current_validity == 'valid' %}selected{% endif %}>Valid Now</option>
+              <option value="expired" {% if current_validity == 'expired' %}selected{% endif %}>Expired</option>
+              <option value="upcoming" {% if current_validity == 'upcoming' %}selected{% endif %}>Upcoming</option>
+            </select>
+          </form>
+        </div>
+      </div>
+
+      <!-- BANNER TABLE -->
+      <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden fade-in" style="animation-delay: 0.5s;">
+        <div class="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+          <h2 class="text-2xl font-black text-gray-900">All Banners</h2>
+          <p class="text-sm text-gray-500 mt-1">Manage your website banners and promotional content</p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gray-50 border-b-2 border-gray-200">
+              <tr>
+                <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Banner</th>
+                <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Type</th>
+                <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Priority</th>
+                <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Validity</th>
+                <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Performance</th>
+                <th class="px-6 py-4 text-center text-xs font-black text-gray-700 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              {% for banner in banners %}
+                <tr class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all">
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-4">
+                      {% if banner.desktop_image %}
+                        <img src="{{ banner.desktop_image.url }}" alt="{{ banner.title }}" 
+                             class="w-16 h-12 object-cover rounded-lg border-2 border-gray-200">
+                      {% else %}
+                        <div class="w-16 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                          <i class="fas fa-image text-gray-400 text-xl"></i>
+                        </div>
+                      {% endif %}
+                      <div>
+                        <div class="font-bold text-gray-900">{{ banner.title }}</div>
+                        {% if banner.headline %}
+                          <div class="text-sm text-gray-600">{{ banner.headline|truncatechars:50 }}</div>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full">
+                      {{ banner.get_banner_type_display }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class="px-3 py-1 bg-gray-100 text-gray-800 text-xs font-bold rounded-full">
+                      {{ banner.priority }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    {% if banner.is_active %}
+                      <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">Active</span>
+                    {% else %}
+                      <span class="px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full">Inactive</span>
+                    {% endif %}
+                  </td>
+                  <td class="px-6 py-4 text-sm">
+                    {% if banner.valid_to.date < today %}
+                      <span class="text-red-600">Expired</span>
+                    {% elif banner.valid_from > today %}
+                      <span class="text-blue-600">Upcoming</span>
+                    {% else %}
+                      <span class="text-green-600">Valid Now</span>
+                    {% endif %}
+                    <div class="text-xs text-gray-500">
+                      {{ banner.valid_from|date:"d M Y" }} - {{ banner.valid_to|date:"d M Y" }}
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 text-sm">
+                    <div class="flex flex-col gap-1">
+                      <span class="text-gray-600">
+                        <i class="fas fa-mouse-pointer mr-1"></i>{{ banner.click_count }} clicks
+                      </span>
+                      <span class="text-gray-600">
+                        <i class="fas fa-eye mr-1"></i>{{ banner.impression_count }} views
+                      </span>
+                      <span class="text-green-600 font-bold">
+                        {{ banner.click_through_rate|floatformat:1 }}% CTR
+                      </span>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <div class="flex items-center justify-center gap-2">
+                      <button onclick="toggleBannerStatus({{ banner.id }}, {{ banner.is_active|lower }})"
+                              class="p-2 {% if banner.is_active %}text-orange-600{% else %}text-green-600{% endif %} hover:bg-gray-50 rounded-lg transition-all" 
+                              title="{% if banner.is_active %}Deactivate{% else %}Activate{% endif %}">
+                        <i class="fas {% if banner.is_active %}fa-pause{% else %}fa-play{% endif %}"></i>
+                      </button>
+                      <a href="{% url 'customeradmin:banner-edit' banner.id %}" 
+                         class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Edit">
+                        <i class="fas fa-edit"></i>
+                      </a>
+                      <button onclick="confirmDelete('{{ banner.title }}', {{ banner.id }})"
+                              class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Delete">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="7" class="px-6 py-20 text-center">
+                    <div class="inline-flex items-center justify-center w-24 h-24 bg-gray-100 rounded-full mb-6">
+                      <i class="fas fa-image text-4xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">No Banners Found</h3>
+                    <p class="text-gray-500 mb-4">Create your first banner to get started</p>
+                    <a href="{% url 'customeradmin:banner-add' %}"
+                       class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:shadow-lg transition-all inline-block">
+                      <i class="fas fa-plus mr-2"></i>Add Banner
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- PAGINATION -->
+        {% if page_obj.paginator.num_pages > 1 %}
+          <div class="px-8 py-4 border-t border-gray-100 bg-gray-50">
+            <div class="flex items-center justify-between">
+              <p class="text-sm text-gray-600">
+                Showing <span class="font-bold text-purple-600">{{ page_obj.start_index }}</span> to
+                <span class="font-bold text-purple-600">{{ page_obj.end_index }}</span> of
+                <span class="font-bold text-purple-600">{{ page_obj.paginator.count }}</span> entries
+              </p>
+              <div class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                  <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_validity %}&validity={{ current_validity }}{% endif %}"
+                     class="px-4 py-2 border-2 border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-100 transition-all">
+                    <i class="fas fa-chevron-left"></i>
+                  </a>
+                {% endif %}
+                <span class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold">
+                  {{ page_obj.number }}
+                </span>
+                {% if page_obj.has_next %}
+                  <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_validity %}&validity={{ current_validity }}{% endif %}"
+                     class="px-4 py-2 border-2 border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-100 transition-all">
+                    <i class="fas fa-chevron-right"></i>
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== TOAST + CONFIRM ===== -->
+  <div id="toast-container" style="position:fixed; top:16px; right:16px; z-index:9999; display:flex; flex-direction:column; gap:8px;"></div>
+  <div id="confirm-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:9998;">
+    <div style="background:#fff; width:460px; max-width:92vw; border-radius:20px; box-shadow:0 25px 60px rgba(0,0,0,0.3); overflow:hidden;">
+      <div style="padding:24px; border-bottom:2px solid #e5e7eb; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <h3 style="margin:0; font-size:20px; font-weight:900; color:#fff;">
+          <i class="fas fa-exclamation-triangle mr-2"></i>Confirm Action
+        </h3>
+      </div>
+      <div id="confirm-message" style="padding:24px; color:#374151; font-size:15px; line-height:1.6;"></div>
+      <div style="display:flex; gap:12px; justify-content:flex-end; padding:20px 24px; background:#f9fafb; border-top:2px solid #e5e7eb;">
+        <button id="confirm-cancel" type="button" class="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50 font-bold transition-all">
+          <i class="fas fa-times mr-2"></i>Cancel
+        </button>
+        <button id="confirm-ok" type="button" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-lg font-bold transition-all">
+          <i class="fas fa-check mr-2"></i>Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .fade-in { animation:fadeIn 0.6s ease-out; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    .pulse { animation:pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  </style>
+
+  <script>
+    /* ===== same toast & confirm you already use ===== */
+    function showToast(msg, type='info', t=3000){
+      const css={
+        success:{bg:'linear-gradient(135deg,#d1fae5,#a7f3d0)',c:'#166534',icon:'fa-check-circle'},
+        error  :{bg:'linear-gradient(135deg,#fef2f2,#fecaca)',c:'#b91c1c',icon:'fa-times-circle'}
+      };
+      const s=css[type]||css.success;
+      const el=document.createElement('div');
+      el.style.cssText=`padding:16px 20px;border-radius:12px;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.15);display:flex;align-items:center;gap:12px;background:${s.bg};color:${s.c};font-weight:600;border:2px solid ${s.c}33;animation:slideIn .3s;min-width:300px;`;
+      el.innerHTML=`<i class="fas ${s.icon}" style="font-size:20px"></i><div style="flex:1">${msg}</div><button onclick="this.parentElement.remove()" style="border:none;background:transparent;cursor:pointer;color:${s.c};font-size:18px"><i class="fas fa-times"></i></button>`;
+      document.getElementById('toast-container').appendChild(el);
+      if(t) setTimeout(()=>el.remove(),t);
+    }
+    
+    function confirmDialog(msg){
+      return new Promise(resolve=>{
+        const overlay=document.getElementById('confirm-overlay');
+        document.getElementById('confirm-message').textContent=msg;
+        overlay.style.display='flex';
+        const ok=document.getElementById('confirm-ok'), cancel=document.getElementById('confirm-cancel');
+        const clean=()=>{ overlay.style.display='none'; ok.onclick=cancel.onclick=null; };
+        ok.onclick=()=>{ clean(); resolve(true); };
+        cancel.onclick=()=>{ clean(); resolve(false); };
+      });
+    }
+    
+    async function confirmDelete(title, id){
+      const ok=await confirmDialog(`🗑️  Delete banner "${title}" ?\n\nThis action cannot be undone.`);
+      if(!ok) return;
+      showToast('Deleting…','info',1500);
+      fetch(`/staff/banners/delete/${id}/`,{
+        method:'POST',
+        headers:{'X-CSRFToken':'{{ csrf_token }}','Content-Type':'application/json'}
+      }).then(r=>r.json()).then(d=>{
+        if(d.success){ showToast('✅ Banner deleted','success'); setTimeout(()=>location.reload(),700); }
+        else showToast('❌ '+d.error,'error');
+      }).catch(()=>showToast('Network error','error'));
+    }
+    
+    async function toggleBannerStatus(id, currentStatus){
+      const action = currentStatus ? 'deactivate' : 'activate';
+      const ok=await confirmDialog(`${action.charAt(0).toUpperCase() + action.slice(1)} banner?`);
+      if(!ok) return;
+      
+      showToast(`${action}ing…`,'info',1500);
+      fetch(`/staff/banners/toggle/${id}/`,{
+        method:'POST',
+        headers:{'X-CSRFToken':'{{ csrf_token }}','Content-Type':'application/json'}
+      }).then(r=>r.json()).then(d=>{
+        if(d.success){ showToast(`✅ Banner ${action}d`,'success'); setTimeout(()=>location.reload(),700); }
+        else showToast('❌ '+d.error,'error');
+      }).catch(()=>showToast('Network error','error'));
+    }
+  </script>
+{% endblock %} {% endcomment %}

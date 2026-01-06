@@ -116,63 +116,65 @@
 
         {% with url_name=request.resolver_match.url_name %}
         <div class="space-y-2">
-          <a href="{% url 'admin_dashboard' %}"
+          <a href="{% url 'customeradmin:admin_dashboard' %}"
              class="sidebar-item flex items-center px-4 py-3 text-sm font-medium rounded-xl {% if url_name == 'admin_dashboard' %}active text-white{% else %}text-white/80 hover:text-white{% endif %}">
             <i class="fas fa-home w-5 text-center mr-3 text-lg"></i>
             <span>Dashboard</span>
           </a>
 
-          <a href="{% url 'product-list' %}"
+          <a href="{% url 'customeradmin:product-list' %}"
              class="sidebar-item flex items-center px-4 py-3 text-sm font-medium rounded-xl {% if url_name == 'product-list' or url_name == 'product-add' or url_name == 'product-edit' %}active text-white{% else %}text-white/80 hover:text-white{% endif %}">
             <i class="fas fa-box w-5 text-center mr-3 text-lg"></i>
             <span>Products</span>
           </a>
 
-          <a href="{% url 'category-list' %}"
+          <a href="{% url 'customeradmin:category-list' %}"
              class="sidebar-item flex items-center px-4 py-3 text-sm font-medium rounded-xl {% if url_name == 'category-list' %}active text-white{% else %}text-white/80 hover:text-white{% endif %}">
             <i class="fas fa-tags w-5 text-center mr-3 text-lg"></i>
             <span>Categories</span>
           </a>
 
-          <a href="{% url 'user-management' %}"
+          <a href="{% url 'customeradmin:user-management' %}"
              class="sidebar-item flex items-center px-4 py-3 text-sm font-medium rounded-xl {% if url_name == 'user-management' %}active text-white{% else %}text-white/80 hover:text-white{% endif %}">
             <i class="fas fa-users-cog w-5 text-center mr-3 text-lg"></i>
             <span>User Management</span>
           </a>
 
-          <a href="#"
-             class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded-xl">
+          <!-- NEW: Coupon Management -->
+          <a href="{% url 'customeradmin:coupon-list' %}"
+             class="sidebar-item flex items-center px-4 py-3 text-sm font-medium rounded-xl {% if url_name == 'coupon-list' or url_name == 'coupon-add' %}active text-white{% else %}text-white/80 hover:text-white{% endif %}">
             <i class="fas fa-ticket-alt w-5 text-center mr-3 text-lg"></i>
             <span>Coupons</span>
           </a>
 
           <a href="#"
-             class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded-xl">
+             class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded
             <i class="fas fa-image w-5 text-center mr-3 text-lg"></i>
             <span>Banners</span>
           </a>
 
-          <a href="{% url 'order-list' %}"
+          <a href="{% url 'customeradmin:order-list' %}"
              class="sidebar-item flex items-center px-4 py-3 text-sm font-medium rounded-xl {% if url_name == 'order-list' %}active text-white{% else %}text-white/80 hover:text-white{% endif %}">
             <i class="fas fa-shopping-bag w-5 text-center mr-3 text-lg"></i>
             <span>Orders</span>
           </a>
 
-          <a href="{% url 'customer-list' %}"
+          <a href="{% url 'customeradmin:customer-list' %}"
              class="sidebar-item flex items-center px-4 py-3 text-sm font-medium rounded-xl {% if url_name == 'customer-list' %}active text-white{% else %}text-white/80 hover:text-white{% endif %}">
             <i class="fas fa-users w-5 text-center mr-3 text-lg"></i>
             <span>Customers</span>
           </a>
 
-          <a href="#"
-             class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded-xl">
+          <!-- NEW: Sales Report -->
+          <a href="{% url 'customeradmin:sales-report' %}"
+             class="sidebar-item flex items-center px-4 py-3 text-sm font-medium rounded-xl {% if url_name == 'sales-report' %}active text-white{% else %}text-white/80 hover:text-white{% endif %}">
             <i class="fas fa-chart-bar w-5 text-center mr-3 text-lg"></i>
             <span>Sales Report</span>
           </a>
 
           <!-- Logout -->
           <div class="mt-6 pt-6 border-t border-white/20">
-            <form action="{% url 'admin_logout' %}" method="post" style="width: 100%;">
+            <form action="{% url 'customeradmin:admin_logout' %}" method="post">
               {% csrf_token %}
               <button type="submit"
                       class="sidebar-item flex items-center px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded-xl w-full text-left border-none bg-transparent cursor-pointer">
@@ -188,7 +190,10 @@
 
     <!-- Main Content Area -->
     <div class="flex-1 flex flex-col overflow-hidden">
-      {% block body %}{% endblock %}
+      <!-- Page Header Area -->
+      <div class="flex-1 overflow-auto p-8">
+        {% block body %}{% endblock %}
+      </div>
     </div>
   </div>
 

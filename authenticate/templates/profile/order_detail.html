@@ -13,8 +13,7 @@
         margin: 20px auto;
         max-width: 1000px;
     }
-    
-    /* Beautiful Breadcrumbs */
+
     .breadcrumb {
         background: white;
         padding: 15px 20px;
@@ -29,45 +28,15 @@
         margin-left: auto;
         margin-right: auto;
     }
-    
-    .breadcrumb-item {
-        display: flex;
-        align-items: center;
-        color: #666;
-        font-size: 14px;
-    }
 
-    .breadcrumb-item a {
-        color: #666;
-        text-decoration: none;
-        transition: all 0.3s ease;
-    }
-    
-    .breadcrumb-item a:hover {
-        color: #667eea;
-    }
-    
-    .breadcrumb-item.active {
-        color: #667eea;
-        font-weight: 600;
-    }
-    
-    .breadcrumb-item::after {
-        content: '/';
-        margin: 0 10px;
-        color: #ddd;
-    }
-    
-    .breadcrumb-item:last-child::after {
-        content: '';
-        margin: 0;
-    }
+    .breadcrumb-item { display: flex; align-items: center; color: #666; font-size: 14px; }
+    .breadcrumb-item a { color: #666; text-decoration: none; transition: all 0.3s ease; }
+    .breadcrumb-item a:hover { color: #667eea; }
+    .breadcrumb-item.active { color: #667eea; font-weight: 600; }
+    .breadcrumb-item::after { content: '/'; margin: 0 10px; color: #ddd; }
+    .breadcrumb-item:last-child::after { content: ''; margin: 0; }
+    .breadcrumb-item i { margin-right: 6px; }
 
-    .breadcrumb-item i {
-        margin-right: 6px;
-    }
-
-    /* Order Header */
     .order-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         padding: 30px;
@@ -79,22 +48,9 @@
         align-items: center;
         box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
     }
+    .order-number { font-size: 28px; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.5px; }
+    .order-date { font-size: 14px; opacity: 0.95; display: flex; align-items: center; gap: 6px; }
 
-    .order-number {
-        font-size: 28px;
-        font-weight: 700;
-        margin-bottom: 8px;
-        letter-spacing: 0.5px;
-    }
-
-    .order-date {
-        font-size: 14px;
-        opacity: 0.95;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-    
     .order-info {
         background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         padding: 25px;
@@ -105,34 +61,11 @@
         gap: 20px;
         border: 1px solid #e9ecef;
     }
+    .info-item { padding: 15px; background: white; border-radius: 8px; transition: all 0.3s ease; }
+    .info-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .info-label { font-size: 12px; color: #6c757d; text-transform: uppercase; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.5px; }
+    .info-value { font-size: 16px; color: #333; font-weight: 600; }
 
-    .info-item {
-        padding: 15px;
-        background: white;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-
-    .info-item:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-
-    .info-label {
-        font-size: 12px;
-        color: #6c757d;
-        text-transform: uppercase;
-        font-weight: 700;
-        margin-bottom: 8px;
-        letter-spacing: 0.5px;
-    }
-
-    .info-value {
-        font-size: 16px;
-        color: #333;
-        font-weight: 600;
-    }
-    
     .item {
         display: flex;
         gap: 20px;
@@ -143,65 +76,16 @@
         transition: all 0.3s ease;
         background: white;
     }
+    .item:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.1); transform: translateY(-3px); border-color: #667eea; }
+    .item:last-child { margin-bottom: 0; }
 
-    .item:hover {
-        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        transform: translateY(-3px);
-        border-color: #667eea;
-    }
-    
-    .item:last-child {
-        margin-bottom: 0;
-    }
-    
-    .thumb {
-        width: 100px;  
-        height: 100px;
-        border-radius: 12px;
-        object-fit: cover;
-        border: 2px solid #e9ecef;
-        flex: 0 0 100px;
-    }
+    .thumb { width: 100px; height: 100px; border-radius: 12px; object-fit: cover; border: 2px solid #e9ecef; flex: 0 0 100px; }
+    .item-details { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+    .item-name { font-size: 18px; font-weight: 700; color: #333; margin-bottom: 8px; }
+    .item-quantity { font-size: 14px; color: #6c757d; margin: 5px 0; display: flex; align-items: center; gap: 6px; }
+    .item-price { font-size: 20px; color: #667eea; font-weight: 700; margin-top: 5px; }
 
-    .item-details {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-
-    .item-name {
-        font-size: 18px;
-        font-weight: 700;
-        color: #333;
-        margin-bottom: 8px;
-    }
-
-    .item-quantity {
-        font-size: 14px;
-        color: #6c757d;
-        margin: 5px 0;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .item-price {
-        font-size: 20px;
-        color: #667eea;
-        font-weight: 700;
-        margin-top: 5px;
-    }
-    
-    .order-status {
-        padding: 8px 20px;
-        border-radius: 25px;
-        font-size: 13px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
+    .order-status { padding: 8px 20px; border-radius: 25px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
     .status-pending { background: #fff3cd; color: #856404; }
     .status-confirmed { background: #d1ecf1; color: #0c5460; }
     .status-processing { background: #d4edda; color: #155724; }
@@ -209,7 +93,7 @@
     .status-delivered { background: #d4edda; color: #155724; }
     .status-cancelled { background: #f8d7da; color: #721c24; }
     .status-returned { background: #f8d7da; color: #721c24; }
-    
+
     .btn-primary {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: none;
@@ -224,13 +108,8 @@
         font-weight: 600;
         box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4); color: white; }
 
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
-        color: white;
-    }
-    
     .btn-secondary {
         background-color: #6c757d;
         border: none;
@@ -245,14 +124,8 @@
         transition: all 0.3s ease;
         font-weight: 600;
     }
+    .btn-secondary:hover { background-color: #5a6268; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3); color: white; }
 
-    .btn-secondary:hover {
-        background-color: #5a6268;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
-        color: white;
-    }
-    
     .btn-outline-danger {
         border: 2px solid #dc3545;
         color: #dc3545;
@@ -266,13 +139,7 @@
         transition: all 0.3s ease;
         font-weight: 600;
     }
-
-    .btn-outline-danger:hover {
-        background: #dc3545;
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-    }
+    .btn-outline-danger:hover { background: #dc3545; color: white; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3); }
 
     .action-buttons {
         display: flex;
@@ -294,12 +161,8 @@
         align-items: center;
         gap: 10px;
     }
+    .section-title i { color: #667eea; }
 
-    .section-title i {
-        color: #667eea;
-    }
-
-    /* Shipping Address Box */
     .shipping-address-box {
         background: linear-gradient(135deg, #f8f9ff 0%, #fff5f8 100%);
         padding: 25px;
@@ -320,73 +183,21 @@
         letter-spacing: 0.5px;
     }
 
-    .address-content {
-        color: #333;
-        line-height: 1.8;
-        font-size: 15px;
-    }
+    .address-content { color: #333; line-height: 1.8; font-size: 15px; }
 
-    .empty-items {
-        text-align: center;
-        padding: 60px 20px;
-        color: #6c757d;
-    }
-
-    .empty-items i {
-        font-size: 4rem;
-        margin-bottom: 20px;
-        opacity: 0.3;
-        color: #667eea;
-    }
+    .empty-items { text-align: center; padding: 60px 20px; color: #6c757d; }
+    .empty-items i { font-size: 4rem; margin-bottom: 20px; opacity: 0.3; color: #667eea; }
 
     @media (max-width: 768px) {
-        .content-card {
-            padding: 25px 20px;
-        }
-
-        .order-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 15px;
-            padding: 25px;
-        }
-
-        .order-number {
-            font-size: 22px;
-        }
-
-        .order-info {
-            grid-template-columns: 1fr;
-            padding: 20px;
-        }
-
-        .item {
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .thumb {
-            width: 100%;
-            height: auto;
-            flex: none;
-        }
-
-        .action-buttons {
-            flex-direction: column;
-        }
-
-        .btn-secondary {
-            margin-right: 0;
-            margin-bottom: 10px;
-            width: 100%;
-            justify-content: center;
-        }
-
-        .btn-primary,
-        .btn-outline-danger {
-            width: 100%;
-            justify-content: center;
-        }
+        .content-card { padding: 25px 20px; }
+        .order-header { flex-direction: column; align-items: flex-start; gap: 15px; padding: 25px; }
+        .order-number { font-size: 22px; }
+        .order-info { grid-template-columns: 1fr; padding: 20px; }
+        .item { flex-direction: column; gap: 15px; }
+        .thumb { width: 100%; height: auto; flex: none; }
+        .action-buttons { flex-direction: column; }
+        .btn-secondary { margin-right: 0; margin-bottom: 10px; width: 100%; justify-content: center; }
+        .btn-primary, .btn-outline-danger { width: 100%; justify-content: center; }
     }
 </style>
 {% endblock %}
@@ -394,30 +205,22 @@
 {% block banner %}{% endblock %}
 
 {% block content %}
-<!-- Beautiful Breadcrumb -->
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
         <li class="breadcrumb-item">
-            <a href="{% url 'dummy_home' %}">
-                <i class="fas fa-home"></i>Home
-            </a>
+            <a href="{% url 'dummy_home' %}"><i class="fas fa-home"></i>Home</a>
         </li>
         <li class="breadcrumb-item">
-            <a href="{% url 'user_profile' %}">
-                <i class="fas fa-user"></i>Profile
-            </a>
+            <a href="{% url 'user_profile' %}"><i class="fas fa-user"></i>Profile</a>
         </li>
         <li class="breadcrumb-item">
-            <a href="{% url 'user_orders' %}">
-                <i class="fas fa-shopping-bag"></i>My Orders
-            </a>
+            <a href="{% url 'user_orders' %}"><i class="fas fa-shopping-bag"></i>My Orders</a>
         </li>
         <li class="breadcrumb-item active" aria-current="page">Order #{{ order.order_number }}</li>
     </ol>
 </nav>
 
 <div class="content-card">
-    <!-- Order Header -->
     <div class="order-header">
         <div>
             <div class="order-number">Order #{{ order.order_number }}</div>
@@ -428,8 +231,7 @@
         </div>
         <span class="order-status status-{{ order.status }}">{{ order.get_status_display }}</span>
     </div>
-    
-    <!-- Order Info Grid -->
+
     <div class="order-info">
         <div class="info-item">
             <div class="info-label">Total Amount</div>
@@ -451,12 +253,9 @@
         {% endif %}
     </div>
 
-    <!-- Shipping Address -->
     {% if order.shipping_address %}
     <div class="shipping-address-box">
-        <div class="address-title">
-            <i class="fas fa-map-marker-alt"></i>Shipping Address
-        </div>
+        <div class="address-title"><i class="fas fa-map-marker-alt"></i>Shipping Address</div>
         <div class="address-content">
             <strong>{{ order.shipping_address.full_name }}</strong><br>
             {{ order.shipping_address.address_line_1 }}<br>
@@ -469,12 +268,9 @@
         </div>
     </div>
     {% endif %}
-    
-    <!-- Items Ordered -->
-    <h6 class="section-title">
-        <i class="fas fa-box"></i>Items Ordered
-    </h6>
-    
+
+    <h6 class="section-title"><i class="fas fa-box"></i>Items Ordered</h6>
+
     {% if items %}
         {% for item in items %}
         <div class="item">
@@ -487,9 +283,7 @@
             {% endif %}
             <div class="item-details">
                 <div class="item-name">{{ item.product_name }}</div>
-                <div class="item-quantity">
-                    <i class="fas fa-cube"></i>Quantity: {{ item.quantity }}
-                </div>
+                <div class="item-quantity"><i class="fas fa-cube"></i>Quantity: {{ item.quantity }}</div>
                 <div class="item-price">₹{{ item.total_price|floatformat:2 }}</div>
             </div>
         </div>
@@ -501,22 +295,25 @@
             <p>No items found in this order.</p>
         </div>
     {% endif %}
-    
-    <!-- Action Buttons -->
+
     <div class="action-buttons">
         <a href="{% url 'user_orders' %}" class="btn-secondary">
             <i class="fas fa-arrow-left"></i>Back to Orders
         </a>
+
         {% if order.can_be_cancelled %}
+            <!-- ✅ Directly go to cancel_order page (GET) -->
             <a href="{% url 'cancel_order' order.order_number %}" class="btn-outline-danger">
                 <i class="fas fa-times"></i>Cancel Order
             </a>
         {% endif %}
+
         {% if order.can_be_returned %}
             <a href="{% url 'return_order' order.order_number %}" class="btn-outline-danger">
                 <i class="fas fa-undo"></i>Request Return
             </a>
         {% endif %}
+
         <a href="{% url 'download_invoice' order.order_number %}" class="btn-primary">
             <i class="fas fa-download"></i>Download Invoice
         </a>

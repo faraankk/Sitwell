@@ -43,9 +43,10 @@ urlpatterns = [
     path('cart/count/', views.cart_item_count_view, name='cart_item_count'),
     
     # Wishlist URLs (uncomment if implemented)
-    # path('wishlist/', views.wishlist_view, name='wishlist'),
-    # path('wishlist/add/<int:product_id>/', views.add_to_wishlist_view, name='add_to_wishlist'),
-    # path('wishlist/remove/<int:product_id>/', views.remove_from_wishlist_view, name='remove_from_wishlist'),
+    path('wishlist/', views.wishlist_view, name='wishlist'),
+    path('wishlist/add/<int:product_id>/', views.add_to_wishlist_view, name='add_to_wishlist'),
+    path('wishlist/remove/<int:product_id>/', views.remove_from_wishlist_view, name='remove_from_wishlist'),
+    path('wishlist/count/', views.wishlist_item_count, name='wishlist_item_count'),
     
     # Checkout and Order URLs
     path('checkout/', views.checkout_view, name='checkout'),
@@ -59,4 +60,28 @@ urlpatterns = [
     path('orders/<str:order_id>/cancel-item/<int:item_id>/', views.cancel_order_view, name='cancel_order_item'),
     path('orders/<str:order_id>/return/', views.return_order_view, name='return_order'),
     path('orders/<str:order_id>/invoice/', views.download_invoice_view, name='download_invoice'),
+
+    # razourpay urls
+    path('razorpay/create-order/', views.razorpay_create_order, name='razorpay_create_order'),
+    path('razorpay/callback/', views.RazorpayCallbackView.as_view(), name='razorpay_callback'),
+    path('order-failure/', views.order_failure_view, name='order_failure'),
+    path('orders/<str:orderid>/retry-payment/', views.retry_razorpay_payment, name='retry_razorpay_payment'),
+
+    # Coupon URLs
+    path('coupon/apply/', views.apply_coupon_view, name='apply_coupon'),
+    path('coupon/remove/', views.remove_coupon_view, name='remove_coupon'),
+
+    # Wallet URLs
+    path('wallet/balance/', views.wallet_balance, name='wallet_balance'),
+    path('wallet/', views.wallet_view, name='wallet'),
+    path('wallet/payment/', views.wallet_payment_view, name='wallet_payment'),
+    path('orders/<str:order_id>/return-refund/', views.process_return_refund_view, name='process_return_refund'),
+    path('admin/confirm-return-refund/<str:order_id>/', views.confirm_return_refund_view, name='confirm_return_refund'),
+
+    path('wallet/add/', views.wallet_add, name='wallet_add'),
+    path('place-order/cod/', views.place_order_cod_view, name='place_order_cod'),
+
+       
+    path('wallet/topup-order/', views.wallet_topup_order, name='wallet_topup_order'),
+    path('wallet/topup-callback/', views.WalletTopupCallback.as_view(), name='wallet_topup_callback'),
 ]

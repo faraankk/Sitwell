@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Sitwell{% endblock %}</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css " rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/home.css' %}">
     
     <style>
@@ -593,9 +593,9 @@
 
                     <div class="nav-icons">
                         <!-- Wishlist -->
-                        <a href="javascript:void(0)" class="nav-icon" title="Wishlist">
+                        <a href="{% url 'wishlist' %}" class="nav-icon" title="Wishlist">
                             <i class="fas fa-heart"></i>
-                            <span class="notification-badge">2</span>
+                            <span class="notification-badge wishlist-count">0</span>
                         </a>
 
                         <!-- Cart link -->
@@ -622,7 +622,7 @@
                                 <a href="{% url 'user_orders' %}">
                                     <i class="fas fa-shopping-bag"></i>My Orders
                                 </a>
-                                <a href="javascript:void(0)">
+                                <a href="{% url 'wishlist' %}">
                                     <i class="fas fa-heart"></i>My Wishlist
                                 </a>
                                 {% if user.is_staff %}
@@ -715,7 +715,7 @@
                             <a href="{% url 'product_list' %}" style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
                                 <i class="fas fa-chevron-right" style="margin-right: 8px; font-size: 10px; color: #667eea;"></i>Shop
                             </a>
-                            <a href="#" style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
+                            <a href="{% url 'wishlist' %}" style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
                                 <i class="fas fa-chevron-right" style="margin-right: 8px; font-size: 10px; color: #667eea;"></i>Wishlist
                             </a>
                             <a href="#" style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
@@ -871,19 +871,31 @@
             }
         }
 
-        // Update cart count
-        function updateCartCount() {
-            fetch('/cart/count/')
-                .then(response => response.json())
-                .then(data => {
-                    document.querySelector('.cart-count').textContent = data.count || 0;
-                })
-                .catch(error => console.error('Error:', error));
+        /* ======  wishlist counter support  ====== */
+        function updateWishlistCount(count){
+            document.querySelector('.wishlist-count').textContent = count || 0;
         }
+        /* auto-load on first paint */
+        document.addEventListener('DOMContentLoaded', () => {
+            if ("{{ user.is_authenticated|yesno:'1,0' }}" === "1") {
+                fetch("{% url 'wishlist_item_count' %}")
+                  .then(r => r.json())
+                  .then(d => updateWishlistCount(d.count));
+            }
+        });
 
-        // Load cart count on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            updateCartCount();
+
+        /* ======  cart counter support  ====== */
+        function updateCartCount(count){
+            document.querySelector('.cart-count').textContent = count || 0;
+        }
+        /* auto-load on first paint */
+        document.addEventListener('DOMContentLoaded', () => {
+            if ("{{ user.is_authenticated|yesno:'1,0' }}" === "1") {
+                fetch("{% url 'cart_item_count' %}")
+                .then(r => r.json())
+                .then(d => updateCartCount(d.count));
+            }
         });
     </script>
     {% block extra_js %}{% endblock %}
