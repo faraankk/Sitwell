@@ -16,6 +16,8 @@ urlpatterns = [
     path('products/deleted/', views.deleted_products_view, name='deleted-products'),
     path('customers/', views.customer_view, name='customer-list'),
     path('logout/', views.custom_logout, name='admin_logout'),
+
+    
     path('categories/', views.category_view, name='category-list'),
     path('categories/add/', views.add_category, name='add-category'),
     path('categories/edit/<int:category_id>/', views.edit_category, name='edit-category'),
@@ -23,8 +25,7 @@ urlpatterns = [
     path('categories/soft-delete/<int:category_id>/', views.soft_delete_category, name='soft-delete-category'),
     path('categories/restore/<int:category_id>/', views.restore_category, name='restore-category'),
     path('categories/deleted/', views.deleted_categories_view, name='deleted-categories'),  
-    path('categories/deleted/', views.deleted_categories_view, name='deleted-categories'),
-    path('categories/restore/<int:category_id>/', views.restore_category, name='restore-category'),
+    
     path('user-management/', views.user_management_view, name='user-management'),
     path('block-user/<int:user_id>/', views.block_user, name='block-user'),
     path('unblock-user/<int:user_id>/', views.unblock_user, name='unblock-user'),

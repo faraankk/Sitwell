@@ -34,7 +34,7 @@ from .forms import CouponForm
 from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.template.response import TemplateResponse
-
+from django.views.decorators.http import require_POST
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -588,42 +588,43 @@ def soft_delete_category(request, category_id):
         logger.error(f"Error soft deleting category: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)})
 
-@login_required
-def restore_category(request, category_id):
-    if not request.user.is_superuser:
-        messages.error(request, "You do not have permission.")
-        return redirect('/')
+# @login_required
+# def restore_category(request, category_id):
+#     if not request.user.is_superuser:
+#         messages.error(request, "You do not have permission.")
+#         return redirect('/')
     
-    try:
-        category = get_object_or_404(Category.all_objects, id=category_id)
-        if not category.is_deleted:
-            messages.warning(request, f"Category '{category.name}' is not deleted.")
-            return redirect('category-list')
+#     try:
+#         category = get_object_or_404(Category.all_objects, id=category_id)
+#         if not category.is_deleted:
+#             messages.warning(request, f"Category '{category.name}' is not deleted.")
+#             return redirect('category-list')
         
-        category.restore()
-        messages.success(request, f"Category '{category.name}' has been restored successfully.")
-    except Exception as e:
-        logger.error(f"Error restoring category: {str(e)}")
-        messages.error(request, f"Error restoring category: {str(e)}")
+#         category.restore()
+#         messages.success(request, f"Category '{category.name}' has been restored successfully.")
+#     except Exception as e:
+#         logger.error(f"Error restoring category: {str(e)}")
+#         messages.error(request, f"Error restoring category: {str(e)}")
     
-    return redirect('category-list')
+#     return redirect('category-list')
 
 @login_required
 def deleted_categories_view(request):
     if not request.user.is_superuser:
         messages.error(request, "You do not have permission to view this page.")
         return redirect('/')
-    
+
     deleted_categories = Category.all_objects.filter(is_deleted=True).order_by('-deleted_at')
-    
+
     paginator = Paginator(deleted_categories, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
-    return render(request, 'categories/deleted_categories.html', {  
+
+    return render(request, 'category/deleted_categories.html', {
         'categories': page_obj,
         'page_obj': page_obj,
     })
+
 
 @login_required
 @require_POST 
@@ -658,27 +659,36 @@ def deleted_categories_view(request):
         'page_obj': page_obj,
     })
 
+
+
 @login_required
+@require_POST
 def restore_category(request, category_id):
-    """Restore a soft-deleted category"""
     if not request.user.is_superuser:
         messages.error(request, "You do not have permission.")
         return redirect('/')
-    
+
+    category = get_object_or_404(Category.all_objects, id=category_id)
+
+    if not category.is_deleted:
+        messages.warning(
+            request,
+            f"Category '{category.name}' is not deleted."
+        )
+        return redirect("customeradmin:deleted-categories")
+
     try:
-        category = get_object_or_404(Category.all_objects, id=category_id)
-        if not category.is_deleted:
-            messages.warning(request, f"Category '{category.name}' is not deleted.")
-            return redirect('deleted-categories')
-        
         category.restore()
-        messages.success(request, f"Category '{category.name}' has been restored successfully.")
-        
+        messages.success(
+            request,
+            f"Category '{category.name}' restored successfully."
+        )
     except Exception as e:
-        logger.error(f"Error restoring category: {str(e)}")
-        messages.error(request, f"Error restoring category: {str(e)}")
-    
-    return redirect('deleted-categories')
+        logger.error(f"Error restoring category: {e}")
+        messages.error(request, "Error restoring category.")
+
+    return redirect("customeradmin:deleted-categories")
+
 
 
 '''User Management'''

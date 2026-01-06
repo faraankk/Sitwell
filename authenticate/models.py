@@ -6,6 +6,7 @@ from customeradmin.models import Product
 import random
 import string 
 from decimal import Decimal
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
-            raise ValueError("The Email field must be set")
+            raise ValueError("Email is required")
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
@@ -22,14 +23,14 @@ class CustomUserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('is_active', True)
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("is_active", True)
 
-        if extra_fields.get('is_staff') is not True:
-            raise ValueError('Superuser must have is_staff=True.')
-        if extra_fields.get('is_superuser') is not True:
-            raise ValueError('Superuser must have is_superuser=True.')
+        if not extra_fields.get("is_staff"):
+            raise ValueError("Superuser must have is_staff=True")
+        if not extra_fields.get("is_superuser"):
+            raise ValueError("Superuser must have is_superuser=True")
 
         return self.create_user(email, password, **extra_fields)
 
@@ -39,29 +40,32 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=50)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=15, unique=True)
+
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+
     otp = models.CharField(max_length=6, blank=True, null=True)
-    otp_created_at = models.DateTimeField(null=True, blank=True)
-    
+    otp_created_at = models.DateTimeField(blank=True, null=True)
+
     is_blocked = models.BooleanField(default=False)
-    blocked_at = models.DateTimeField(null=True, blank=True)
-    blocked_by = models.CharField(max_length=100, null=True, blank=True)
-    
-    profile_image = models.ImageField(upload_to='profile_images/', blank=True, null=True)
+    blocked_at = models.DateTimeField(blank=True, null=True)
+    blocked_by = models.CharField(max_length=100, blank=True, null=True)
+
+    profile_image = models.ImageField(upload_to="profile_images/", blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
-    bio = models.TextField(max_length=500, blank=True)
+    bio = models.TextField(blank=True, max_length=500)
+
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     new_email = models.EmailField(blank=True, null=True)
     email_verification_token = models.CharField(max_length=100, blank=True, null=True)
     email_token_created_at = models.DateTimeField(blank=True, null=True)
 
     objects = CustomUserManager()
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['first_name', 'last_name', 'phone_number']
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["first_name", "last_name", "phone_number"]
 
     def __str__(self):
         return self.email
@@ -69,34 +73,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
-    
-    def block_user(self, blocked_by=None):
-        self.is_blocked = True
-        self.blocked_at = timezone.now()
-        self.blocked_by = blocked_by or 'Admin'
-        self.save()
-    
-    def unblock_user(self):
-        self.is_blocked = False
-        self.blocked_at = None
-        self.blocked_by = None
-        self.save()
-
-    def clean_phone_number(self):
-        if self.phone_number:
-            self.phone_number = re.sub(r'[^\d]', '', self.phone_number)
-    
-    # def save(self, *args, **kwargs):
-    #     self.clean_phone_number()
-    #     super().save(*args, **kwargs)
-    
-    
-    def save(self, *args, **kwargs):
-        self.clean_phone_number()
-        is_new = self.pk is None
-        super().save(*args, **kwargs)
-        if is_new:
-            Referral.objects.get_or_create(referrer=self, defaults={'code': generate_ref_code()})
 
 class UserAddress(models.Model):
     ADDRESS_TYPES = [
@@ -127,12 +103,23 @@ class UserAddress(models.Model):
     
     def clean_phone_number(self):
         if self.phone_number:
-            self.phone_number = re.sub(r'[^\d]', '', self.phone_number)
+            self.phone_number = re.sub(r"[^\d]", "", self.phone_number)
+
+    def block_user(self, blocked_by="Admin"):
+        self.is_blocked = True
+        self.blocked_at = timezone.now()
+        self.blocked_by = blocked_by
+        self.save(update_fields=["is_blocked", "blocked_at", "blocked_by"])
+
+    def unblock_user(self):
+        self.is_blocked = False
+        self.blocked_at = None
+        self.blocked_by = None
+        self.save(update_fields=["is_blocked", "blocked_at", "blocked_by"])
 
     def save(self, *args, **kwargs):
         self.clean_phone_number()
         super().save(*args, **kwargs)
-
 
 class Order(models.Model):
     ORDER_STATUS_CHOICES = [
