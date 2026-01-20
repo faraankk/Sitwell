@@ -51,11 +51,8 @@ urlpatterns = [
     path('reports/sales/', views.sales_report, name='sales-report'),
     path('reports/sales/download/<str:format>/', views.sales_report_download, name='sales-report-download'),
 
-    #     # Banner management URLs
-    # path('banners/', views.banner_list, name='banner-list'),
-    # path('banners/add/', views.banner_add, name='banner-add'),
-    # path('banners/edit/<int:banner_id>/', views.banner_edit, name='banner-edit'),
-    # path('banners/delete/<int:banner_id>/', views.banner_delete, name='banner-delete'),
-    # path('banners/toggle/<int:banner_id>/', views.banner_toggle_status, name='banner-toggle-status'),
-    # path('banners/track-click/<int:banner_id>/', views.banner_track_click, name='banner-track-click'),
+    path('banners/', views.banner_list, name='banner-list'),
+    path('banners/add/', views.banner_add, name='banner-add'),
+    path('banners/edit/<int:banner_id>/', views.banner_edit, name='banner-edit'),
+    path('banners/delete/<int:banner_id>/', views.banner_delete, name='banner-delete'),
 ]

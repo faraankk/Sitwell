@@ -471,3 +471,77 @@ class ReturnItem(models.Model):
     @property
     def total_price(self):
         return self.unit_price * self.quantity
+    
+
+
+from django.db import models
+from django.utils import timezone
+from django.db.models import Q
+
+class Banner(models.Model):
+    POSITION_CHOICES = [
+        ('hero', 'Hero Banner (Main)'),
+        ('top', 'Top Banner'),
+        ('middle', 'Middle Banner'),
+        ('bottom', 'Bottom Banner'),
+        ('sidebar', 'Sidebar Banner'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('inactive', 'Inactive'),
+    ]
+    
+    title = models.CharField(max_length=200, help_text="Banner title for admin reference")
+    image = models.ImageField(upload_to='banners/', help_text="Recommended size: 1920x600px for hero banners")
+    mobile_image = models.ImageField(upload_to='banners/mobile/', blank=True, null=True, 
+                                   help_text="Optional mobile-optimized image")
+    
+    # Display settings
+    position = models.CharField(max_length=20, choices=POSITION_CHOICES, default='hero')
+    order = models.PositiveIntegerField(default=0, help_text="Display order (0 = first)")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
+    
+    # Content
+    heading = models.CharField(max_length=200, blank=True, help_text="Main banner text")
+    subheading = models.CharField(max_length=300, blank=True, help_text="Secondary text")
+    button_text = models.CharField(max_length=50, blank=True, help_text="Button text (e.g., 'Shop Now')")
+    button_link = models.URLField(blank=True, help_text="Button link URL")
+    
+    # Timing
+    start_date = models.DateTimeField(default=timezone.now, help_text="When to start showing")
+    end_date = models.DateTimeField(blank=True, null=True, help_text="When to stop showing (optional)")
+    
+    # Tracking
+    clicks = models.PositiveIntegerField(default=0, help_text="Number of clicks")
+    impressions = models.PositiveIntegerField(default=0, help_text="Number of impressions")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['position', 'order', '-created_at']
+        verbose_name = 'Banner'
+        verbose_name_plural = 'Banners'
+    
+    def __str__(self):
+        return f"{self.title} ({self.get_position_display()})"
+    
+    @property
+    def is_active(self):
+        now = timezone.now()
+        if self.status != 'active':
+            return False
+        if self.start_date and now < self.start_date:
+            return False
+        if self.end_date and now > self.end_date:
+            return False
+        return True
+    
+    def increment_clicks(self):
+        self.clicks += 1
+        self.save(update_fields=['clicks'])
+    
+    def increment_impressions(self):
+        self.impressions += 1
+        self.save(update_fields=['impressions'])

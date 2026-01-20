@@ -198,7 +198,7 @@
 
               <div class="product-overlay {% if product.stock_quantity == 0 %}sold-out-overlay{% endif %}">
                 {% if product.stock_quantity > 0 %}
-                  <button class="overlay-btn" onclick="addToCart({{ product.id }})"><i class="fas fa-shopping-cart"></i> Add to Cart</button>
+                  {% comment %} <button class="overlay-btn" onclick="addToCart({{ product.id }})"><i class="fas fa-shopping-cart"></i> Add to Cart</button> {% endcomment %}
                 {% else %}
                   <button class="overlay-btn" disabled><i class="fas fa-ban"></i> Sold Out</button>
                 {% endif %}

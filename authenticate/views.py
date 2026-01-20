@@ -32,11 +32,18 @@ import logging
 import razorpay
 from django.views.decorators.csrf import csrf_exempt
 from django.views import View
-from django.http import JsonResponse
+
 from django.utils.decorators import method_decorator
 from django.urls import reverse
 from django.utils.http import urlencode
 from django.contrib.auth import get_user_model
+from django.views.decorators.http import require_POST
+from authenticate.utils import consume_coupon
+
+
+
+from customeradmin.models import Banner
+
 
 
 User = get_user_model()
@@ -53,19 +60,17 @@ def signup_view(request):
                 user.is_active = False
                 user.otp = generate_otp()
                 user.otp_created_at = timezone.now()
-                user.save()                       # ← must be AFTER this line
+                user.save()                       
 
-                # ---------- REFFERAL REWARD ----------
                 referral_code = form.cleaned_data.get('referral_code')
-                if referral_code:                 # optional field can be empty
+                if referral_code:                 
                     from customeradmin.models import Referral, ReferralOffer
                     try:
                         ref = Referral.objects.select_related('referrer').get(code=referral_code.upper())
-                        # create usage record
+                      
                         from customeradmin.models import ReferralUsage
                         ReferralUsage.objects.create(referral=ref, referee=user)
 
-                        # reward referrer (wallet credit)
                         wallet, _ = Wallet.objects.get_or_create(user=ref.referrer)
                         ref_offer = ReferralOffer.objects.filter(offer__is_active=True).first()
                         if ref_offer:
@@ -73,9 +78,7 @@ def signup_view(request):
                             wallet.credit(reward, note=f"Referral reward for {user.email}")
                             messages.success(request, f"Referral accepted! ₹{reward} credited to referrer.")
                     except Exception:
-                        # invalid code → silently ignore (or add message if you want)
                         pass
-                # ---------- END REFFERAL REWARD ----------
 
                 send_otp_email(user.email, user.otp)
                 request.session['otp_user_id'] = user.id
@@ -388,13 +391,15 @@ def confirm_new_password_view(request):
     return render(request, 'confi_new_password.html')
 
 @csrf_protect
-@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
+@require_POST
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def logout_view(request):
-    if request.method == 'POST':
-        logout(request)
-        messages.success(request, 'You have been logged out successfully.')
-        return redirect('home')
+    logout(request)
+    messages.success(request, 'You have been logged out successfully.')
     return redirect('home')
+
+
+
 
 @cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def send_test_email(request):
@@ -535,123 +540,7 @@ def dummy_home_view(request):
         }
         return render(request, 'dummy.html', context)
 
-# @cache_control(no_cache=True, must_revalidate=True, no_store=True) 
-# def product_list_view(request):
-#     """Enhanced product list with advanced search and filtering"""
-#     try:
-#         # Base queryset with optimized queries
-#         products = Product.objects.filter(
-#             status='published'
-#         ).select_related('category').prefetch_related('images')
-        
-#         # Get filter parameters
-#         search_query = request.GET.get('search', '').strip()
-#         category_filter = request.GET.get('category')
-#         brand_filter = request.GET.get('brand')
-#         min_price = request.GET.get('min_price')
-#         max_price = request.GET.get('max_price')
-#         sort_by = request.GET.get('sort', 'newest')
-#         availability = request.GET.get('availability')
-        
-#         # Enhanced Search - search in multiple fields
-#         if search_query:
-#             products = products.filter(
-#                 Q(name__icontains=search_query) |
-#                 Q(description__icontains=search_query) |
-#                 Q(brand__icontains=search_query) |
-#                 Q(category__name__icontains=search_query) |
-#                 Q(sku__icontains=search_query)
-#             )
-        
-#         # Category filtering
-#         if category_filter and category_filter != 'all':
-#             products = products.filter(category__name__iexact=category_filter)
-        
-#         # Brand filtering
-#         if brand_filter and brand_filter != 'all':
-#             products = products.filter(brand__icontains=brand_filter)
-        
-#         # Price range filtering
-#         if min_price:
-#             try:
-#                 min_price_float = float(min_price)
-#                 products = products.filter(price__gte=min_price_float)
-#             except (ValueError, TypeError):
-#                 pass
-        
-#         if max_price:
-#             try:
-#                 max_price_float = float(max_price)
-#                 products = products.filter(price__lte=max_price_float)
-#             except (ValueError, TypeError):
-#                 pass
-        
-#         # Availability filtering
-#         if availability == 'in_stock':
-#             products = products.filter(stock_quantity__gt=0)
-#         elif availability == 'out_of_stock':
-#             products = products.filter(stock_quantity__lte=0)
-        
-#         # Sorting options
-#         sort_options = {
-#             'price_low': 'price',
-#             'price_high': '-price',
-#             'name_az': 'name',
-#             'name_za': '-name',
-#             'newest': '-created_at',
-#             'oldest': 'created_at',
-#         }
-        
-#         if sort_by in sort_options:
-#             products = products.order_by(sort_options[sort_by])
-#         else:
-#             products = products.order_by('-created_at')
-        
-#         # Pagination
-#         paginator = Paginator(products, 12)
-#         page_number = request.GET.get('page')
-#         page_obj = paginator.get_page(page_number)
-        
-#         # Get available filters for template
-#         all_published = Product.objects.filter(status='published')
-#         available_categories = all_published.values_list('category__name', flat=True).distinct()
-#         available_brands = all_published.exclude(brand__iexact='').values_list('brand', flat=True).distinct()
-        
-#         context = {
-#             'page_obj': page_obj,
-#             'products': page_obj,
-#             'available_categories': available_categories,
-#             'available_brands': available_brands,
-#             'search_query': search_query,
-#             'current_category': category_filter,
-#             'current_brand': brand_filter,
-#             'current_sort': sort_by,
-#             'min_price': min_price,
-#             'max_price': max_price,
-#             'current_availability': availability,
-#             'total_products': paginator.count,
-#         }
-        
-#         return render(request, 'product_list.html', context)
-        
-#     except Exception as e:
-#         logger.error(f"Error in product_list_view: {str(e)}")
-#         messages.error(request, f'Error loading products: {str(e)}')
-#         context = {
-#             'page_obj': None,
-#             'products': [],
-#             'available_categories': [],
-#             'available_brands': [],
-#             'search_query': request.GET.get('search', ''),
-#             'current_category': request.GET.get('category'),
-#             'current_brand': request.GET.get('brand'),
-#             'current_sort': request.GET.get('sort', 'newest'),
-#             'min_price': request.GET.get('min_price'),
-#             'max_price': request.GET.get('max_price'),
-#             'current_availability': request.GET.get('availability'),
-#             'total_products': 0,
-#         }
-#         return render(request, 'product_list.html', context)
+
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def product_list_view(request):
     """Enhanced product list with advanced search and filtering"""
@@ -1114,43 +1003,53 @@ def manage_addresses_view(request):
 
 
 @login_required
-@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def add_address_view(request):
     """Add new address"""
     try:
-        # Get fresh user data
         user = CustomUser.objects.get(pk=request.user.pk)
-        
+
         if request.method == 'POST':
             form = UserAddressForm(request.POST)
             if form.is_valid():
                 address = form.save(commit=False)
                 address.user = user
-                
-                # If this is the first address, make it default
+
+                # first address → default
                 if not user.addresses.exists():
                     address.is_default = True
-                
+
                 address.save()
                 messages.success(request, 'Address added successfully!')
+
+                # ── SMART REDIRECT LOGIC ──
+                next_url = request.GET.get('next')
+                if next_url:
+                    if 'cart' in next_url:
+                        messages.success(request, 'Address added – back to cart!')
+                        return redirect(next_url)
+                    if 'checkout' in next_url:
+                        messages.success(request, 'Address added – back to checkout!')
+                        return redirect(next_url)
+
+                # fallback
                 return redirect('manage_addresses')
             else:
                 messages.error(request, 'Please correct the errors below.')
         else:
             form = UserAddressForm()
-        
+
         context = {
             'form': form,
             'title': 'Add New Address',
             'user': user,
         }
         return render(request, 'profile/add_edit_address.html', context)
-        
+
     except Exception as e:
         print(f"Error in add_address_view: {str(e)}")
         messages.error(request, 'Error adding address.')
         return redirect('manage_addresses')
-
 
 
 @login_required
@@ -1311,116 +1210,8 @@ def cancel_order_view(request, order_id, item_id=None):
     context = {'form': form, 'order': order, 'item_id': item_id}
     return render(request, 'profile/cancel_order.html', context)
 
-
-'''Cart management '''
-# CART MANAGEMENT VIEWS
-
-# @login_required
-# def add_to_cart_view(request, product_id):
-#     """Add product to cart or increase quantity"""
-#     if request.method != 'POST':
-#         return JsonResponse({'success': False, 'message': 'Invalid request method'})
-    
-#     try:
-#         with transaction.atomic():
-#             # Get product and validate availability
-#             product = get_object_or_404(Product, id=product_id)
-            
-#             # Check if product or category is blocked/unlisted
-#             if product.status != 'published':
-#                 return JsonResponse({
-#                     'success': False, 
-#                     'message': 'This product is no longer available'
-#                 })
-            
-#             # Check if category is blocked (assuming you have this field)
-#             if hasattr(product, 'category') and hasattr(product.category, 'is_blocked'):
-#                 if product.category.is_blocked:
-#                     return JsonResponse({
-#                         'success': False, 
-#                         'message': 'This product category is currently unavailable'
-#                     })
-            
-#             # Check stock availability
-#             if product.stock_quantity <= 0:
-#                 return JsonResponse({
-#                     'success': False, 
-#                     'message': 'This product is out of stock'
-#                 })
-            
-#             # Get or create user's cart
-#             cart, created = Cart.objects.get_or_create(user=request.user)
-            
-#             # Get requested quantity (default to 1)
-#             quantity = int(request.POST.get('quantity', 1))
-            
-#             # Check if item already exists in cart
-#             cart_item, item_created = CartItem.objects.get_or_create(
-#                 cart=cart,
-#                 product=product,
-#                 defaults={'quantity': 0}
-#             )
-            
-#             # Calculate new quantity
-#             new_quantity = cart_item.quantity + quantity
-            
-#             # Validate maximum quantity constraints
-#             MAX_CART_QUANTITY = 10  # Configurable limit per product
-#             max_allowed = min(product.stock_quantity, MAX_CART_QUANTITY)
-            
-#             if new_quantity > max_allowed:
-#                 return JsonResponse({
-#                     'success': False, 
-#                     'message': f'Cannot add more than {max_allowed} items of this product'
-#                 })
-            
-#             # Update quantity
-#             cart_item.quantity = new_quantity
-#             cart_item.save()
-            
-#             # Remove from wishlist if it exists
-#             try:
-#                 wishlist = Wishlist.objects.get(user=request.user)
-#                 WishlistItem.objects.filter(
-#                     wishlist=wishlist, 
-#                     product=product
-#                 ).delete()
-#                 removed_from_wishlist = True
-#             except Wishlist.DoesNotExist:
-#                 removed_from_wishlist = False
-            
-#             # Prepare response data
-#             response_data = {
-#                 'success': True,
-#                 'message': f'Added {product.name} to cart',
-#                 'cart_total_items': cart.total_items,
-#                 'cart_total_amount': float(cart.total_amount),
-#                 'item_quantity': cart_item.quantity,
-#                 'item_subtotal': float(cart_item.subtotal),
-#                 'removed_from_wishlist': removed_from_wishlist
-#             }
-            
-#             return JsonResponse(response_data)
-            
-#     except Product.DoesNotExist:
-#         return JsonResponse({
-#             'success': False, 
-#             'message': 'Product not found'
-#         })
-#     except ValueError:
-#         return JsonResponse({
-#             'success': False, 
-#             'message': 'Invalid quantity specified'
-#         })
-#     except Exception as e:
-#         return JsonResponse({
-#             'success': False, 
-#             'message': 'An error occurred while adding to cart'
-#         })
-
 @login_required
 def add_to_cart_view(request, product_id):
-    """Add product to cart or increase quantity"""
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
@@ -1428,16 +1219,22 @@ def add_to_cart_view(request, product_id):
         with transaction.atomic():
             product = get_object_or_404(Product, id=product_id)
 
-            # availability / status checks
+            # availability checks
             if product.status != 'published':
                 return JsonResponse({'success': False, 'message': 'This product is no longer available'})
+
             if hasattr(product, 'category') and getattr(product.category, 'is_blocked', False):
-                return JsonResponse({'success': False, 'message': 'This product category is currently unavailable'})
+                return JsonResponse({'success': False, 'message': 'This product category is unavailable'})
+
             if product.stock_quantity <= 0:
                 return JsonResponse({'success': False, 'message': 'This product is out of stock'})
 
             cart, _ = Cart.objects.get_or_create(user=request.user)
-            quantity = int(request.POST.get('quantity', 1))
+
+            try:
+                quantity = int(request.POST.get('quantity', 1))
+            except ValueError:
+                return JsonResponse({'success': False, 'message': 'Invalid quantity'})
 
             cart_item, created = CartItem.objects.get_or_create(
                 cart=cart,
@@ -1446,36 +1243,35 @@ def add_to_cart_view(request, product_id):
             )
 
             new_qty = cart_item.quantity + quantity
-            max_allowed = min(product.stock_quantity, 10)          # global limit per product
+            max_allowed = min(product.stock_quantity, 10)
+
             if new_qty > max_allowed:
-                return JsonResponse({'success': False, 'message': f'Cannot add more than {max_allowed} items of this product'})
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Cannot add more than {max_allowed} items of this product'
+                })
 
             cart_item.quantity = new_qty
             cart_item.save()
 
-            # --- STEP-2 tweak: remove from wishlist if present ---
-            removed_from_wishlist = False
+            # remove from wishlist if exists
             wishlist = Wishlist.objects.filter(user=request.user).first()
             if wishlist:
-                deleted = WishlistItem.objects.filter(wishlist=wishlist, product=product).delete()[0]
-                removed_from_wishlist = bool(deleted)
+                WishlistItem.objects.filter(wishlist=wishlist, product=product).delete()
 
             return JsonResponse({
                 'success': True,
-                'message': f'Added {product.name} to cart',
+                'message': f'{product.name} added to cart',
                 'cart_total_items': cart.total_items,
                 'cart_total_amount': float(cart.total_amount),
                 'item_quantity': cart_item.quantity,
-                'item_subtotal': float(cart_item.subtotal),
-                'removed_from_wishlist': removed_from_wishlist
+                'item_subtotal': float(cart_item.subtotal)
             })
 
     except Product.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Product not found'})
-    except ValueError:
-        return JsonResponse({'success': False, 'message': 'Invalid quantity specified'})
     except Exception:
-        return JsonResponse({'success': False, 'message': 'An error occurred while adding to cart'})
+        return JsonResponse({'success': False, 'message': 'Something went wrong'})
 
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True) 
@@ -1527,46 +1323,49 @@ def cart_view(request):
 
 @login_required
 def update_cart_quantity_view(request):
-    """Update cart item quantity via AJAX"""
+    """Update cart item quantity via AJAX – returns raw + formatted prices"""
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Invalid request method'})
-    
+
     try:
         cart_item_id = request.POST.get('cart_item_id')
-        action = request.POST.get('action')  # 'increment' or 'decrement'
-        
+        action       = request.POST.get('action')          # 'increment' / 'decrement'
+
         cart_item = get_object_or_404(CartItem, id=cart_item_id, cart__user=request.user)
-        
+
         with transaction.atomic():
             if action == 'increment':
-                new_quantity = cart_item.quantity + 1
+                new_qty = cart_item.quantity + 1
             elif action == 'decrement':
-                new_quantity = max(1, cart_item.quantity - 1)
+                new_qty = max(1, cart_item.quantity - 1)
             else:
                 return JsonResponse({'success': False, 'message': 'Invalid action'})
-            
-            # Validate quantity constraints
+
             max_allowed = cart_item.max_quantity_allowed
-            if new_quantity > max_allowed:
-                return JsonResponse({
-                    'success': False,
-                    'message': f'Cannot exceed maximum quantity of {max_allowed}'
-                })
-            
-            cart_item.quantity = new_quantity
+            if new_qty > max_allowed:
+                return JsonResponse({'success': False,
+                                     'message': f'Cannot exceed maximum quantity of {max_allowed}'})
+
+            cart_item.quantity = new_qty
             cart_item.save()
-            
+
+            raw_unit_price = float(cart_item.product.get_discounted_price())
+            pretty_price   = f"₹{cart_item.product.get_discounted_price():.2f}"
+
             return JsonResponse({
-                'success': True,
-                'new_quantity': cart_item.quantity,
-                'item_subtotal': float(cart_item.subtotal),
-                'cart_total': float(cart_item.cart.total_amount),
-                'cart_total_items': cart_item.cart.total_items,
+                'success'                     : True,
+                'new_quantity'                : cart_item.quantity,
+                'discounted_unit_price'       : raw_unit_price,   # 7200.00
+                'discounted_unit_price_display': pretty_price,      # "₹7,200.00"
+                'item_subtotal'               : float(cart_item.subtotal),
+                'cart_total'                  : float(cart_item.cart.total_amount),
+                'cart_total_items'            : cart_item.cart.total_items,
+                'max_quantity'                : max_allowed,
             })
-            
+
     except CartItem.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Cart item not found'})
-    except Exception as e:
+    except Exception:
         return JsonResponse({'success': False, 'message': 'Error updating quantity'})
 
 @login_required
@@ -1635,54 +1434,6 @@ def cart_item_count_view(request):
             'success': True,
             'count': 0
         })
-
-# WISHLIST VIEWS
-
-# @login_required
-# @cache_control(no_cache=True, must_revalidate=True, no_store=True) 
-# def wishlist_view(request):
-#     """Display user's wishlist"""
-#     try:
-#         wishlist = Wishlist.objects.get(user=request.user)
-#         wishlist_items = wishlist.items.select_related('product').prefetch_related('product__images')
-        
-#         # Check for any unavailable items (e.g., unpublished or out-of-stock)
-#         unavailable_items = []
-#         available_items = []
-        
-#         for item in wishlist_items:
-#             if item.product.status != 'published' or item.product.stock_quantity <= 0:
-#                 unavailable_items.append(item)
-#             else:
-#                 available_items.append(item)
-        
-#         context = {
-#             'wishlist': wishlist,
-#             'wishlist_items': wishlist_items,
-#             'available_items': available_items,
-#             'unavailable_items': unavailable_items,
-#             'total_items': wishlist.items.count(),
-#         }
-        
-#         return render(request, 'wishlist/wishlist.html', context)
-        
-#     except Wishlist.DoesNotExist:
-#         # Create empty wishlist if none exists
-#         wishlist = Wishlist.objects.create(user=request.user)
-#         context = {
-#             'wishlist': wishlist,
-#             'wishlist_items': [],
-#             'available_items': [],
-#             'unavailable_items': [],
-#             'total_items': 0,
-#         }
-#         return render(request, 'wishlist/wishlist.html', context)
-    
-#     except Exception as e:
-#         logger.error(f"Error loading wishlist: {str(e)}")
-#         messages.error(request, 'Error loading wishlist')
-#         return redirect('dummy_home')
-
 
 
 
@@ -1761,6 +1512,9 @@ def checkout_view(request):
         messages.error(request, "An unexpected error occurred.")
         return redirect('cart')
 
+
+from authenticate.utils import consume_coupon
+
 @login_required
 @transaction.atomic
 def place_order_view(request):
@@ -1771,47 +1525,35 @@ def place_order_view(request):
     try:
         cart = Cart.objects.get(user=request.user)
         cart_items = cart.items.filter(product__status='published', product__stock_quantity__gt=0)
-        
+
         if not cart_items.exists():
             messages.error(request, "Your cart is empty or items are out of stock.")
             return redirect('cart')
-        
+
         address_id = request.POST.get('address')
         if not address_id:
             messages.error(request, "Please select a shipping address.")
             return redirect('checkout')
-            
+
         shipping_address = UserAddress.objects.get(id=address_id, user=request.user)
 
-        # Recalculate total to ensure price integrity
+        # =====  UNIVERSAL TOTALS  =====
         subtotal = sum(item.subtotal for item in cart_items)
-        taxes = subtotal * Decimal('0.18')  # 18% tax
         shipping = Decimal('50.00') if subtotal < 1000 else Decimal('0.00')
-        
-        # Handle coupon from session
-        coupon = None
+
         coupon_discount = Decimal('0.00')
-        
+        applied_coupon  = None
         if 'applied_coupon_id' in request.session:
             try:
-                coupon = Coupon.objects.get(id=request.session['applied_coupon_id'])
-                if coupon.is_valid:
-                    coupon_discount = coupon.calculate_discount(subtotal)
-                    # Validate that user hasn't used this coupon before
-                    if not CouponUsage.objects.filter(coupon=coupon, user=request.user).exists():
-                        coupon.mark_as_used(request.user, None)  # We'll update with order later
-                    else:
-                        messages.warning(request, "You have already used this coupon.")
-                        coupon = None
-                        coupon_discount = Decimal('0.00')
-                else:
-                    messages.warning(request, "Coupon is no longer valid.")
-                    del request.session['applied_coupon_id']
-                    coupon = None
+                applied_coupon = Coupon.objects.get(id=request.session['applied_coupon_id'])
+                if applied_coupon.is_valid and not CouponUsage.objects.filter(coupon=applied_coupon, user=request.user).exists():
+                    coupon_discount = applied_coupon.calculate_discount(subtotal)
             except Coupon.DoesNotExist:
                 del request.session['applied_coupon_id']
 
-        grand_total = subtotal + taxes + shipping - coupon_discount
+        tax         = (subtotal - coupon_discount) * Decimal('0.18')
+        grand_total = subtotal - coupon_discount + tax + shipping
+        # ================================
 
         # Create the Order
         order = Order.objects.create(
@@ -1820,10 +1562,10 @@ def place_order_view(request):
             total_amount=grand_total,
             payment_method='Cash on Delivery',
             payment_status='Pending',
-            coupon=coupon,
+            coupon=applied_coupon,
             coupon_discount=coupon_discount,
             subtotal=subtotal,
-            tax_amount=taxes,
+            tax_amount=tax,
             shipping_charge=shipping,
             discount_amount=coupon_discount
         )
@@ -1837,16 +1579,17 @@ def place_order_view(request):
                 product_price=item.product.price,
                 quantity=item.quantity
             )
-            # Decrease stock
             product = item.product
             product.stock_quantity -= item.quantity
             product.save()
+        if order.coupon:
+            consume_coupon(order.coupon, request.user, order)
 
         # Clear the cart and coupon session
         cart.items.all().delete()
         if 'applied_coupon_id' in request.session:
             del request.session['applied_coupon_id']
-        
+
         messages.success(request, "Your order has been placed successfully!")
         return redirect('order_success', order_id=order.order_number)
 
@@ -1879,38 +1622,113 @@ def order_success_view(request, order_id):
         logger.error(f"Error loading order success page: {str(e)}")
         messages.error(request, "Could not load order confirmation.")
         return redirect('user_orders')
-
 @login_required
-@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def download_invoice_view(request, order_id):
     order = get_object_or_404(Order, order_number=order_id, user=request.user)
-    
+
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    from django.conf import settings
+    from io import BytesIO
+    import os
+
+    # -------- REGISTER UNICODE FONT (₹ SUPPORT) --------
+    font_path = os.path.join(
+        settings.BASE_DIR,
+        'static',
+        'fonts',
+        'DejaVuSans.ttf'
+    )
+
+    pdfmetrics.registerFont(TTFont('DejaVu', font_path))
+
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
-    styles = getSampleStyleSheet()
-    elements = []
-    
-    # Title
-    elements.append(Paragraph(f"Invoice for Order: {order.order_number}", styles['Title']))
-    elements.append(Paragraph(f"Date: {order.created_at.strftime('%Y-%m-%d')}", styles['Normal']))
-    elements.append(Paragraph(f"Status: {order.get_status_display()}", styles['Normal']))
-    elements.append(Paragraph(f"Payment Method: {order.get_payment_method_display()}", styles['Normal']))
-    elements.append(Paragraph(f"Total: ${order.total_amount}", styles['Normal']))
-    
-    # Items Table
-    data = [['Product', 'Quantity', 'Price', 'Total']]
+    p = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+
+    # -------- HEADER --------
+    p.setFont("DejaVu", 16)
+    p.drawString(50, height - 50, f"INVOICE  {order.order_number}")
+
+    p.setFont("DejaVu", 11)
+    p.drawString(50, height - 70, f"Date: {order.created_at.strftime('%d-%b-%Y')}")
+    p.drawString(50, height - 85, f"Payment: {order.get_payment_method_display()}")
+
+    # -------- CUSTOMER DETAILS --------
+    p.drawString(50, height - 110, f"Bill To: {order.user.full_name}")
+    addr = order.shipping_address
+    p.drawString(
+        50,
+        height - 125,
+        f"{addr.address_line_1}, {addr.city}, {addr.state} - {addr.postal_code}"
+    )
+
+    # -------- TABLE HEADER --------
+    y = height - 160
+    p.setFont("DejaVu", 10)
+
+    p.drawString(50, y, "Item")
+    p.drawString(300, y, "Qty")
+    p.drawRightString(410, y, "Rate")
+    p.drawRightString(520, y, "Total")
+
+    p.line(50, y - 5, 520, y - 5)
+
+    # -------- TABLE ROWS --------
+    y -= 20
     for item in order.items.all():
-        data.append([item.product_name, item.quantity, f"${item.product_price}", f"${item.total_price}"])
-    table = Table(data)
-    table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), 'grey'), ('TEXTCOLOR', (0, 0), (-1, 0), 'white')]))
-    elements.append(table)
-    
-    doc.build(elements)
+        p.drawString(50, y, item.product_name[:40])
+        p.drawString(300, y, str(item.quantity))
+        p.drawRightString(410, y, f"₹{item.product_price:.2f}")
+        p.drawRightString(520, y, f"₹{item.total_price:.2f}")
+        y -= 15
+
+    # -------- TOTALS SECTION --------
+    y -= 20
+    p.line(50, y, 520, y)
+    y -= 15
+
+    LABEL_X = 350
+    VALUE_X = 520
+
+    p.drawString(LABEL_X, y, "Sub-total:")
+    p.drawRightString(VALUE_X, y, f"₹{order.subtotal:.2f}")
+
+    if order.coupon_discount:
+        y -= 15
+        p.drawString(LABEL_X, y, "Coupon Discount:")
+        p.drawRightString(VALUE_X, y, f"-₹{order.coupon_discount:.2f}")
+
+    y -= 15
+    p.drawString(LABEL_X, y, "Tax (18 %):")
+    p.drawRightString(VALUE_X, y, f"₹{order.tax_amount:.2f}")
+
+    y -= 15
+    p.drawString(LABEL_X, y, "Shipping:")
+    p.drawRightString(
+        VALUE_X,
+        y,
+        "Free" if not order.shipping_charge else f"₹{order.shipping_charge:.2f}"
+    )
+
+    y -= 20
+    p.setFont("DejaVu", 11)
+    p.drawString(LABEL_X, y, "Grand Total:")
+    p.drawRightString(VALUE_X, y, f"₹{order.total_amount:.2f}")
+
+    # -------- FINISH PDF --------
+    p.showPage()
+    p.save()
     buffer.seek(0)
-    
+
     response = HttpResponse(buffer, content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename=invoice_{order.order_number}.pdf'
+    response['Content-Disposition'] = (
+        f'attachment; filename=invoice_{order.order_number}.pdf'
+    )
     return response
+
 
 @login_required
 @transaction.atomic
@@ -2008,8 +1826,6 @@ def about(request):
     """Display about page"""
     return render(request, 'about.html')
 
-
-
 @login_required
 @transaction.atomic
 def razorpay_create_order(request):
@@ -2022,16 +1838,24 @@ def razorpay_create_order(request):
         if not items.exists():
             return JsonResponse({'success': False, 'message': 'Cart empty'})
 
+        # =====  UNIVERSAL TOTALS  =====
         subtotal = sum(i.subtotal for i in items)
-        tax      = subtotal * Decimal('0.18')
-        shipping = Decimal('50.00') if subtotal < 1000 else 0
-        coupon   = request.POST.get('coupon', '').strip().upper()
-        discount = Decimal('0.00')
-        coupons  = {'SAVE10': 0.10, 'FLAT50': 50, 'FIRSTORDER': 0.15}
-        if coupon in coupons:
-            disc_val = coupons[coupon]
-            discount = subtotal * Decimal(disc_val) if disc_val < 1 else Decimal(disc_val)
-        amount_paise = int((subtotal + tax + shipping - discount) * 100)
+        shipping = Decimal('50.00') if subtotal < 1000 else Decimal('0.00')
+
+        coupon_discount = Decimal('0.00')
+        if 'applied_coupon_id' in request.session:
+            try:
+                coupon = Coupon.objects.get(id=request.session['applied_coupon_id'])
+                if coupon.is_valid and not CouponUsage.objects.filter(coupon=coupon, user=request.user).exists():
+                    coupon_discount = coupon.calculate_discount(subtotal)
+            except Coupon.DoesNotExist:
+                del request.session['applied_coupon_id']
+
+        tax         = (subtotal - coupon_discount) * Decimal('0.18')
+        grand_total = subtotal - coupon_discount + tax + shipping
+        # ================================
+
+        amount_paise = int(grand_total * 100)
 
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID,
                                        settings.RAZORPAY_KEY_SECRET))
@@ -2045,14 +1869,16 @@ def razorpay_create_order(request):
         order = Order.objects.create(
             user=request.user,
             shipping_address=address,
-            total_amount=(amount_paise/100),
+            total_amount=grand_total,
             payment_method='card',
             payment_status='pending',
             razorpay_order_id=rz_order['id'],
             subtotal=subtotal,
             tax_amount=tax,
             shipping_charge=shipping,
-            discount_amount=discount
+            discount_amount=coupon_discount,
+            coupon=coupon if coupon_discount > 0 else None,
+            coupon_discount=coupon_discount
         )
 
         for item in items:
@@ -2074,22 +1900,8 @@ def razorpay_create_order(request):
             'user_phone' : request.user.phone_number
         })
     except Exception as e:
-        print("🔥 RAZORPAY ERROR:", e)
-
-        if hasattr(e, 'error'):
-            print("CODE:", e.error.get('code'))
-            print("DESCRIPTION:", e.error.get('description'))
-
-            return JsonResponse({
-                'success': False,
-                'error_code': e.error.get('code'),
-                'error_message': e.error.get('description'),
-            }, status=400)
-
-        return JsonResponse({
-            'success': False,
-            'message': str(e)
-        }, status=500)
+        logger.error("Razorpay error", exc_info=True)
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
 
 
@@ -2113,6 +1925,10 @@ class RazorpayCallbackView(View):
             order.status = "confirmed"
             order.razorpay_payment_id = rz_payment_id
             order.save()
+
+            if order.coupon:
+                consume_coupon(order.coupon, order.user, order)
+
             Cart.objects.filter(user=order.user).delete()
 
             if request.GET.get("retry") == "1":
@@ -2205,66 +2021,165 @@ def retry_razorpay_payment(request, orderid):
         return JsonResponse({"success": False, "message": "Error creating payment. Please try again."}, status=500)
 
 
+# @login_required
+# def apply_coupon_view(request):
+#     """Apply coupon to cart - returns JSON"""
+#     if request.method != 'POST':
+#         return JsonResponse({'success': False, 'message': 'Invalid request'})
+
+#     code = request.POST.get('code', '').upper().strip()
+#     print(f"Applying coupon: {code}")  
+    
+#     try:
+#         coupon = Coupon.objects.get(code=code, is_active=True)
+#         print(f"Found coupon: {coupon.code}")  
+#     except Coupon.DoesNotExist:
+#         return JsonResponse({'success': False, 'message': 'Invalid coupon code'})
+
+#     if not coupon.is_valid:
+#         print(f"Coupon not valid")  
+#         return JsonResponse({'success': False, 'message': 'Coupon expired or invalid'})
+
+#     if CouponUsage.objects.filter(coupon=coupon, user=request.user).exists():
+#         return JsonResponse({'success': False, 'message': 'You already used this coupon'})
+
+#     request.session['applied_coupon_id'] = coupon.id
+
+#     try:
+#         cart = Cart.objects.get(user=request.user)
+#         cart_items = cart.items.filter(product__status='published', product__stock_quantity__gt=0)
+        
+#         if not cart_items.exists():
+#             return JsonResponse({
+#                 'success': False, 
+#                 'message': 'Your cart is empty'
+#             })
+        
+#         subtotal = sum(item.subtotal for item in cart_items)
+#         print(f"Subtotal: {subtotal}")  
+        
+#         if not isinstance(subtotal, Decimal):
+#             subtotal = Decimal(str(subtotal))
+        
+#         discount = coupon.calculate_discount(subtotal)
+#         print(f"Final discount: {discount}")  
+
+#         return JsonResponse({
+#             'success': True,
+#             'message': f'Coupon "{coupon.code}" applied!',
+#             'coupon_code': coupon.code,
+#             'discount': float(discount),
+#             'new_total': float(subtotal - discount)
+#         })
+        
+#     except Cart.DoesNotExist:
+#         return JsonResponse({
+#             'success': False, 
+#             'message': 'Cart not found'
+#         })
+#     except Exception as e:
+#         print(f"Error in apply_coupon_view: {e}") 
+#         return JsonResponse({
+#             'success': False, 
+#             'message': 'Error applying coupon'
+#         })
+
+from decimal import Decimal
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from authenticate.models import Coupon, CouponUsage
+from authenticate.models import Cart
+
+
 @login_required
 def apply_coupon_view(request):
     """Apply coupon to cart - returns JSON"""
     if request.method != 'POST':
-        return JsonResponse({'success': False, 'message': 'Invalid request'})
+        return JsonResponse({
+            'success': False,
+            'message': 'Invalid request'
+        })
 
     code = request.POST.get('code', '').upper().strip()
-    print(f"Applying coupon: {code}")  
-    
+
+    # ───────────────────────────────
+    # 1️⃣ Fetch coupon
+    # ───────────────────────────────
     try:
         coupon = Coupon.objects.get(code=code, is_active=True)
-        print(f"Found coupon: {coupon.code}")  
     except Coupon.DoesNotExist:
-        return JsonResponse({'success': False, 'message': 'Invalid coupon code'})
+        return JsonResponse({
+            'success': False,
+            'message': 'Invalid coupon code'
+        })
 
+    # ───────────────────────────────
+    # 2️⃣ Global validity check
+    #    (active + date + max usage)
+    # ───────────────────────────────
     if not coupon.is_valid:
-        print(f"Coupon not valid")  
-        return JsonResponse({'success': False, 'message': 'Coupon expired or invalid'})
+        if coupon.used_count >= coupon.max_usage:
+            return JsonResponse({
+                'success': False,
+                'message': 'Coupon usage limit reached'
+            })
+        return JsonResponse({
+            'success': False,
+            'message': 'Coupon expired or inactive'
+        })
 
+    # ───────────────────────────────
+    # 3️⃣ Per-user usage check
+    # ───────────────────────────────
     if CouponUsage.objects.filter(coupon=coupon, user=request.user).exists():
-        return JsonResponse({'success': False, 'message': 'You already used this coupon'})
+        return JsonResponse({
+            'success': False,
+            'message': 'You already used this coupon'
+        })
 
-    request.session['applied_coupon_id'] = coupon.id
-
+    # ───────────────────────────────
+    # 4️⃣ Fetch cart & calculate totals
+    # ───────────────────────────────
     try:
         cart = Cart.objects.get(user=request.user)
-        cart_items = cart.items.filter(product__status='published', product__stock_quantity__gt=0)
-        
+        cart_items = cart.items.filter(
+            product__status='published',
+            product__stock_quantity__gt=0
+        )
+
         if not cart_items.exists():
             return JsonResponse({
-                'success': False, 
+                'success': False,
                 'message': 'Your cart is empty'
             })
-        
+
         subtotal = sum(item.subtotal for item in cart_items)
-        print(f"Subtotal: {subtotal}")  
-        
         if not isinstance(subtotal, Decimal):
             subtotal = Decimal(str(subtotal))
-        
+
         discount = coupon.calculate_discount(subtotal)
-        print(f"Final discount: {discount}")  
+
+        # ───────────────────────────────
+        # 5️⃣ Store coupon in session
+        # ───────────────────────────────
+        request.session['applied_coupon_id'] = coupon.id
 
         return JsonResponse({
             'success': True,
-            'message': f'Coupon "{coupon.code}" applied!',
+            'message': f'Coupon "{coupon.code}" applied successfully',
             'coupon_code': coupon.code,
             'discount': float(discount),
             'new_total': float(subtotal - discount)
         })
-        
+
     except Cart.DoesNotExist:
         return JsonResponse({
-            'success': False, 
+            'success': False,
             'message': 'Cart not found'
         })
-    except Exception as e:
-        print(f"Error in apply_coupon_view: {e}") 
+    except Exception:
         return JsonResponse({
-            'success': False, 
+            'success': False,
             'message': 'Error applying coupon'
         })
 
@@ -2376,7 +2291,6 @@ def wallet_view(request):
         messages.error(request, "Error loading wallet")
         return redirect('user_profile')
 
-
 @login_required
 @require_POST
 def wallet_payment_view(request):
@@ -2388,22 +2302,23 @@ def wallet_payment_view(request):
             messages.error(request, 'Your cart is empty')
             return redirect('checkout')
 
+        # =====  UNIVERSAL TOTALS  =====
         subtotal = sum(item.subtotal for item in cart_items)
-        taxes = subtotal * Decimal('0.18')
         shipping = Decimal('50.00') if subtotal < 1000 else Decimal('0.00')
 
         coupon_discount = Decimal('0.00')
-        applied_coupon = None
+        applied_coupon  = None
         if 'applied_coupon_id' in request.session:
             try:
-                coupon = Coupon.objects.get(id=request.session['applied_coupon_id'])
-                if coupon.is_valid:
-                    coupon_discount = coupon.calculate_discount(subtotal)
-                    applied_coupon = coupon
+                applied_coupon = Coupon.objects.get(id=request.session['applied_coupon_id'])
+                if applied_coupon.is_valid and not CouponUsage.objects.filter(coupon=applied_coupon, user=request.user).exists():
+                    coupon_discount = applied_coupon.calculate_discount(subtotal)
             except Coupon.DoesNotExist:
                 del request.session['applied_coupon_id']
 
-        grand_total = subtotal + taxes + shipping - coupon_discount
+        tax         = (subtotal - coupon_discount) * Decimal('0.18')
+        grand_total = subtotal - coupon_discount + tax + shipping
+        # ================================
 
         wallet, _ = Wallet.objects.get_or_create(user=request.user)
         if not wallet.can_pay(grand_total):
@@ -2425,7 +2340,7 @@ def wallet_payment_view(request):
                 payment_method='wallet',
                 payment_status='paid',
                 subtotal=subtotal,
-                tax_amount=taxes,
+                tax_amount=tax,
                 shipping_charge=shipping,
                 discount_amount=coupon_discount,
                 coupon=applied_coupon,
@@ -2448,35 +2363,18 @@ def wallet_payment_view(request):
             wallet.debit(grand_total, order, f"Payment for order {order.order_number}")
 
             if applied_coupon:
-                CouponUsage.objects.create(coupon=applied_coupon, user=request.user, order=order)
+                consume_coupon(applied_coupon, request.user, order)
                 del request.session['applied_coupon_id']
 
             cart.items.all().delete()
 
         messages.success(request, 'Order placed successfully!')
-        return redirect('order_success', order_id=order.order_number)   # ← redirect
+        return redirect('order_success', order_id=order.order_number)
 
     except Exception as e:
         logger.error(f"Wallet payment error: {e}")
         messages.error(request, 'Error processing wallet payment')
         return redirect('checkout')
-            
-    except UserAddress.DoesNotExist:
-        return JsonResponse({
-            'success': False,
-            'message': 'Selected address not found'
-        })
-    except Cart.DoesNotExist:
-        return JsonResponse({
-            'success': False,
-            'message': 'Cart not found'
-        })
-    except Exception as e:
-        logger.error(f"Error in wallet payment: {e}")
-        return JsonResponse({
-            'success': False,
-            'message': 'Error processing wallet payment'
-        })
 
 
 @login_required
@@ -2633,3 +2531,58 @@ class WalletTopupCallback(View):
             return JsonResponse({'success': True})
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e)}, status=400)
+        
+
+
+@require_POST
+@csrf_exempt
+def track_banner_impression(request, banner_id):
+    """Track banner impression (view)"""
+    try:
+        banner = Banner.objects.get(id=banner_id)
+        banner.increment_impressions()
+        return JsonResponse({'status': 'ok'})
+    except Banner.DoesNotExist:
+        return JsonResponse({'status': 'error'}, status=404)
+
+@require_POST
+@csrf_exempt
+def track_banner_click(request, banner_id):
+    """Track banner click"""
+    try:
+        banner = Banner.objects.get(id=banner_id)
+        banner.increment_clicks()
+        return JsonResponse({'status': 'ok'})
+    except Banner.DoesNotExist:
+        return JsonResponse({'status': 'error'}, status=404)
+
+
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from customeradmin.models import Banner
+
+@require_POST
+@csrf_exempt
+def track_banner_impression(request, banner_id):
+    """Track banner impression (view)"""
+    try:
+        banner = Banner.objects.get(id=banner_id)
+        banner.increment_impressions()
+        return JsonResponse({'status': 'ok'})
+    except Banner.DoesNotExist:
+        return JsonResponse({'status': 'error'}, status=404)
+
+@require_POST
+@csrf_exempt
+def track_banner_click(request, banner_id):
+    """Track banner click"""
+    try:
+        banner = Banner.objects.get(id=banner_id)
+        banner.increment_clicks()
+        return JsonResponse({'status': 'ok'})
+    except Banner.DoesNotExist:
+        return JsonResponse({'status': 'error'}, status=404)
+    
+
+

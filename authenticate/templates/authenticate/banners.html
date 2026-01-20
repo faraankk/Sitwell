@@ -1,0 +1,83 @@
+{% load static %}
+{% if banners %}
+<div class="banner-section position-{{ position }}">
+    {% for banner in banners %}
+    <div class="banner-item {% if banner.mobile_image %}has-mobile-image{% endif %}" 
+         data-banner-id="{{ banner.id }}">
+        <div class="banner-image">
+            {% if banner.mobile_image %}
+            <picture>
+                <source media="(max-width: 768px)" srcset="{{ banner.mobile_image.url }}">
+                <img src="{{ banner.image.url }}" alt="{{ banner.heading|default:banner.title }}" 
+                     class="img-fluid" onload="trackBannerImpression({{ banner.id }})">
+            </picture>
+            {% else %}
+            <img src="{{ banner.image.url }}" alt="{{ banner.heading|default:banner.title }}" 
+                 class="img-fluid" onload="trackBannerImpression({{ banner.id }})">
+            {% endif %}
+        </div>
+        
+        {% if banner.heading or banner.subheading or banner.button_text %}
+        <div class="banner-content">
+            <div class="container">
+                {% if banner.heading %}
+                <h2 class="banner-heading">{{ banner.heading }}</h2>
+                {% endif %}
+                
+                {% if banner.subheading %}
+                <p class="banner-subheading">{{ banner.subheading }}</p>
+                {% endif %}
+                
+                
+
+                {% comment %} {% if banner.button_text %}
+                <a href="{% url 'login' %}?next={% url 'product_list' %}"
+                    class="btn btn-banner"
+                    onclick="trackBannerClick({{ banner.id }})">
+                        {{ banner.button_text }}
+                </a>
+                {% endif %} {% endcomment %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+function trackBannerImpression(bannerId) {
+    fetch(`/banner/track/impression/${bannerId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        }
+    });
+}
+
+function trackBannerClick(bannerId) {
+    fetch(`/banner/track/click/${bannerId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json',
+        }
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endif %}

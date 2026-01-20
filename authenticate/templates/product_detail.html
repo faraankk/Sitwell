@@ -210,15 +210,29 @@
         <div class="quantity-section">
           <label><i class="fas fa-cubes"></i> Quantity:</label>
           <div class="quantity-controls">
-            <button type="button" class="quantity-btn" onclick="decrementQuantity({{ product.id }})"><i class="fas fa-minus"></i></button>
-            <input type="number" id="quantity-{{ product.id }}" name="quantity" value="1" min="1" max="{{ product.stock_quantity }}" class="quantity-input" readonly>
-            <button type="button" class="quantity-btn" onclick="incrementQuantity({{ product.id }})"><i class="fas fa-plus"></i></button>
+            <button type="button" class="quantity-btn" onclick="decrementQuantity({{ product.id }})">
+              <i class="fas fa-minus"></i>
+            </button>
+
+            <input type="number"
+                  id="quantity-{{ product.id }}"
+                  name="quantity"
+                  value="1"
+                  min="1"
+                  max="{{ product.stock_quantity }}"
+                  class="quantity-input"
+                  readonly>
+
+            <button type="button" class="quantity-btn" onclick="incrementQuantity({{ product.id }})">
+              <i class="fas fa-plus"></i>
+            </button>
           </div>
+
           <small style="color: #666;">Max {{ product.stock_quantity }} available</small>
         </div>
         <div class="action-buttons">
           <button type="submit" class="btn btn-primary"><i class="fas fa-cart-plus"></i> Add to Cart</button>
-          <button type="button" class="btn btn-success"><i class="fas fa-bolt"></i> Buy Now</button>
+          {% comment %} <button type="button" class="btn btn-success"><i class="fas fa-bolt"></i> Buy Now</button> {% endcomment %}
           <!-- WISHLIST HEART -->
           <button type="button" class="btn btn-outline {% if product.id in user_wishlist_ids %}added{% endif %}" onclick="toggleWishlist(this,{{ product.id }})" title="Add to wishlist">
             <i class="fas fa-heart"></i>
@@ -285,10 +299,15 @@ function changeMainImage(src, thumbEl){
  thumbEl.classList.add('active');
 }
 document.getElementById('mainImage')?.addEventListener('click', function(){this.classList.toggle('zoomed');});
-function incrementQuantity(pid){
- const i=document.getElementById(`quantity-${pid}`), max=parseInt(i.max);
- if(parseInt(i.value)<max) i.value=parseInt(i.value)+1;
+function incrementQuantity(pid) {
+  const input = document.getElementById(`quantity-${pid}`);
+  const max = Math.min(parseInt(input.max), 10);
+
+  if (parseInt(input.value) < max) {
+    input.value = parseInt(input.value) + 1;
+  }
 }
+
 function decrementQuantity(pid){
  const i=document.getElementById(`quantity-${pid}`);
  if(parseInt(i.value)>1) i.value=parseInt(i.value)-1;
@@ -306,12 +325,22 @@ function toggleWishlist(btn,pid){
 document.querySelector('.add-to-cart-form')?.addEventListener('submit',function(e){
  e.preventDefault(); const btn=this.querySelector('button[type="submit"]');
  btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Adding...';
- fetch(`/cart/add/${this.dataset.productId}/`,{method:'POST',headers:{'X-CSRFToken':this.querySelector('[name=csrfmiddlewaretoken]').value},body:`quantity=${this.querySelector('input[name="quantity"]').value}`})
+fetch(`/cart/add/${this.dataset.productId}/`, {
+  method: 'POST',
+  headers: {
+    'X-CSRFToken': this.querySelector('[name=csrfmiddlewaretoken]').value,
+    'Content-Type': 'application/x-www-form-urlencoded'
+  },
+  body: new URLSearchParams({
+    quantity: this.querySelector('input[name="quantity"]').value
+  })
+})
+
  .then(r=>r.json()).then(d=>{
    const m=document.querySelector('.messages')||Object.assign(document.body.insertAdjacentHTML('afterbegin','<div class="messages"></div>'),document.body.firstElementChild);
    m.innerHTML=`<div class="alert alert-success"><i class="fas fa-check-circle"></i>${d.message}<button class="close-btn" onclick="this.parentElement.remove();">&times;</button></div>`;
    const c=document.querySelector('.cart-count'); if(c){fetch('/cart/count/').then(r=>r.json()).then(d=>{if(d.success)c.textContent=d.count;});}
- }).catch(err=>alert('Error')).finally(()=>{btn.disabled=false;btn.innerHTML='<i class="fas fa-cart-plus"></i> Add to Cart';});
+ }).finally(()=>{btn.disabled=false;btn.innerHTML='<i class="fas fa-cart-plus"></i> Add to Cart';});
 });
 setTimeout(()=>document.querySelectorAll('.alert').forEach(a=>{a.style.opacity='0';setTimeout(()=>a.remove(),300);}),5000);
 </script>

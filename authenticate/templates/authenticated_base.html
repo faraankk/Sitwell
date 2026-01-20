@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Sitwell{% endblock %}</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css " rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css    " rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/home.css' %}">
     
     <style>
@@ -24,7 +24,7 @@
             background-color: #f9fafb;
         }
 
-        /* Left Navigation Sidebar Styles */
+        /* ----------  LEFT NAVIGATION  ---------- */
         .profile-sidebar-nav {
             position: fixed;
             left: -300px;
@@ -38,11 +38,7 @@
             overflow-y: auto;
             padding-top: 20px;
         }
-
-        .profile-sidebar-nav.active {
-            left: 0;
-        }
-
+        .profile-sidebar-nav.active { left: 0; }
         .profile-sidebar {
             background: white;
             border-radius: 10px;
@@ -50,7 +46,6 @@
             padding: 20px;
             margin: 20px;
         }
-
         .profile-image {
             width: 120px;
             height: 120px;
@@ -60,11 +55,7 @@
             margin: 0 auto 15px;
             display: block;
         }
-
-        .profile-nav {
-            margin-top: 20px;
-        }
-
+        .profile-nav { margin-top: 20px; }
         .profile-nav .nav-link {
             color: #6c757d;
             border: none;
@@ -80,24 +71,21 @@
             width: 100%;
             cursor: pointer;
         }
-
         .profile-nav .nav-link:hover {
             background-color: #f8f9fa;
             color: #667eea;
             transform: translateX(5px);
         }
-
         .profile-nav .nav-link.active {
             background-color: #667eea;
             color: white;
         }
-
         .profile-nav .nav-link i {
             width: 20px;
             margin-right: 10px;
         }
 
-        /* Overlay for mobile */
+        /* ----------  NAVBAR OVERLAY & TOGGLE  ---------- */
         .navbar-overlay {
             position: fixed;
             top: 0;
@@ -108,12 +96,7 @@
             z-index: 999;
             display: none;
         }
-
-        .navbar-overlay.active {
-            display: block;
-        }
-
-        /* Navbar toggle button */
+        .navbar-overlay.active { display: block; }
         .navbar-toggle-btn {
             position: fixed;
             top: 100px;
@@ -130,34 +113,17 @@
             transition: all 0.3s ease;
             display: none;
         }
-
         .navbar-toggle-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
-
-        .navbar-toggle-btn.active {
-            left: 320px;
-        }
-
-        .navbar-toggle-btn.show {
-            display: block;
-        }
-
+        .navbar-toggle-btn.active { left: 320px; }
+        .navbar-toggle-btn.show { display: block; }
         @media (max-width: 768px) {
-            .navbar-toggle-btn.active {
-                left: 20px;
-            }
+            .navbar-toggle-btn.active { left: 20px; }
         }
 
-        /* Main content wrapper */
-        .main-wrapper {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Header - MATCHING BASE.HTML STYLE */
+        /* ----------  HEADER  ---------- */
         header {
             background: #fff;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
@@ -165,7 +131,6 @@
             top: 0;
             z-index: 100;
         }
-
         .header-content {
             display: flex;
             justify-content: space-between;
@@ -174,7 +139,6 @@
             max-width: 1400px;
             margin: 0 auto;
         }
-
         .logo {
             font-size: 32px;
             font-weight: 800;
@@ -186,13 +150,11 @@
             text-decoration: none;
             letter-spacing: -1px;
         }
-
         nav {
             display: flex;
             gap: 35px;
             align-items: center;
         }
-
         nav a {
             text-decoration: none;
             font-weight: 600;
@@ -202,7 +164,6 @@
             position: relative;
             font-size: 18px;
         }
-
         nav a::after {
             content: '';
             position: absolute;
@@ -213,16 +174,10 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             transition: width 0.3s ease;
         }
+        nav a:hover::after { width: 100%; }
+        nav a:hover { color: #667eea; }
 
-        nav a:hover::after {
-            width: 100%;
-        }
-
-        nav a:hover {
-            color: #667eea;
-        }
-
-        /* Search Bar */
+        /* ----------  SEARCH  ---------- */
         .search-container {
             display: flex;
             align-items: center;
@@ -232,12 +187,10 @@
             border-radius: 8px;
             transition: all 0.3s ease;
         }
-
         .search-container:focus-within {
             background: #fff;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-
         .search-input {
             border: none;
             background: transparent;
@@ -245,7 +198,6 @@
             font-size: 14px;
             outline: none;
         }
-
         .search-btn {
             background: none;
             border: none;
@@ -254,17 +206,10 @@
             color: #666;
             transition: color 0.3s ease;
         }
+        .search-btn:hover { color: #667eea; }
 
-        .search-btn:hover {
-            color: #667eea;
-        }
-
-        /* User Profile Dropdown */
-        .user-profile {
-            position: relative;
-            display: inline-block;
-        }
-
+        /* ----------  USER PROFILE DROPDOWN  ---------- */
+        .user-profile { position: relative; display: inline-block; }
         .profile-toggle {
             background: none;
             border: none;
@@ -278,12 +223,7 @@
             border-radius: 8px;
             transition: background-color 0.3s ease;
         }
-
-        .profile-toggle:hover {
-            background-color: #f8f8f8;
-            color: #667eea;
-        }
-
+        .profile-toggle:hover { background-color: #f8f8f8; color: #667eea; }
         .user-avatar {
             width: 36px;
             height: 36px;
@@ -296,7 +236,6 @@
             font-weight: bold;
             font-size: 14px;
         }
-
         .profile-dropdown {
             position: absolute;
             top: calc(100% + 10px);
@@ -310,22 +249,11 @@
             z-index: 1000;
             animation: dropdownSlide 0.3s ease-out;
         }
-
         @keyframes dropdownSlide {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        .profile-dropdown.show {
-            display: block;
-        }
-
+        .profile-dropdown.show { display: block; }
         .profile-dropdown a {
             display: flex;
             align-items: center;
@@ -336,39 +264,29 @@
             transition: all 0.2s ease;
             font-size: 14px;
         }
-
-        .profile-dropdown a::after {
-            display: none;
-        }
-
+        .profile-dropdown a::after { display: none; }
         .profile-dropdown a i {
             width: 18px;
             font-size: 16px;
             color: #6c757d;
         }
-
         .profile-dropdown a:hover {
             background-color: #f8f9fa;
             color: #667eea;
             padding-left: 24px;
         }
-
-        .profile-dropdown a:hover i {
-            color: #667eea;
-        }
-
+        .profile-dropdown a:hover i { color: #667eea; }
         .dropdown-divider {
             margin: 8px 0;
             border-top: 1px solid #e9ecef;
         }
 
-        /* Notification/Cart Icons */
+        /* ----------  NOTIFICATION / CART ICONS  ---------- */
         .nav-icons {
             display: flex;
             gap: 15px;
             align-items: center;
         }
-
         .nav-icon {
             position: relative;
             background: none;
@@ -381,12 +299,10 @@
             transition: all 0.3s ease;
             text-decoration: none;
         }
-
         .nav-icon:hover {
             background-color: #f8f8f8;
             color: #667eea;
         }
-
         .notification-badge {
             position: absolute;
             top: 2px;
@@ -403,48 +319,55 @@
             justify-content: center;
         }
 
-        /* Banner with Background Image */
-        .banner {
-            margin: 25px 40px;
-            height: 250px;
-            background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(51,51,51,0.7) 100%),
-                        url('/media/sofa.webp') center/cover;
-            border-radius: 12px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 32px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        /* ----------  DYNAMIC HERO BANNER  (replaces old .banner)  ---------- */
+        .banner-section{
+            margin:25px 40px 40px;
+            position:relative;
+            border-radius:15px;
+            overflow:hidden;
+            box-shadow:0 8px 24px rgba(0,0,0,.1);
+        }
+        .banner-item{ position:relative; }
+        .banner-image img{
+            width:100%;
+            height:400px;
+            object-fit:cover;
+            display:block;
+        }
+        .banner-content{
+            position:absolute;
+            top:50%; left:50%;
+            transform:translate(-50%,-50%);
+            text-align:center; color:#fff;
+            z-index:2; padding:20px;
+        }
+        .banner-heading{
+            font-size:3rem; font-weight:bold;
+            margin-bottom:1rem;
+            text-shadow:2px 2px 4px rgba(0,0,0,.7);
+        }
+        .banner-subheading{
+            font-size:1.2rem; margin-bottom:1.5rem;
+            text-shadow:1px 1px 2px rgba(0,0,0,.7);
+        }
+        .btn-banner{
+            background:#ff6b6b; color:#fff;
+            padding:12px 30px; border:none;
+            border-radius:25px; font-size:1.1rem;
+            text-decoration:none; display:inline-block;
+            transition:all .3s ease;
+        }
+        .btn-banner:hover{
+            background:#ff5252; transform:translateY(-2px);
+        }
+        @media(max-width:768px){
+            .banner-section{ margin:15px 20px 30px; }
+            .banner-image img{ height:250px; }
+            .banner-heading{ font-size:2rem; }
+            .banner-subheading{ font-size:1rem; }
         }
 
-        .banner-text {
-            z-index: 2;
-            font-weight: bold;
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
-            padding: 0 20px;
-        }
-
-        .banner::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
-            animation: shine 3s infinite;
-        }
-
-        @keyframes shine {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        /* Main content area */
+        /* ----------  MAIN CONTENT  ---------- */
         main {
             flex: 1;
             max-width: 1400px;
@@ -454,12 +377,9 @@
             z-index: 1;
             position: relative;
         }
+        main.content-pushed { margin-left: 300px; }
 
-        main.content-pushed {
-            margin-left: 300px;
-        }
-
-        /* Responsive */
+        /* ----------  RESPONSIVE  ---------- */
         @media (max-width: 768px) {
             .header-content {
                 flex-direction: column;
@@ -467,57 +387,26 @@
                 gap: 20px;
                 padding: 20px;
             }
-
             nav {
                 flex-wrap: wrap;
                 gap: 20px;
             }
-
-            nav a {
-                font-size: 16px;
-            }
-
-            .logo {
-                font-size: 28px;
-            }
-
-            .banner {
-                height: 150px;
-                font-size: 20px;
-                margin: 15px 20px;
-            }
-
-            main {
-                padding: 0 20px;
-            }
-
-            main.content-pushed {
-                margin-left: 0;
-            }
-
-            .search-container {
-                width: 100%;
-            }
-
-            .search-input {
-                flex: 1;
-            }
+            nav a { font-size: 16px; }
+            .logo { font-size: 28px; }
+            main { padding: 0 20px; }
+            main.content-pushed { margin-left: 0; }
+            .search-container { width: 100%; }
+            .search-input { flex: 1; }
         }
-
         @media (max-width: 480px) {
             nav {
                 flex-direction: column;
                 width: 100%;
                 gap: 15px;
             }
-
             nav a {
                 padding: 8px 0;
                 width: 100%;
-                font-size: 16px;
-            }
-
-            .banner-text {
                 font-size: 16px;
             }
         }
@@ -632,21 +521,26 @@
                                 </a>
                                 {% endif %}
                                 <div class="dropdown-divider"></div>
-                                <a href="{% url 'logout' %}">
-                                    <i class="fas fa-sign-out-alt"></i>Logout
-                                </a>
+                                <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" style="background:none;border:none;cursor:pointer;">
+                                        Logout
+                                    </button>
+                                </form>
+
+
+
                             </div>
                         </div>
                     {% endif %}
                 </div>
             </div>
-            
-            {% block banner %}
-            <div class="banner">
-                <div class="banner-text">Up to 10% off Voucher - Discover Amazing Furniture Deals</div>
-            </div>
-            {% endblock %}
         </header>
+
+        {% block banner %}
+            {% load banner_tags %}
+            {% get_banners 'hero' %}
+        {% endblock %}
 
         <main id="mainContent">
             {% block content %}
@@ -654,7 +548,7 @@
         </main>
 
         {% block footer %}
-        <footer style="background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%); color: #ccc; padding: 80px 0 0 0; margin-top: 100px;">
+        <footer style="background: linear-gradient(135deg, #1a1a1a 0%, #0a0a1a 100%); color: #ccc; padding: 80px 0 0 0; margin-top: 100px;">
             <div style="max-width: 1400px; margin: 0 auto; padding: 0 40px;">
                 <!-- Main Footer Content -->
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 60px; margin-bottom: 60px;">

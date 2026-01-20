@@ -5,7 +5,7 @@
 
 {% block extra_css %}
 <style>
-    /* Search and Filter Section */
+    /* ----------  EXISTING STYLES (untouched)  ---------- */
     .search-filter-section {
         background: white;
         border-radius: 15px;
@@ -14,7 +14,6 @@
         box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         border: 2px solid #e9ecef;
     }
-    
     .filter-header {
         display: flex;
         align-items: center;
@@ -23,7 +22,6 @@
         padding-bottom: 15px;
         border-bottom: 2px solid #f0f0f0;
     }
-
     .filter-header h3 {
         font-size: 20px;
         font-weight: 700;
@@ -32,11 +30,7 @@
         align-items: center;
         gap: 10px;
     }
-
-    .filter-header i {
-        color: #667eea;
-    }
-    
+    .filter-header i { color: #667eea; }
     .search-row {
         display: grid;
         grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
@@ -44,12 +38,10 @@
         align-items: end;
         margin-bottom: 20px;
     }
-    
     .filter-group {
         display: flex;
         flex-direction: column;
     }
-    
     .filter-group label {
         font-weight: 600;
         margin-bottom: 8px;
@@ -59,12 +51,10 @@
         align-items: center;
         gap: 6px;
     }
-
     .filter-group label i {
         color: #667eea;
         font-size: 12px;
     }
-    
     .filter-group input,
     .filter-group select {
         padding: 12px 16px;
@@ -74,7 +64,6 @@
         background: #f8f9fa;
         transition: all 0.3s ease;
     }
-
     .filter-group input:focus,
     .filter-group select:focus {
         outline: none;
@@ -82,16 +71,8 @@
         background: white;
         box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
     }
-    
-    .search-input {
-        position: relative;
-    }
-    
-    .search-input input {
-        width: 100%;
-        padding-right: 45px;
-    }
-    
+    .search-input { position: relative; }
+    .search-input input { width: 100%; padding-right: 45px; }
     .clear-search {
         position: absolute;
         right: 12px;
@@ -111,23 +92,16 @@
         justify-content: center;
         transition: all 0.3s ease;
     }
-
     .clear-search:hover {
         background: #c82333;
         transform: translateY(-50%) scale(1.1);
     }
-    
     .price-range {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 10px;
     }
-    
-    .filter-buttons {
-        display: flex;
-        gap: 12px;
-    }
-    
+    .filter-buttons { display: flex; gap: 12px; }
     .btn-primary {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -143,13 +117,11 @@
         gap: 8px;
         box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
-    
     .btn-primary:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
         color: white;
     }
-    
     .btn-secondary {
         background: #6c757d;
         color: white;
@@ -164,14 +136,11 @@
         font-weight: 600;
         transition: all 0.3s ease;
     }
-    
     .btn-secondary:hover {
         background: #5a6268;
         transform: translateY(-2px);
         color: white;
     }
-    
-    /* Results Info */
     .results-info {
         display: flex;
         justify-content: space-between;
@@ -182,13 +151,11 @@
         border-radius: 12px;
         border-left: 4px solid #667eea;
     }
-
     .results-info h2 {
         font-size: 24px;
         font-weight: 700;
         color: #333;
     }
-    
     .results-count {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -197,15 +164,12 @@
         font-weight: 700;
         box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
-    
-    /* Product Grid */
     .products {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 25px;
         margin: 40px 0;
     }
-    
     .product {
         background: white;
         border-radius: 15px;
@@ -218,50 +182,34 @@
         flex-direction: column;
         height: 100%;
     }
-    
     .product:hover {
         transform: translateY(-8px);
         box-shadow: 0 8px 30px rgba(102, 126, 234, 0.2);
         border-color: #667eea;
     }
-    
-    .product-image-container {
-        position: relative;
-        width: 100%;
-        height: 220px;
-        background: #f8f9fa;
-        overflow: hidden;
+    /* ----------  UNIFORM PRODUCT IMAGE  ---------- */
+    .product-image-container{
+        position:relative;
+        width:100%;
+        background:#f8f9fa;
+        height:220px;          
+        overflow:hidden;
     }
-    
-    .product-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.3s ease;
+    .uniform{                     /* identical box for every image / placeholder */
+        width:100%;
+        height:220px;
+        object-fit:cover;
+        border-radius:12px 12px 0 0;
     }
-    
-    .product:hover .product-image {
-        transform: scale(1.1);
+    .product-placeholder.uniform{
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        color:#999;
+        font-size:14px;
+        background:linear-gradient(135deg,#f5f5f5 0%,#e9e9e9 100%);
     }
-    
-    .product-placeholder {
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, #f5f5f5 0%, #e9e9e9 100%);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        color: #999;
-        font-size: 14px;
-    }
-    
-    .product-placeholder i {
-        font-size: 40px;
-        margin-bottom: 10px;
-        opacity: 0.4;
-    }
-    
     .discount-badge {
         position: absolute;
         top: 12px;
@@ -277,7 +225,6 @@
         box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
         z-index: 2;
     }
-    
     .product-info {
         padding: 20px;
         display: flex;
@@ -285,11 +232,7 @@
         flex: 1;
         justify-content: space-between;
     }
-    
-    .product-content {
-        flex: 1;
-    }
-    
+    .product-content { flex: 1; }
     .product-name {
         font-weight: 700;
         font-size: 15px;
@@ -303,7 +246,6 @@
         overflow: hidden;
         text-align: center;
     }
-    
     .product-price {
         display: flex;
         flex-direction: column;
@@ -313,21 +255,18 @@
         min-height: 50px;
         justify-content: center;
     }
-    
     .original-price {
         font-size: 13px;
         color: #a0aec0;
         text-decoration: line-through;
         order: 1;
     }
-    
     .current-price {
         font-size: 20px;
         font-weight: 700;
         color: #667eea;
         order: 2;
     }
-    
     .product-meta {
         display: flex;
         justify-content: space-between;
@@ -337,7 +276,6 @@
         border-top: 1px solid #f1f5f9;
         font-size: 12px;
     }
-    
     .stock-info {
         display: flex;
         align-items: center;
@@ -345,11 +283,7 @@
         color: #10b981;
         font-weight: 600;
     }
-    
-    .stock-info i {
-        font-size: 10px;
-    }
-    
+    .stock-info i { font-size: 10px; }
     .category-tag {
         color: #718096;
         background: #f7fafc;
@@ -359,7 +293,6 @@
         letter-spacing: 0.5px;
         font-weight: 600;
     }
-    
     .view-product {
         width: 100%;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -379,14 +312,11 @@
         letter-spacing: 0.5px;
         box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
-    
     .view-product:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
         color: white;
     }
-    
-    /* Pagination */
     .pagination {
         display: flex;
         justify-content: center;
@@ -394,7 +324,6 @@
         gap: 10px;
         margin: 60px 0 40px;
     }
-    
     .pagination a,
     .pagination span {
         padding: 12px 18px;
@@ -408,7 +337,6 @@
         gap: 6px;
         transition: all 0.3s ease;
     }
-    
     .pagination a:hover {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -416,21 +344,17 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
-    
     .pagination .current {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border-color: transparent;
         box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
-    
-    /* No Products Message */
     .no-products {
         text-align: center;
         padding: 100px 20px;
         color: #718096;
     }
-
     .empty-icon {
         width: 120px;
         height: 120px;
@@ -441,93 +365,78 @@
         justify-content: center;
         margin: 0 auto 30px;
     }
-    
     .no-products i {
         font-size: 4rem;
         color: #667eea;
         opacity: 0.5;
     }
-    
     .no-products h3 {
         font-size: 28px;
         margin-bottom: 15px;
         color: #333;
         font-weight: 700;
     }
-    
     .no-products p {
         margin-bottom: 30px;
         font-size: 16px;
         color: #666;
     }
-    
-    /* Responsive Design */
     @media (max-width: 1400px) {
         .products {
             grid-template-columns: repeat(4, 1fr);
             gap: 20px;
         }
     }
-    
     @media (max-width: 1200px) {
         .products {
             grid-template-columns: repeat(3, 1fr);
             gap: 20px;
         }
     }
-    
     @media (max-width: 900px) {
         .products {
             grid-template-columns: repeat(2, 1fr);
             gap: 20px;
         }
     }
-    
     @media (max-width: 768px) {
         .search-row {
             grid-template-columns: 1fr;
             gap: 15px;
         }
-        
         .filter-buttons {
             flex-direction: column;
         }
-
         .btn-primary,
         .btn-secondary {
             width: 100%;
             justify-content: center;
         }
-        
         .results-info {
             flex-direction: column;
             gap: 15px;
             text-align: center;
         }
-        
         .product-info {
             padding: 15px;
         }
-
         .search-filter-section {
             padding: 20px;
         }
     }
-    
     @media (max-width: 600px) {
         .products {
             grid-template-columns: 1fr;
             gap: 20px;
         }
-        
         .product-image-container {
-            height: 200px;
+            height: 220px; /* keeps uniform height on mobile */
         }
     }
 </style>
 {% endblock %}
 
-{% block banner %}
+{% comment %} {% block banner %}
 <div class="banner">
     <div class="banner-text">
         <i class="fas fa-gift" style="margin-right: 10px;"></i>
@@ -535,11 +444,11 @@
         <i class="fas fa-star" style="margin: 0 10px;"></i>
     </div>
 </div> 
-{% endblock %}
+{% endblock %} {% endcomment %}
 
 {% block content %}
 <!-- Search and Filter Section -->
-<div class="search-filter-section">
+{% comment %} <div class="search-filter-section">
     <div class="filter-header">
         <h3><i class="fas fa-filter"></i>Filter Products</h3>
     </div>
@@ -555,7 +464,7 @@
                         <a href="{% url 'dummy_home' %}" class="clear-search" title="Clear search">×</a>
                     {% endif %}
                 </div>
-            </div>
+            </div> {% endcomment %}
             
             <!-- Category Filter -->
             <div class="filter-group">
@@ -572,7 +481,7 @@
             </div>
             
             <!-- Brand Filter -->
-            <div class="filter-group">
+            {% comment %} <div class="filter-group">
                 <label><i class="fas fa-bookmark"></i>Brand</label>
                 <select name="brand">
                     <option value="">All Brands</option>
@@ -583,19 +492,19 @@
                         </option>
                     {% endfor %}
                 </select>
-            </div>
+            </div> {% endcomment %}
             
             <!-- Price Range -->
-            <div class="filter-group">
+            {% comment %} <div class="filter-group">
                 <label><i class="fas fa-rupee-sign"></i>Price Range</label>
                 <div class="price-range">
                     <input type="number" name="min_price" placeholder="Min ₹" value="{{ min_price }}">
                     <input type="number" name="max_price" placeholder="Max ₹" value="{{ max_price }}">
                 </div>
-            </div>
+            </div> {% endcomment %}
             
             <!-- Sort -->
-            <div class="filter-group">
+            {% comment %} <div class="filter-group">
                 <label><i class="fas fa-sort"></i>Sort By</label>
                 <select name="sort">
                     <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>New Arrivals</option>
@@ -618,7 +527,7 @@
             </a>
         </div>
     </form>
-</div>
+</div> {% endcomment %}
 
 <!-- Results Info -->
 <div class="results-info">
@@ -632,13 +541,14 @@
         <div class="products">
             {% for product in page_obj %}
             <div class="product">
+                <!--  UNIFORM IMAGE BOX  -->
                 <div class="product-image-container">
                     {% if product.get_main_image_url %}
-                        <img src="{{ product.get_main_image_url }}" class="product-image" alt="{{ product.name }}">
+                        <img src="{{ product.get_main_image_url }}" class="product-image uniform" alt="{{ product.name }}">
                     {% else %}
-                        <div class="product-placeholder">
+                        <div class="product-placeholder uniform">
                             <i class="fas fa-image"></i>
-                            <div>No Image Available</div>
+                            <div>No Image</div>
                         </div>
                     {% endif %}
                     

@@ -35,6 +35,8 @@ from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.template.response import TemplateResponse
 from django.views.decorators.http import require_POST
+from .models import Banner
+from .forms import BannerForm
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -383,13 +385,10 @@ def delete_product_image(request, image_id):
 
 @login_required
 def custom_logout(request):
-    """Custom logout view that redirects to admin login"""
-    from django.contrib.auth import logout
     if request.method == 'POST':
         logout(request)
         messages.success(request, "You have been successfully logged out.")
-        return redirect('login_to_account')  
-    return redirect('login_to_account')
+    return redirect('customeradmin:login_to_account')
 
 
 
@@ -1489,196 +1488,87 @@ def _coupon_excel(coupons):
     return response
 
 
-# # ---------- BANNER MANAGEMENT ----------
-# @login_required
-# @cache_control(no_cache=True, must_revalidate=True, no_store=True)
-# def banner_list(request):
-#     """List all banners with search and filters"""
-#     if not request.user.is_superuser:
-#         messages.error(request, "Permission denied.")
-#         return redirect("/")
+@login_required
+def banner_list(request):
+    """List all banners with filtering and pagination"""
+    banners = Banner.objects.all().order_by('-created_at')
     
-#     qs = Banner.objects.all().order_by('-priority', '-created_at')
+    # Filtering
+    position_filter = request.GET.get('position')
+    status_filter = request.GET.get('status')
     
-#     # Search functionality
-#     search_query = request.GET.get('search', '').strip()
-#     if search_query:
-#         qs = qs.filter(
-#             Q(title__icontains=search_query) |
-#             Q(headline__icontains=search_query) |
-#             Q(description__icontains=search_query)
-#         )
+    if position_filter:
+        banners = banners.filter(position=position_filter)
+    if status_filter:
+        banners = banners.filter(status=status_filter)
     
-#     # Filter by type
-#     banner_type = request.GET.get('type', '')
-#     if banner_type:
-#         qs = qs.filter(banner_type=banner_type)
+    # Pagination
+    paginator = Paginator(banners, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     
-#     # Filter by status
-#     status_filter = request.GET.get('status', '')
-#     if status_filter == 'active':
-#         qs = qs.filter(is_active=True)
-#     elif status_filter == 'inactive':
-#         qs = qs.filter(is_active=False)
-    
-#     # Filter by validity
-#     validity_filter = request.GET.get('validity', '')
-#     today = timezone.now()
-#     if validity_filter == 'valid':
-#         qs = qs.filter(is_active=True, valid_from__lte=today, valid_to__gte=today)
-#     elif validity_filter == 'expired':
-#         qs = qs.filter(valid_to__lt=today)
-#     elif validity_filter == 'upcoming':
-#         qs = qs.filter(valid_from__gt=today)
-    
-#     # Get banner statistics
-#     total_banners = qs.count()
-#     active_banners = qs.filter(is_active=True).count()
-#     valid_banners = qs.filter(is_active=True, valid_from__lte=today, valid_to__gte=today).count()
-#     expired_banners = qs.filter(valid_to__lt=today).count()
-    
-#     paginator = Paginator(qs, 20)
-#     page_obj = paginator.get_page(request.GET.get("page"))
+    context = {
+        'page_obj': page_obj,
+        'position_choices': Banner.POSITION_CHOICES,
+        'status_choices': Banner.STATUS_CHOICES,
+        'position_filter': position_filter,
+        'status_filter': status_filter,
+    }
+    return render(request, 'banner/banner_list.html', context)
 
-#     context = {
-#         "banners": page_obj,
-#         "page_obj": page_obj,
-#         "search_query": search_query,
-#         "banner_types": Banner.BANNER_TYPES,
-#         "current_type": banner_type,
-#         "current_status": status_filter,
-#         "current_validity": validity_filter,
-#         "total_banners": total_banners,
-#         "active_banners": active_banners,
-#         "valid_banners": valid_banners,
-#         "expired_banners": expired_banners,
-#         "today": today,
-#     }
-#     return render(request, "banners/banner_list.html", context)
-
-
-# @login_required
-# @cache_control(no_cache=True, must_revalidate=True, no_store=True)
-# def banner_add(request):
-#     """Add new banner"""
-#     if not request.user.is_superuser:
-#         messages.error(request, "Permission denied.")
-#         return redirect("/")
+@login_required
+def banner_add(request):
+    """Add new banner"""
+    if request.method == 'POST':
+        form = BannerForm(request.POST, request.FILES)
+        if form.is_valid():
+            banner = form.save()
+            messages.success(request, f'Banner "{banner.title}" created successfully!')
+            return redirect('customeradmin:banner-list')
+    else:
+        form = BannerForm()
     
-#     if request.method == "POST":
-#         form = BannerForm(request.POST, request.FILES)
-#         if form.is_valid():
-#             banner = form.save(commit=False)
-#             banner.created_by = request.user
-#             banner.save()
-#             messages.success(request, f"Banner '{banner.title}' created successfully.")
-#             return redirect("customeradmin:banner-list")
-#     else:
-#         form = BannerForm()
-    
-#     return render(request, "banners/banner_form.html", {"form": form})
+    context = {
+        'form': form,
+        'title': 'Add New Banner',
+        'position_choices': Banner.POSITION_CHOICES,
+    }
+    return render(request, 'banner/banner_form.html', context)
 
-
-# @login_required
-# @cache_control(no_cache=True, must_revalidate=True, no_store=True)
-# def banner_edit(request, banner_id):
-#     """Edit existing banner"""
-#     if not request.user.is_superuser:
-#         messages.error(request, "Permission denied.")
-#         return redirect("/")
+@login_required
+def banner_edit(request, banner_id):
+    """Edit existing banner"""
+    banner = get_object_or_404(Banner, id=banner_id)
     
-#     banner = get_object_or_404(Banner, id=banner_id)
+    if request.method == 'POST':
+        form = BannerForm(request.POST, request.FILES, instance=banner)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Banner "{banner.title}" updated successfully!')
+            return redirect('customeradmin:banner-list')
+    else:
+        form = BannerForm(instance=banner)
     
-#     if request.method == "POST":
-#         form = BannerForm(request.POST, request.FILES, instance=banner)
-#         if form.is_valid():
-#             form.save()
-#             messages.success(request, f"Banner '{banner.title}' updated successfully.")
-#             return redirect("customeradmin:banner-list")
-#     else:
-#         form = BannerForm(instance=banner)
+    context = {
+        'form': form,
+        'title': 'Edit Banner',
+        'banner': banner,
+        'position_choices': Banner.POSITION_CHOICES,
+    }
+    return render(request, 'banner/banner_form.html', context)
+
+@login_required
+def banner_delete(request, banner_id):
+    """Delete banner"""
+    banner = get_object_or_404(Banner, id=banner_id)
     
-#     return render(request, "banners/banner_form.html", {
-#         "form": form, 
-#         "banner": banner
-#     })
-
-
-# @login_required
-# @require_POST
-# def banner_delete(request, banner_id):
-#     """Delete banner"""
-#     if not request.user.is_superuser:
-#         return JsonResponse({"success": False, "error": "Permission denied"})
+    if request.method == 'POST':
+        banner_title = banner.title
+        banner.delete()
+        messages.success(request, f'Banner "{banner_title}" deleted successfully!')
+        return redirect('customeradmin:banner-list')
     
-#     banner = get_object_or_404(Banner, id=banner_id)
-#     banner.delete()
-#     return JsonResponse({"success": True})
-
-
-# @login_required
-# @require_POST
-# def banner_toggle_status(request, banner_id):
-#     """Toggle banner active/inactive status"""
-#     if not request.user.is_superuser:
-#         return JsonResponse({"success": False, "error": "Permission denied"})
-    
-#     banner = get_object_or_404(Banner, id=banner_id)
-#     banner.is_active = not banner.is_active
-#     banner.save()
-    
-#     status = "activated" if banner.is_active else "deactivated"
-#     return JsonResponse({
-#         "success": True, 
-#         "message": f"Banner '{banner.title}' {status}."
-#     })
-
-
-# @login_required
-# @require_POST
-# def banner_track_click(request, banner_id):
-#     """Track banner clicks via AJAX"""
-#     banner = get_object_or_404(Banner, id=banner_id)
-#     banner.increment_clicks()
-#     return JsonResponse({"success": True})
-
-
-# # Helper function to get valid banners
-# def get_valid_banners(banner_type=None, category=None, page_path=None):
-#     """Get valid banners for display"""
-#     today = timezone.now()
-#     qs = Banner.objects.filter(
-#         is_active=True,
-#         valid_from__lte=today,
-#         valid_to__gte=today
-#     )
-    
-#     if banner_type:
-#         qs = qs.filter(banner_type=banner_type)
-    
-#     if category:
-#         qs = qs.filter(
-#             models.Q(target_category=category) | 
-#             models.Q(target_category='')
-#         )
-    
-#     if page_path:
-#         qs = qs.filter(
-#             models.Q(target_page=page_path) | 
-#             models.Q(target_page='')
-#         )
-    
-#     # Filter by device
-#     # This is a simplified version - you'd implement proper device detection
-#     qs = qs.filter(show_on_desktop=True)  # Default to desktop
-    
-#     return qs.order_by('-priority', '-created_at')
-
-
-# @login_required
-# @require_POST
-# def banner_track_impression(request, banner_id):
-#     """Track banner impressions via AJAX"""
-#     banner = get_object_or_404(Banner, id=banner_id)
-#     banner.increment_impressions()
-#     return JsonResponse({"success": True})
+    context = {
+        'banner': banner,
+    }
+    return render(request, 'banner/banner_delete_confirm.html', context)

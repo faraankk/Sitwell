@@ -231,6 +231,46 @@ class Order(models.Model):
     def can_be_returned(self):
         return self.status == 'delivered'
     
+    # Valid status transitions - defines the allowed workflow
+    STATUS_TRANSITIONS = {
+        'pending': ['confirmed', 'paid', 'cancelled'],
+        'confirmed': ['processing', 'cancelled'],
+        'paid': ['processing', 'shipped', 'cancelled'],
+        'processing': ['shipped', 'cancelled'],
+        'shipped': ['out-for-delivery', 'delivered', 'cancelled'],
+        'out-for-delivery': ['delivered', 'cancelled'],
+        'delivered': ['refund_pending'],  # Only returns allowed after delivery
+        'cancelled': [],  # Terminal state - no further changes
+        'refunded': [],   # Terminal state - no further changes
+        'refund_pending': ['refunded', 'delivered'],  # Admin can approve refund or reject (mark as delivered)
+    }
+    
+    def can_transition_to(self, new_status):
+        """Check if order can transition from current status to new_status."""
+        if new_status == self.status:
+            return True  # No change is always valid
+        allowed = self.STATUS_TRANSITIONS.get(self.status, [])
+        return new_status in allowed
+    
+    def get_allowed_next_statuses(self):
+        """Returns list of (value, label) tuples for valid next statuses."""
+        # Always include current status as first option
+        current_label = dict(self.ORDER_STATUS_CHOICES).get(self.status, self.status.title())
+        result = [(self.status, current_label)]
+        
+        # Add allowed transitions
+        allowed = self.STATUS_TRANSITIONS.get(self.status, [])
+        for val, label in self.ORDER_STATUS_CHOICES:
+            if val in allowed and val != self.status:
+                result.append((val, label))
+        
+        return result
+    
+    @property
+    def is_terminal_status(self):
+        """Check if order is in a terminal state that cannot be changed."""
+        return self.status in ['cancelled', 'refunded']
+    
     def process_wallet_refund(self, amount=None, processed_by="System"):
         """Refund order amount to user's wallet."""
         if amount is None:

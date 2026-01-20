@@ -1,0 +1,166 @@
+{% extends 'admin/base_admin.html' %}  <!-- ✅ Correct path -->
+{% load static %}
+
+{% block title %}Banner Management - Sitwell{% endblock %}
+
+{% block body %}
+<div class="fade-in">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2">Banner Management</h1>
+    <p class="text-gray-600">Manage your website banners and promotional content</p>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="flex justify-between items-center mb-6">
+    <a href="{% url 'customeradmin:banner-add' %}" 
+       class="bg-gradient-to-r from-primary to-accent text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-300 flex items-center">
+      <i class="fas fa-plus mr-2"></i>
+      Add New Banner
+    </a>
+
+    <!-- Filters -->
+    <div class="flex gap-4">
+      <form method="GET" class="flex gap-4">
+        <select name="position" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+          <option value="">All Positions</option>
+          {% for key, name in position_choices %}
+            <option value="{{ key }}" {% if position_filter == key %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+        
+        <select name="status" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
+          <option value="">All Status</option>
+          {% for key, name in status_choices %}
+            <option value="{{ key }}" {% if status_filter == key %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+        
+        <button type="submit" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">
+          <i class="fas fa-filter"></i> Filter
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Banners Table -->
+  <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gradient-to-r from-primary to-accent text-white">
+          <tr>
+            <th class="px-6 py-4 text-left text-sm font-medium">Banner</th>
+            <th class="px-6 py-4 text-left text-sm font-medium">Position</th>
+            <th class="px-6 py-4 text-left text-sm font-medium">Status</th>
+            <th class="px-6 py-4 text-left text-sm font-medium">Order</th>
+            <th class="px-6 py-4 text-left text-sm font-medium">Analytics</th>
+            <th class="px-6 py-4 text-left text-sm font-medium">Schedule</th>
+            <th class="px-6 py-4 text-left text-sm font-medium">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          {% for banner in page_obj %}
+          <tr class="hover:bg-gray-50 transition-colors">
+            <td class="px-6 py-4">
+              <div class="flex items-center">
+                <img src="{{ banner.image.url }}" alt="{{ banner.title }}" 
+                     class="w-16 h-12 object-cover rounded-lg mr-3">
+                <div>
+                  <div class="font-medium text-gray-900">{{ banner.title }}</div>
+                  {% if banner.heading %}
+                  <div class="text-sm text-gray-500">{{ banner.heading|truncatechars:30 }}</div>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                {{ banner.get_position_display }}
+              </span>
+            </td>
+            <td class="px-6 py-4">
+              {% if banner.is_active %}
+                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                  Active
+                </span>
+              {% else %}
+                <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">
+                  Inactive
+                </span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4">
+              <span class="font-medium">{{ banner.order }}</span>
+            </td>
+            <td class="px-6 py-4">
+              <div class="text-sm">
+                <div class="text-gray-900">👆 {{ banner.clicks }} clicks</div>
+                <div class="text-gray-500">👁️ {{ banner.impressions }} views</div>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <div class="text-sm">
+                <div class="text-gray-900">Start: {{ banner.start_date|date:"M d, Y" }}</div>
+                {% if banner.end_date %}
+                <div class="text-gray-500">End: {{ banner.end_date|date:"M d, Y" }}</div>
+                {% endif %}
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex gap-2">
+                <a href="{% url 'customeradmin:banner-edit' banner.id %}" 
+                   class="text-blue-600 hover:text-blue-900 p-2">
+                  <i class="fas fa-edit"></i>
+                </a>
+                <a href="{% url 'customeradmin:banner-delete' banner.id %}" 
+                   class="text-red-600 hover:text-red-900 p-2">
+                  <i class="fas fa-trash"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+              <i class="fas fa-image text-4xl mb-4 opacity-50"></i>
+              <p class="text-lg">No banners found</p>
+              <p class="text-sm">Click "Add New Banner" to create your first banner</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="px-6 py-4 border-t border-gray-200">
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-gray-700">
+          Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} banners
+        </div>
+        <div class="flex gap-2">
+          {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if position_filter %}&position={{ position_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+               class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+              <i class="fas fa-chevron-left"></i>
+            </a>
+          {% endif %}
+          
+          <span class="px-4 py-2 bg-primary text-white rounded-lg">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+          </span>
+          
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if position_filter %}&position={{ position_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+               class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+              <i class="fas fa-chevron-right"></i>
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

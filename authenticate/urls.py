@@ -84,4 +84,9 @@ urlpatterns = [
        
     path('wallet/topup-order/', views.wallet_topup_order, name='wallet_topup_order'),
     path('wallet/topup-callback/', views.WalletTopupCallback.as_view(), name='wallet_topup_callback'),
+
+    path('banner/track/impression/<int:banner_id>/', views.track_banner_impression, name='track_banner_impression'),
+    path('banner/track/click/<int:banner_id>/', views.track_banner_click, name='track_banner_click'),
+
+    
 ]
