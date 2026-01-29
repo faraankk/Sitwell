@@ -98,3 +98,45 @@ class ReferralAdmin(admin.ModelAdmin):
 class ReferralUsageAdmin(admin.ModelAdmin):
     list_display = ('referral', 'referee', 'used_at')
 
+
+from django.contrib import admin
+from .models import Banner
+
+@admin.register(Banner)
+class BannerAdmin(admin.ModelAdmin):
+    list_display = ['title', 'position', 'status', 'is_active', 'order', 'clicks', 'impressions', 'start_date', 'end_date']
+    list_filter = ['position', 'status', 'created_at']
+    search_fields = ['title', 'heading', 'subheading']
+    list_editable = ['order', 'status']
+    readonly_fields = ['clicks', 'impressions', 'created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'position', 'status', 'order')
+        }),
+        ('Images', {
+            'fields': ('image', 'mobile_image'),
+            'description': 'Recommended sizes: Hero banner 1920x600px, Mobile banner 768x400px'
+        }),
+        ('Content', {
+            'fields': ('heading', 'subheading', 'button_text', 'button_link')
+        }),
+        ('Schedule', {
+            'fields': ('start_date', 'end_date')
+        }),
+        ('Analytics', {
+            'fields': ('clicks', 'impressions'),
+            'classes': ('collapse',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+    
+    def is_active(self, obj):
+        return obj.is_active
+    is_active.boolean = True
+    is_active.short_description = 'Active'
+
+

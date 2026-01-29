@@ -1,0 +1,229 @@
+{% extends 'admin/base_admin.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Sitwell{% endblock %}
+
+{% block body %}
+<div class="fade-in">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <div class="flex items-center gap-4 mb-2">
+      <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
+        <i class="fas fa-image text-white text-xl"></i>
+      </div>
+      <div>
+        <h1 class="text-3xl font-bold text-gray-800">{{ title }}</h1>
+        <p class="text-gray-600">Create and manage banner content</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+    <!-- Form Header -->
+    <div class="bg-gradient-to-r from-purple-500 to-pink-500 px-8 py-4">
+      <h2 class="text-white font-semibold text-lg">
+        <i class="fas fa-edit mr-2"></i>Banner Details
+      </h2>
+    </div>
+    
+    <form method="POST" enctype="multipart/form-data" class="p-8 space-y-8">
+      {% csrf_token %}
+      
+      <!-- Section: Basic Information -->
+      <div class="border-b border-gray-200 pb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+          <i class="fas fa-info-circle text-purple-500 mr-2"></i>Basic Information
+        </h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Banner Title <span class="text-red-500">*</span>
+            </label>
+            {{ form.title }}
+            {% if form.title.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ form.title.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Position <span class="text-red-500">*</span>
+            </label>
+            {{ form.position }}
+            {% if form.position.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ form.position.errors.0 }}</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Images -->
+      <div class="border-b border-gray-200 pb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+          <i class="fas fa-images text-purple-500 mr-2"></i>Banner Images
+        </h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-gray-50 rounded-lg p-4 border-2 border-dashed border-gray-300 hover:border-purple-400 transition-colors">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-desktop mr-1"></i> Desktop Image <span class="text-red-500">*</span>
+            </label>
+            {{ form.image }}
+            {% if form.image.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ form.image.errors.0 }}</p>
+            {% endif %}
+            <p class="text-sm text-gray-500 mt-2"><i class="fas fa-info-circle mr-1"></i>Recommended: 1920x600px for hero banners</p>
+            {% if banner and banner.image %}
+              <div class="mt-3 p-2 bg-white rounded-lg inline-block shadow">
+                <img src="{{ banner.image.url }}" alt="Current banner" class="w-32 h-20 object-cover rounded">
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="bg-gray-50 rounded-lg p-4 border-2 border-dashed border-gray-300 hover:border-purple-400 transition-colors">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-mobile-alt mr-1"></i> Mobile Image (Optional)
+            </label>
+            {{ form.mobile_image }}
+            {% if form.mobile_image.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ form.mobile_image.errors.0 }}</p>
+            {% endif %}
+            <p class="text-sm text-gray-500 mt-2"><i class="fas fa-info-circle mr-1"></i>Recommended: 768x400px for mobile</p>
+            {% if banner and banner.mobile_image %}
+              <div class="mt-3 p-2 bg-white rounded-lg inline-block shadow">
+                <img src="{{ banner.mobile_image.url }}" alt="Current mobile banner" class="w-20 h-32 object-cover rounded">
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Content -->
+      <div class="border-b border-gray-200 pb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+          <i class="fas fa-font text-purple-500 mr-2"></i>Banner Content
+        </h3>
+        <div class="space-y-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Heading
+            </label>
+            {{ form.heading }}
+            {% if form.heading.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ form.heading.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Subheading
+            </label>
+            {{ form.subheading }}
+            {% if form.subheading.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ form.subheading.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-mouse-pointer mr-1"></i> Button Text
+              </label>
+              {{ form.button_text }}
+              {% if form.button_text.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.button_text.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-link mr-1"></i> Button Link
+              </label>
+              {{ form.button_link }}
+              {% if form.button_link.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.button_link.errors.0 }}</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Settings -->
+      <div class="border-b border-gray-200 pb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+          <i class="fas fa-cog text-purple-500 mr-2"></i>Display Settings
+        </h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Display Order
+            </label>
+            {{ form.order }}
+            {% if form.order.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ form.order.errors.0 }}</p>
+            {% endif %}
+            <p class="text-sm text-gray-500 mt-1"><i class="fas fa-info-circle mr-1"></i>0 = first banner</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Status
+            </label>
+            {{ form.status }}
+            {% if form.status.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ form.status.errors.0 }}</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Schedule -->
+      <div class="pb-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+          <i class="fas fa-calendar-alt text-purple-500 mr-2"></i>Schedule
+        </h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              Start Date
+            </label>
+            {{ form.start_date }}
+            {% if form.start_date.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ form.start_date.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              End Date (Optional)
+            </label>
+            {{ form.end_date }}
+            {% if form.end_date.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ form.end_date.errors.0 }}</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Form Errors -->
+      {% if form.non_field_errors %}
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p class="text-red-600"><i class="fas fa-exclamation-circle mr-2"></i>{{ form.non_field_errors }}</p>
+        </div>
+      {% endif %}
+
+      <!-- Buttons -->
+      <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+        <a href="{% url 'customeradmin:banner-list' %}" 
+           class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors font-medium">
+          <i class="fas fa-times mr-2"></i>Cancel
+        </a>
+        <button type="submit" 
+                class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-lg font-medium hover:shadow-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-300">
+          <i class="fas fa-save mr-2"></i>Save Banner
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

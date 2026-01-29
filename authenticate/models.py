@@ -6,6 +6,7 @@ from customeradmin.models import Product
 import random
 import string 
 from decimal import Decimal
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
-            raise ValueError("The Email field must be set")
+            raise ValueError("Email is required")
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
@@ -22,14 +23,14 @@ class CustomUserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('is_active', True)
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("is_active", True)
 
-        if extra_fields.get('is_staff') is not True:
-            raise ValueError('Superuser must have is_staff=True.')
-        if extra_fields.get('is_superuser') is not True:
-            raise ValueError('Superuser must have is_superuser=True.')
+        if not extra_fields.get("is_staff"):
+            raise ValueError("Superuser must have is_staff=True")
+        if not extra_fields.get("is_superuser"):
+            raise ValueError("Superuser must have is_superuser=True")
 
         return self.create_user(email, password, **extra_fields)
 
@@ -39,29 +40,32 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=50)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=15, unique=True)
+
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
+
     otp = models.CharField(max_length=6, blank=True, null=True)
-    otp_created_at = models.DateTimeField(null=True, blank=True)
-    
+    otp_created_at = models.DateTimeField(blank=True, null=True)
+
     is_blocked = models.BooleanField(default=False)
-    blocked_at = models.DateTimeField(null=True, blank=True)
-    blocked_by = models.CharField(max_length=100, null=True, blank=True)
-    
-    profile_image = models.ImageField(upload_to='profile_images/', blank=True, null=True)
+    blocked_at = models.DateTimeField(blank=True, null=True)
+    blocked_by = models.CharField(max_length=100, blank=True, null=True)
+
+    profile_image = models.ImageField(upload_to="profile_images/", blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
-    bio = models.TextField(max_length=500, blank=True)
+    bio = models.TextField(blank=True, max_length=500)
+
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     new_email = models.EmailField(blank=True, null=True)
     email_verification_token = models.CharField(max_length=100, blank=True, null=True)
     email_token_created_at = models.DateTimeField(blank=True, null=True)
 
     objects = CustomUserManager()
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['first_name', 'last_name', 'phone_number']
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["first_name", "last_name", "phone_number"]
 
     def __str__(self):
         return self.email
@@ -69,34 +73,20 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
+
     
-    def block_user(self, blocked_by=None):
+    def block_user(self, blocked_by="Admin"):
         self.is_blocked = True
         self.blocked_at = timezone.now()
-        self.blocked_by = blocked_by or 'Admin'
-        self.save()
-    
+        self.blocked_by = blocked_by
+        self.save(update_fields=["is_blocked", "blocked_at", "blocked_by"])
+
     def unblock_user(self):
         self.is_blocked = False
         self.blocked_at = None
         self.blocked_by = None
-        self.save()
+        self.save(update_fields=["is_blocked", "blocked_at", "blocked_by"])
 
-    def clean_phone_number(self):
-        if self.phone_number:
-            self.phone_number = re.sub(r'[^\d]', '', self.phone_number)
-    
-    # def save(self, *args, **kwargs):
-    #     self.clean_phone_number()
-    #     super().save(*args, **kwargs)
-    
-    
-    def save(self, *args, **kwargs):
-        self.clean_phone_number()
-        is_new = self.pk is None
-        super().save(*args, **kwargs)
-        if is_new:
-            Referral.objects.get_or_create(referrer=self, defaults={'code': generate_ref_code()})
 
 class UserAddress(models.Model):
     ADDRESS_TYPES = [
@@ -127,12 +117,23 @@ class UserAddress(models.Model):
     
     def clean_phone_number(self):
         if self.phone_number:
-            self.phone_number = re.sub(r'[^\d]', '', self.phone_number)
+            self.phone_number = re.sub(r"[^\d]", "", self.phone_number)
+
+    def block_user(self, blocked_by="Admin"):
+        self.is_blocked = True
+        self.blocked_at = timezone.now()
+        self.blocked_by = blocked_by
+        self.save(update_fields=["is_blocked", "blocked_at", "blocked_by"])
+
+    def unblock_user(self):
+        self.is_blocked = False
+        self.blocked_at = None
+        self.blocked_by = None
+        self.save(update_fields=["is_blocked", "blocked_at", "blocked_by"])
 
     def save(self, *args, **kwargs):
         self.clean_phone_number()
         super().save(*args, **kwargs)
-
 
 class Order(models.Model):
     ORDER_STATUS_CHOICES = [
@@ -224,7 +225,7 @@ class Order(models.Model):
                 original_total += original_price * item.quantity
         self.discount_amount = original_total - self.subtotal
         self.tax_amount = self.subtotal * Decimal('0.18')
-        self.shipping_charge = Decimal('0.00') if self.subtotal >= Decimal('500.00') else Decimal('50.00')
+        self.shipping_charge = Decimal('0.00') if self.subtotal >= Decimal('10000.00') else Decimal('199.00')
         self.total_amount = self.subtotal + self.tax_amount + self.shipping_charge
         self.save(update_fields=['subtotal', 'discount_amount', 'tax_amount', 'shipping_charge', 'total_amount'])
         return {
@@ -243,6 +244,46 @@ class Order(models.Model):
     @property
     def can_be_returned(self):
         return self.status == 'delivered'
+    
+    # Valid status transitions - defines the allowed workflow
+    STATUS_TRANSITIONS = {
+        'pending': ['confirmed', 'paid', 'cancelled'],
+        'confirmed': ['processing', 'cancelled'],
+        'paid': ['processing', 'shipped', 'cancelled'],
+        'processing': ['shipped', 'cancelled'],
+        'shipped': ['out-for-delivery', 'delivered', 'cancelled'],
+        'out-for-delivery': ['delivered', 'cancelled'],
+        'delivered': ['refund_pending'],  # Only returns allowed after delivery
+        'cancelled': [],  # Terminal state - no further changes
+        'refunded': [],   # Terminal state - no further changes
+        'refund_pending': ['refunded', 'delivered'],  # Admin can approve refund or reject (mark as delivered)
+    }
+    
+    def can_transition_to(self, new_status):
+        """Check if order can transition from current status to new_status."""
+        if new_status == self.status:
+            return True  # No change is always valid
+        allowed = self.STATUS_TRANSITIONS.get(self.status, [])
+        return new_status in allowed
+    
+    def get_allowed_next_statuses(self):
+        """Returns list of (value, label) tuples for valid next statuses."""
+        # Always include current status as first option
+        current_label = dict(self.ORDER_STATUS_CHOICES).get(self.status, self.status.title())
+        result = [(self.status, current_label)]
+        
+        # Add allowed transitions
+        allowed = self.STATUS_TRANSITIONS.get(self.status, [])
+        for val, label in self.ORDER_STATUS_CHOICES:
+            if val in allowed and val != self.status:
+                result.append((val, label))
+        
+        return result
+    
+    @property
+    def is_terminal_status(self):
+        """Check if order is in a terminal state that cannot be changed."""
+        return self.status in ['cancelled', 'refunded']
     
     def process_wallet_refund(self, amount=None, processed_by="System"):
         """Refund order amount to user's wallet."""
@@ -428,6 +469,7 @@ class WishlistItem(models.Model):
 
 class Coupon(models.Model):
     code = models.CharField(max_length=50, unique=True, db_index=True)
+    description = models.CharField(max_length=255, blank=True, null=True)  # Added description field
     discount_percent = models.PositiveIntegerField(default=10)  # 1-100
     min_order_amount = models.DecimalField(max_digits=10, decimal_places=2, default=500)
     max_usage = models.PositiveIntegerField(default=100)

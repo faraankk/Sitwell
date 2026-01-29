@@ -130,3 +130,30 @@ def is_valid_full_name(name):
         return "Name cannot contain multiple consecutive spaces."
     
     return None
+
+
+from django.db import transaction
+from authenticate.models import CouponUsage,Coupon
+
+@transaction.atomic
+def consume_coupon(coupon, user, order):
+    coupon = Coupon.objects.select_for_update().get(id=coupon.id)
+
+    if coupon.used_count >= coupon.max_usage:
+        raise ValueError("Coupon usage limit exceeded")
+
+    if CouponUsage.objects.filter(coupon=coupon, user=user).exists():
+        return
+
+    CouponUsage.objects.create(
+        coupon=coupon,
+        user=user,
+        order=order
+    )
+
+    coupon.used_count += 1
+
+    if coupon.used_count >= coupon.max_usage:
+        coupon.is_active = False
+
+    coupon.save(update_fields=["used_count", "is_active"])

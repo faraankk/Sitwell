@@ -4,182 +4,187 @@
 {% block title %}Sales Report - Sitwell Admin{% endblock %}
 
 {% block body %}
-  <!-- Enhanced Header -->
-  <header class="bg-white shadow-sm border-b border-gray-100 px-8 py-5 flex-shrink-0">
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-black" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Sales Report</h1>
-        <nav class="flex items-center space-x-2 text-sm text-gray-500 mt-2">
-          <a href="{% url 'customeradmin:admin_dashboard' %}" class="text-purple-600 hover:text-purple-800 font-medium transition-colors">
-            <i class="fas fa-home mr-1"></i>Dashboard
+<!-- Enhanced Header -->
+<header class="bg-white shadow-sm border-b border-gray-100 px-8 py-5 flex-shrink-0">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl font-black"
+        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        Sales Report</h1>
+      <nav class="flex items-center space-x-2 text-sm text-gray-500 mt-2">
+        <a href="{% url 'customeradmin:admin_dashboard' %}"
+          class="text-purple-600 hover:text-purple-800 font-medium transition-colors">
+          <i class="fas fa-home mr-1"></i>Dashboard
+        </a>
+        <i class="fas fa-chevron-right text-xs"></i>
+        <a href="{% url 'customeradmin:sales-report' %}"
+          class="text-purple-600 hover:text-purple-800 font-medium transition-colors">Reports</a>
+        <i class="fas fa-chevron-right text-xs"></i>
+        <span class="font-medium">Sales Report</span>
+      </nav>
+    </div>
+    <div class="flex items-center space-x-3 bg-gradient-to-r from-blue-50 to-purple-50 px-4 py-2 rounded-xl">
+      <div class="w-2 h-2 bg-green-500 rounded-full pulse"></div>
+      <span class="text-sm font-bold text-gray-700">Farhaan</span>
+      <span class="text-xs text-gray-500 font-medium">Admin</span>
+    </div>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main class="flex-1 overflow-auto p-8">
+  <div class="max-w-7xl mx-auto">
+
+    <!-- Filter Form - Enhanced Design -->
+    <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 mb-8 fade-in">
+      <form method="get" class="flex flex-wrap items-center gap-4">
+        <div class="flex items-center space-x-2">
+          <label class="text-sm font-bold text-gray-700">Filter by:</label>
+          <select name="filter"
+            class="px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-all font-medium">
+            <option value="day" {% if filter_type == 'day' %}selected{% endif %}>Today</option>
+            <option value="week" {% if filter_type == 'week' %}selected{% endif %}>This Week</option>
+            <option value="month" {% if filter_type == 'month' %}selected{% endif %}>This Month</option>
+            <option value="custom" {% if filter_type == 'custom' %}selected{% endif %}>Custom Range</option>
+          </select>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <label class="text-sm font-bold text-gray-700">From:</label>
+          <input type="date" name="from" value="{{ start }}"
+            class="px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-all font-medium">
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <label class="text-sm font-bold text-gray-700">To:</label>
+          <input type="date" name="to" value="{{ end }}"
+            class="px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-all font-medium">
+        </div>
+
+        <button type="submit"
+          class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:shadow-lg transition-all">
+          <i class="fas fa-filter mr-2"></i>Filter
+        </button>
+
+        <div class="flex items-center space-x-2 ml-auto">
+          <a href="{% url 'customeradmin:sales-report-download' 'pdf' %}"
+            class="px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-bold hover:shadow-lg transition-all">
+            <i class="fas fa-file-pdf mr-2"></i>PDF
           </a>
-          <i class="fas fa-chevron-right text-xs"></i>
-          <a href="{% url 'customeradmin:sales-report' %}" class="text-purple-600 hover:text-purple-800 font-medium transition-colors">Reports</a>
-          <i class="fas fa-chevron-right text-xs"></i>
-          <span class="font-medium">Sales Report</span>
-        </nav>
+          <a href="{% url 'customeradmin:sales-report-download' 'excel' %}"
+            class="px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold hover:shadow-lg transition-all">
+            <i class="fas fa-file-excel mr-2"></i>Excel
+          </a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Summary Cards - Enhanced Design -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+      <div
+        class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in aspect-square flex flex-col items-center justify-center text-center">
+        <div
+          class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg mb-4">
+          <i class="fas fa-shopping-cart text-white text-2xl"></i>
+        </div>
+        <p class="text-sm font-bold text-gray-500 uppercase mb-2">Total Orders</p>
+        <p class="text-3xl font-black text-blue-600">{{ summary.count }}</p>
       </div>
-      <div class="flex items-center space-x-3 bg-gradient-to-r from-blue-50 to-purple-50 px-4 py-2 rounded-xl">
-        <div class="w-2 h-2 bg-green-500 rounded-full pulse"></div>
-        <span class="text-sm font-bold text-gray-700">Farhaan</span>
-        <span class="text-xs text-gray-500 font-medium">Admin</span>
+
+      <div
+        class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in aspect-square flex flex-col items-center justify-center text-center"
+        style="animation-delay: 0.1s;">
+        <div
+          class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg mb-4">
+          <i class="fas fa-arrow-up text-white text-2xl"></i>
+        </div>
+        <p class="text-sm font-bold text-gray-500 uppercase mb-2">Gross Sales</p>
+        <p class="text-3xl font-black text-green-600">₹{{ summary.gross }}</p>
+      </div>
+
+      <div
+        class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in aspect-square flex flex-col items-center justify-center text-center"
+        style="animation-delay: 0.2s;">
+        <div
+          class="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg mb-4">
+          <i class="fas fa-tag text-white text-2xl"></i>
+        </div>
+        <p class="text-sm font-bold text-gray-500 uppercase mb-2">Discounts</p>
+        <p class="text-3xl font-black text-orange-600">₹{{ summary.discount }}</p>
+      </div>
+
+      <div
+        class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in aspect-square flex flex-col items-center justify-center text-center"
+        style="animation-delay: 0.3s;">
+        <div
+          class="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg mb-4">
+          <i class="fas fa-ticket-alt text-white text-2xl"></i>
+        </div>
+        <p class="text-sm font-bold text-gray-500 uppercase mb-2">Coupons</p>
+        <p class="text-3xl font-black text-purple-600">₹{{ summary.coupon }}</p>
+      </div>
+
+      <div
+        class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in aspect-square flex flex-col items-center justify-center text-center"
+        style="animation-delay: 0.4s;">
+        <div
+          class="w-14 h-14 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center shadow-lg mb-4">
+          <i class="fas fa-wallet text-white text-2xl"></i>
+        </div>
+        <p class="text-sm font-bold text-gray-500 uppercase mb-2">Net Sales</p>
+        <p class="text-3xl font-black text-gray-900">₹{{ summary.net }}</p>
       </div>
     </div>
-  </header>
 
-  <!-- Main Content -->
-  <main class="flex-1 overflow-auto p-8">
-    <div class="max-w-7xl mx-auto">
-      
-      <!-- Filter Form - Enhanced Design -->
-      <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 mb-8 fade-in">
-        <form method="get" class="flex flex-wrap items-center gap-4">
-          <div class="flex items-center space-x-2">
-            <label class="text-sm font-bold text-gray-700">Filter by:</label>
-            <select name="filter" class="px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-all font-medium">
-              <option value="day" {% if filter_type == 'day' %}selected{% endif %}>Today</option>
-              <option value="week" {% if filter_type == 'week' %}selected{% endif %}>This Week</option>
-              <option value="month" {% if filter_type == 'month' %}selected{% endif %}>This Month</option>
-              <option value="custom" {% if filter_type == 'custom' %}selected{% endif %}>Custom Range</option>
-            </select>
-          </div>
-          
-          <div class="flex items-center space-x-2">
-            <label class="text-sm font-bold text-gray-700">From:</label>
-            <input type="date" name="from" value="{{ start }}" class="px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-all font-medium">
-          </div>
-          
-          <div class="flex items-center space-x-2">
-            <label class="text-sm font-bold text-gray-700">To:</label>
-            <input type="date" name="to" value="{{ end }}" class="px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none transition-all font-medium">
-          </div>
-          
-          <button type="submit" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:shadow-lg transition-all">
-            <i class="fas fa-filter mr-2"></i>Filter
-          </button>
-          
-          <div class="flex items-center space-x-2 ml-auto">
-            <a href="{% url 'customeradmin:sales-report-download' 'pdf' %}" class="px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-bold hover:shadow-lg transition-all">
-              <i class="fas fa-file-pdf mr-2"></i>PDF
-            </a>
-            <a href="{% url 'customeradmin:sales-report-download' 'excel' %}" class="px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold hover:shadow-lg transition-all">
-              <i class="fas fa-file-excel mr-2"></i>Excel
-            </a>
-          </div>
-        </form>
-      </div>
-
-      <!-- Summary Cards - Enhanced Design -->
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-        <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-bold text-gray-500 uppercase mb-2">Total Orders</p>
-              <p class="text-3xl font-black text-blue-600">{{ summary.count }}</p>
-            </div>
-            <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-              <i class="fas fa-shopping-cart text-white text-2xl"></i>
-            </div>
-          </div>
-        </div>
-        
-        <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in" style="animation-delay: 0.1s;">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-bold text-gray-500 uppercase mb-2">Gross Sales</p>
-              <p class="text-3xl font-black text-green-600">₹{{ summary.gross }}</p>
-            </div>
-            <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-              <i class="fas fa-arrow-up text-white text-2xl"></i>
-            </div>
-          </div>
-        </div>
-        
-        <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in" style="animation-delay: 0.2s;">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-bold text-gray-500 uppercase mb-2">Discounts</p>
-              <p class="text-3xl font-black text-orange-600">₹{{ summary.discount }}</p>
-            </div>
-            <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
-              <i class="fas fa-tag text-white text-2xl"></i>
-            </div>
-          </div>
-        </div>
-        
-        <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in" style="animation-delay: 0.3s;">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-bold text-gray-500 uppercase mb-2">Coupons</p>
-              <p class="text-3xl font-black text-purple-600">₹{{ summary.coupon }}</p>
-            </div>
-            <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
-              <i class="fas fa-ticket-alt text-white text-2xl"></i>
-            </div>
-          </div>
-        </div>
-        
-        <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in" style="animation-delay: 0.4s;">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm font-bold text-gray-500 uppercase mb-2">Net Sales</p>
-              <p class="text-3xl font-black text-gray-900">₹{{ summary.net }}</p>
-            </div>
-            <div class="w-14 h-14 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center shadow-lg">
-              <i class="fas fa-wallet text-white text-2xl"></i>
-            </div>
+    <!-- Sales Table - Enhanced Design -->
+    <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden fade-in"
+      style="animation-delay: 0.5s;">
+      <div class="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-black text-gray-900">Daily Sales Breakdown</h2>
+            <p class="text-sm text-gray-500 mt-1">Detailed sales data by date</p>
           </div>
         </div>
       </div>
 
-      <!-- Sales Table - Enhanced Design -->
-      <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden fade-in" style="animation-delay: 0.5s;">
-        <div class="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
-          <div class="flex items-center justify-between">
-            <div>
-              <h2 class="text-2xl font-black text-gray-900">Daily Sales Breakdown</h2>
-              <p class="text-sm text-gray-500 mt-1">Detailed sales data by date</p>
-            </div>
-          </div>
-        </div>
-        
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-gray-50 border-b-2 border-gray-200">
-              <tr>
-                <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Date</th>
-                <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Orders</th>
-                <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Gross Sales</th>
-                <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Discounts</th>
-                <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Coupons</th>
-                <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Net Sales</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-              {% for d in daily %}
-              <tr class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all">
-                <td class="px-6 py-4 text-sm font-bold text-gray-900">{{ d.period|date:"d M Y" }}</td>
-                <td class="px-6 py-4 text-sm font-bold text-blue-600">{{ d.count }}</td>
-                <td class="px-6 py-4 text-sm font-bold text-green-600">₹{{ d.gross }}</td>
-                <td class="px-6 py-4 text-sm font-bold text-orange-600">₹{{ d.discount }}</td>
-                <td class="px-6 py-4 text-sm font-bold text-purple-600">₹{{ d.coupon }}</td>
-                <td class="px-6 py-4 text-sm font-bold text-gray-900">₹{{ d.net }}</td>
-              </tr>
-              {% empty %}
-              <tr>
-                <td colspan="6" class="px-6 py-20 text-center">
-                  <div class="inline-flex items-center justify-center w-24 h-24 bg-gray-100 rounded-full mb-6">
-                    <i class="fas fa-chart-line text-4xl text-gray-400"></i>
-                  </div>
-                  <h3 class="text-xl font-bold text-gray-900 mb-2">No Sales Data</h3>
-                  <p class="text-gray-500 mb-4">No sales data available for the selected period</p>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50 border-b-2 border-gray-200">
+            <tr>
+              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Date</th>
+              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Orders</th>
+              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Gross Sales</th>
+              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Discounts</th>
+              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Coupons</th>
+              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Net Sales</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for d in daily %}
+            <tr class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all">
+              <td class="px-6 py-4 text-sm font-bold text-gray-900">{{ d.period|date:"d M Y" }}</td>
+              <td class="px-6 py-4 text-sm font-bold text-blue-600">{{ d.count }}</td>
+              <td class="px-6 py-4 text-sm font-bold text-green-600">₹{{ d.gross }}</td>
+              <td class="px-6 py-4 text-sm font-bold text-orange-600">₹{{ d.discount }}</td>
+              <td class="px-6 py-4 text-sm font-bold text-purple-600">₹{{ d.coupon }}</td>
+              <td class="px-6 py-4 text-sm font-bold text-gray-900">₹{{ d.net }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="px-6 py-20 text-center">
+                <div class="inline-flex items-center justify-center w-24 h-24 bg-gray-100 rounded-full mb-6">
+                  <i class="fas fa-chart-line text-4xl text-gray-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">No Sales Data</h3>
+                <p class="text-gray-500 mb-4">No sales data available for the selected period</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
     </div>
-  </main>
+  </div>
+</main>
 {% endblock %}

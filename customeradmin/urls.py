@@ -6,6 +6,7 @@ app_name = 'customeradmin'
 urlpatterns = [
     path('adminlogin/', views.login_to_account, name='login_to_account'),
     path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('api/chart-data/', views.chart_data_api, name='chart-data-api'),
     path('products/', views.product_view, name='product-list'),
     path('products/add/', views.add_product, name='add-product'),
     path('products/edit/<int:product_id>/', views.edit_product, name='edit-product'),
@@ -16,6 +17,8 @@ urlpatterns = [
     path('products/deleted/', views.deleted_products_view, name='deleted-products'),
     path('customers/', views.customer_view, name='customer-list'),
     path('logout/', views.custom_logout, name='admin_logout'),
+
+    
     path('categories/', views.category_view, name='category-list'),
     path('categories/add/', views.add_category, name='add-category'),
     path('categories/edit/<int:category_id>/', views.edit_category, name='edit-category'),
@@ -23,8 +26,7 @@ urlpatterns = [
     path('categories/soft-delete/<int:category_id>/', views.soft_delete_category, name='soft-delete-category'),
     path('categories/restore/<int:category_id>/', views.restore_category, name='restore-category'),
     path('categories/deleted/', views.deleted_categories_view, name='deleted-categories'),  
-    path('categories/deleted/', views.deleted_categories_view, name='deleted-categories'),
-    path('categories/restore/<int:category_id>/', views.restore_category, name='restore-category'),
+    
     path('user-management/', views.user_management_view, name='user-management'),
     path('block-user/<int:user_id>/', views.block_user, name='block-user'),
     path('unblock-user/<int:user_id>/', views.unblock_user, name='unblock-user'),
@@ -50,11 +52,12 @@ urlpatterns = [
     path('reports/sales/', views.sales_report, name='sales-report'),
     path('reports/sales/download/<str:format>/', views.sales_report_download, name='sales-report-download'),
 
-    #     # Banner management URLs
-    # path('banners/', views.banner_list, name='banner-list'),
-    # path('banners/add/', views.banner_add, name='banner-add'),
-    # path('banners/edit/<int:banner_id>/', views.banner_edit, name='banner-edit'),
-    # path('banners/delete/<int:banner_id>/', views.banner_delete, name='banner-delete'),
-    # path('banners/toggle/<int:banner_id>/', views.banner_toggle_status, name='banner-toggle-status'),
-    # path('banners/track-click/<int:banner_id>/', views.banner_track_click, name='banner-track-click'),
+    path('banners/', views.banner_list, name='banner-list'),
+    path('banners/add/', views.banner_add, name='banner-add'),
+    path('banners/edit/<int:banner_id>/', views.banner_edit, name='banner-edit'),
+    path('banners/delete/<int:banner_id>/', views.banner_delete, name='banner-delete'),
+
+    # Wallet Management
+    path('wallet/transactions/', views.wallet_transactions_list, name='wallet-transactions'),
+    path('wallet/transactions/<int:transaction_id>/', views.wallet_transaction_detail, name='wallet-transaction-detail'),
 ]

@@ -24,13 +24,13 @@
         padding: 15px 20px;
         margin-bottom: 25px;
         border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         display: flex;
         align-items: center;
         gap: 8px;
         list-style: none;
     }
-    
+
     .breadcrumb-item {
         display: flex;
         align-items: center;
@@ -43,22 +43,22 @@
         text-decoration: none;
         transition: all 0.3s ease;
     }
-    
+
     .breadcrumb-item a:hover {
         color: #667eea;
     }
-    
+
     .breadcrumb-item.active {
         color: #667eea;
         font-weight: 600;
     }
-    
+
     .breadcrumb-item::after {
         content: '/';
         margin: 0 10px;
         color: #ddd;
     }
-    
+
     .breadcrumb-item:last-child::after {
         content: '';
         margin: 0;
@@ -72,7 +72,7 @@
     .content-card {
         background: white;
         border-radius: 15px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         padding: 35px;
     }
 
@@ -98,7 +98,7 @@
     .content-header h4 i {
         color: #667eea;
     }
-    
+
     /* Orders Grid - 3 columns */
     .orders-grid {
         display: grid;
@@ -117,9 +117,9 @@
         flex-direction: column;
         height: 100%;
     }
-    
+
     .order-card:hover {
-        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
         transform: translateY(-4px);
         border-color: #667eea;
     }
@@ -142,7 +142,7 @@
         font-size: 12px;
         display: block;
     }
-    
+
     .order-status {
         padding: 6px 16px;
         border-radius: 20px;
@@ -153,13 +153,36 @@
         display: inline-block;
         margin-top: 10px;
     }
-    
-    .status-pending { background: #fff3cd; color: #856404; }
-    .status-confirmed { background: #d1ecf1; color: #0c5460; }
-    .status-processing { background: #d4edda; color: #155724; }
-    .status-shipped { background: #cce7ff; color: #004085; }
-    .status-delivered { background: #d4edda; color: #155724; }
-    .status-cancelled { background: #f8d7da; color: #721c24; }
+
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-confirmed {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .status-processing {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-shipped {
+        background: #cce7ff;
+        color: #004085;
+    }
+
+    .status-delivered {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-cancelled {
+        background: #f8d7da;
+        color: #721c24;
+    }
 
     .order-details {
         margin-bottom: 20px;
@@ -218,7 +241,7 @@
         color: #667eea;
         font-weight: 600;
     }
-    
+
     .btn-primary {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: none;
@@ -242,7 +265,7 @@
         box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
         color: white;
     }
-    
+
     .btn-outline-danger {
         border: 2px solid #dc3545;
         color: #dc3545;
@@ -286,7 +309,7 @@
         background: #f8d7da;
         border-radius: 8px;
     }
-    
+
     /* Empty State */
     .empty-state {
         text-align: center;
@@ -405,114 +428,165 @@
                 <i class="fas fa-shopping-bag"></i>My Orders
             </h4>
         </div>
-        
+
         {% if orders %}
-            <div class="orders-grid">
-                {% for order in orders %}
-                <div class="order-card">
-                    <div class="order-header">
-                        <h6>Order #{{ order.order_number }}</h6>
-                        <small>
-                            <i class="fas fa-calendar" style="margin-right: 5px;"></i>
-                            {{ order.created_at|date:"M d, Y g:i A" }}
-                        </small>
-                        <span class="order-status status-{{ order.status }}">{{ order.get_status_display }}</span>
+        <div class="orders-grid">
+            {% for order in orders %}
+            <div class="order-card">
+                <div class="order-header">
+                    <h6>Order #{{ order.order_number }}</h6>
+                    <small>
+                        <i class="fas fa-calendar" style="margin-right: 5px;"></i>
+                        {{ order.created_at|date:"M d, Y g:i A" }}
+                    </small>
+                    <span class="order-status status-{{ order.status }}">{{ order.get_status_display }}</span>
+                </div>
+
+                <div class="order-details">
+                    <div class="order-detail-item">
+                        <strong>Total Amount</strong>
+                        <p style="color: #667eea;">₹{{ order.total_amount|floatformat:2 }}</p>
                     </div>
-                    
-                    <div class="order-details">
-                        <div class="order-detail-item">
-                            <strong>Total Amount</strong>
-                            <p style="color: #667eea;">₹{{ order.total_amount|floatformat:2 }}</p>
-                        </div>
-                        <div class="order-detail-item">
-                            <strong>Payment Status</strong>
-                            <p>{{ order.get_payment_status_display }}</p>
-                        </div>
-                        <div class="order-detail-item">
-                            <strong>Items Count</strong>
-                            <p>{{ order.items.count }} item{{ order.items.count|pluralize }}</p>
-                        </div>
+                    <div class="order-detail-item">
+                        <strong>Payment Status</strong>
+                        <p>{{ order.get_payment_status_display }}</p>
                     </div>
-                    
-                    <div class="order-items">
-                        <h6>
-                            <i class="fas fa-box" style="margin-right: 5px;"></i>Items
-                        </h6>
-                        {% for item in order.items.all|slice:":2" %}
-                            <div class="order-item">
-                                <span><strong>{{ item.quantity }}x</strong> {{ item.product_name|truncatechars:20 }}</span>
-                                <span class="order-item-price">₹{{ item.total_price|floatformat:2 }}</span>
-                            </div>
-                        {% endfor %}
-                        {% if order.items.count > 2 %}
-                            <div style="font-size: 12px; color: #888; margin-top: 5px;">
-                                +{{ order.items.count|add:"-2" }} more
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="order-actions">
-                        <a href="{% url 'order_detail' order.order_number %}" class="btn-primary">
-                            <i class="fas fa-eye"></i>View Details
-                        </a>
-                        
-                        {% if order.can_be_cancelled %}
-                            <a href="{% url 'cancel_order' order.order_number %}" class="btn-outline-danger">
-                                <i class="fas fa-times"></i>Cancel Order
-                            </a>
-                        {% endif %}
-                        
-                        {% if order.status == 'cancelled' %}
-                            <span class="cancelled-badge">
-                                <i class="fas fa-times-circle"></i>
-                                Cancelled
-                            </span>
-                        {% endif %}
+                    <div class="order-detail-item">
+                        <strong>Items Count</strong>
+                        <p>{{ order.items.count }} item{{ order.items.count|pluralize }}</p>
                     </div>
                 </div>
-                {% endfor %}
-            </div>
-            
-            <!-- Pagination -->
-            {% if page_obj.has_other_pages %}
-            <div class="pagination">
-                <ul>
-                    {% if page_obj.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
-                                <i class="fas fa-chevron-left"></i> Previous
-                            </a>
-                        </li>
-                    {% endif %}
-                    
-                    {% for page_num in page_obj.paginator.page_range %}
-                        <li class="page-item {% if page_num == page_obj.number %}active{% endif %}">
-                            <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
-                        </li>
+
+                <div class="order-items">
+                    <h6>
+                        <i class="fas fa-box" style="margin-right: 5px;"></i>Items
+                    </h6>
+                    {% for item in order.items.all|slice:":2" %}
+                    <div class="order-item">
+                        <span><strong>{{ item.quantity }}x</strong> {{ item.product_name|truncatechars:20 }}</span>
+                        <span class="order-item-price">₹{{ item.total_price|floatformat:2 }}</span>
+                    </div>
                     {% endfor %}
-                    
-                    {% if page_obj.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">
-                                Next <i class="fas fa-chevron-right"></i>
-                            </a>
-                        </li>
+                    {% if order.items.count > 2 %}
+                    <div style="font-size: 12px; color: #888; margin-top: 5px;">
+                        +{{ order.items.count|add:"-2" }} more
+                    </div>
                     {% endif %}
-                </ul>
-            </div>
-            {% endif %}
-        {% else %}
-            <div class="empty-state">
-                <div class="empty-icon">
-                    <i class="fas fa-shopping-bag"></i>
                 </div>
-                <h5>No Orders Yet</h5>
-                <p>You haven't placed any orders yet. Start shopping to see your orders here!</p>
-                <a href="{% url 'product_list' %}" class="btn-primary" style="width: auto; padding: 14px 32px;">
-                    <i class="fas fa-shopping-cart"></i>Start Shopping
-                </a>
+
+                <div class="order-actions">
+                    <a href="{% url 'order_detail' order.order_number %}" class="btn-primary">
+                        <i class="fas fa-eye"></i>View Details
+                    </a>
+
+                    {% if order.can_be_cancelled %}
+                    <a href="{% url 'cancel_order' order.order_number %}" class="btn-outline-danger">
+                        <i class="fas fa-times"></i>Cancel Order
+                    </a>
+                    {% endif %}
+
+                    {% if order.payment_method == 'Cash on Delivery' and order.razorpay_order_id and order.payment_status == 'pending' %}
+                    <button type="button" class="btn-primary retry-payment-btn" data-order="{{ order.order_number }}"
+                        style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); margin-top: 10px; width: 100%; border: none; cursor: pointer;">
+                        <i class="fas fa-credit-card"></i> Pay Online
+                    </button>
+                    {% endif %}
+
+                    {% if order.status == 'cancelled' %}
+                    <span class="cancelled-badge">
+                        <i class="fas fa-times-circle"></i>
+                        Cancelled
+                    </span>
+                    {% endif %}
+                </div>
             </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="pagination">
+            <ul>
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for page_num in page_obj.paginator.page_range %}
+                <li class="page-item {% if page_num == page_obj.number %}active{% endif %}">
+                    <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+                </li>
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-shopping-bag"></i>
+            </div>
+            <h5>No Orders Yet</h5>
+            <p>You haven't placed any orders yet. Start shopping to see your orders here!</p>
+            <a href="{% url 'product_list' %}" class="btn-primary" style="width: auto; padding: 14px 32px;">
+                <i class="fas fa-shopping-cart"></i>Start Shopping
+            </a>
+        </div>
         {% endif %}
     </div>
 </div>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    document.querySelectorAll('.retry-payment-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const orderNumber = this.dataset.order;
+            fetch(`/orders/${orderNumber}/retry-payment/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            }).then(r => r.json()).then(d => {
+                if (!d.success) { Swal.fire({ icon: 'error', title: 'Error', text: d.message, confirmButtonColor: '#667eea' }); return; }
+                const options = {
+                    key: d.razorpay_key,
+                    amount: d.amount,
+                    currency: 'INR',
+                    name: 'Sitwell',
+                    description: 'Order Payment',
+                    order_id: d.rz_order_id,
+                    handler: function (resp) {
+                        // Submit to callback with retry=1
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = d.callback_url;
+                        ['razorpay_order_id', 'razorpay_payment_id', 'razorpay_signature'].forEach(k => {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = k;
+                            input.value = resp[k];
+                            form.appendChild(input);
+                        });
+                        document.body.appendChild(form);
+                        form.submit();
+                    },
+                    prefill: d.prefill,
+                    theme: { color: '#667eea' }
+                };
+                const rzp = new Razorpay(options);
+                rzp.open();
+            });
+        });
+    });
+</script>
 {% endblock %}

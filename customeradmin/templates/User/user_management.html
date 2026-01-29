@@ -2,294 +2,344 @@
 {% block title %}User Management - Sitwell Admin{% endblock %}
 
 {% block body %}
-  <!-- Enhanced Header -->
-  <header class="bg-white shadow-sm border-b border-gray-100 px-8 py-5">
-    <div class="flex flex-col md:flex-row items-start md:items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-black" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">User Management</h1>
-        <nav class="flex items-center space-x-2 text-sm text-gray-500 mt-2">
-          <a href="{% url 'customeradmin:admin_dashboard' %}" class="text-purple-600 hover:text-purple-800 font-medium transition-colors">
-            <i class="fas fa-home mr-1"></i>Dashboard
-          </a>
-          <i class="fas fa-chevron-right text-xs"></i>
-          <span class="font-medium">User Management</span>
-        </nav>
-      </div>
-      <div class="flex items-center space-x-3 bg-gradient-to-r from-blue-50 to-purple-50 px-4 py-2 rounded-xl mt-4 md:mt-0">
-        <div class="w-2 h-2 bg-green-500 rounded-full pulse"></div>
-        <span class="text-sm font-bold text-gray-700">Farhaan</span>
-        <span class="text-xs text-gray-500 font-medium">Admin</span>
-      </div>
+<!-- Enhanced Header -->
+<header class="bg-white shadow-sm border-b border-gray-100 px-8 py-5">
+  <div class="flex flex-col md:flex-row items-start md:items-center justify-between">
+    <div>
+      <h1 class="text-3xl font-black"
+        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        User Management</h1>
+      <nav class="flex items-center space-x-2 text-sm text-gray-500 mt-2">
+        <a href="{% url 'customeradmin:admin_dashboard' %}"
+          class="text-purple-600 hover:text-purple-800 font-medium transition-colors">
+          <i class="fas fa-home mr-1"></i>Dashboard
+        </a>
+        <i class="fas fa-chevron-right text-xs"></i>
+        <span class="font-medium">User Management</span>
+      </nav>
     </div>
-  </header>
+    <div
+      class="flex items-center space-x-3 bg-gradient-to-r from-blue-50 to-purple-50 px-4 py-2 rounded-xl mt-4 md:mt-0">
+      <div class="w-2 h-2 bg-green-500 rounded-full pulse"></div>
+      <span class="text-sm font-bold text-gray-700">Farhaan</span>
+      <span class="text-xs text-gray-500 font-medium">Admin</span>
+    </div>
+  </div>
+</header>
 
-  <!-- Page Content -->
-  <main class="flex-1 overflow-auto p-8">
+<!-- Page Content -->
+<main class="flex-1 overflow-auto p-8">
 
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-      <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in transform hover:scale-105 transition-all">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-bold text-gray-500 uppercase mb-2">Total Users</p>
-            <p class="text-3xl font-black text-gray-900">{{ users|length }}</p>
-          </div>
-          <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-            <i class="fas fa-users text-white text-2xl"></i>
-          </div>
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div
+      class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in transform hover:scale-105 transition-all">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-bold text-gray-500 uppercase mb-2">Total Users</p>
+          <p class="text-3xl font-black text-gray-900">{{ users|length }}</p>
         </div>
-      </div>
-      
-      <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in transform hover:scale-105 transition-all" style="animation-delay: 0.1s;">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-bold text-gray-500 uppercase mb-2">Active Users</p>
-            <p class="text-3xl font-black text-green-600">{{ active_count|default:0 }}</p>
-          </div>
-          <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-            <i class="fas fa-user-check text-white text-2xl"></i>
-          </div>
-        </div>
-      </div>
-      
-      <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in transform hover:scale-105 transition-all" style="animation-delay: 0.2s;">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-bold text-gray-500 uppercase mb-2">Blocked Users</p>
-            <p class="text-3xl font-black text-red-600">{{ blocked_count|default:0 }}</p>
-          </div>
-          <div class="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
-            <i class="fas fa-user-slash text-white text-2xl"></i>
-          </div>
-        </div>
-      </div>
-      
-      <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in transform hover:scale-105 transition-all" style="animation-delay: 0.3s;">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm font-bold text-gray-500 uppercase mb-2">New Today</p>
-            <p class="text-3xl font-black text-purple-600">{{ new_today|default:0 }}</p>
-          </div>
-          <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
-            <i class="fas fa-user-plus text-white text-2xl"></i>
-          </div>
+        <div
+          class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+          <i class="fas fa-users text-white text-2xl"></i>
         </div>
       </div>
     </div>
 
-    <!-- Search Form -->
-    <form method="get" class="mb-8 fade-in" style="animation-delay: 0.4s;">
-      <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100">
-        <div class="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-4">
-          <div class="relative flex-1 w-full">
-            <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-            <input type="text" name="search" value="{{ search_query }}"
-                   placeholder="Search by username, email, or name..."
-                   class="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-500 transition-all font-medium">
-          </div>
-          <button type="submit" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:shadow-lg transition-all w-full md:w-auto">
-            <i class="fas fa-search mr-2"></i>Search
-          </button>
-          {% if search_query %}
-            <a href="{% url 'customeradmin:user-management' %}" class="px-6 py-3 text-gray-700 border-2 border-gray-300 rounded-xl hover:bg-gray-50 font-bold transition-all w-full md:w-auto text-center">
-              <i class="fas fa-times mr-2"></i>Clear
-            </a>
-          {% endif %}
+    <div
+      class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in transform hover:scale-105 transition-all"
+      style="animation-delay: 0.1s;">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-bold text-gray-500 uppercase mb-2">Active Users</p>
+          <p class="text-3xl font-black text-green-600">{{ active_count|default:0 }}</p>
+        </div>
+        <div
+          class="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+          <i class="fas fa-user-check text-white text-2xl"></i>
         </div>
       </div>
-    </form>
-
-    <!-- Users Table -->
-    <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden fade-in" style="animation-delay: 0.5s;">
-      <div class="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-2xl font-black text-gray-900">All Users</h2>
-            <p class="text-sm text-gray-500 mt-1">Manage user accounts and permissions</p>
-          </div>
-        </div>
-      </div>
-      
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-gray-50 border-b-2 border-gray-200">
-            <tr>
-              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">S.NO</th>
-              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Username</th>
-              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Email</th>
-              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Name</th>
-              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Joined</th>
-              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Status</th>
-              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            {% for user in users %}
-              <tr class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all {% if user.is_blocked %}bg-red-50{% endif %}">
-                <td class="px-6 py-4 text-sm font-bold text-gray-900">{{ forloop.counter }}</td>
-                <td class="px-6 py-4 text-sm">
-                  <div class="flex items-center">
-                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg mr-3">
-                      {{ user.username|slice:":2"|upper }}
-                    </div>
-                    <span class="font-bold text-gray-900">{{ user.username }}</span>
-                  </div>
-                </td>
-                <td class="px-6 py-4 text-sm text-gray-600">{{ user.email }}</td>
-                <td class="px-6 py-4 text-sm text-gray-600 font-medium">{{ user.first_name }} {{ user.last_name }}</td>
-                <td class="px-6 py-4 text-sm text-gray-600">{{ user.date_joined|date:"d M Y" }}</td>
-                <td class="px-6 py-4">
-                  {% if user.is_blocked %}
-                    <span class="px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full">
-                      <i class="fas fa-ban mr-1"></i>Blocked
-                    </span>
-                  {% else %}
-                    <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">
-                      <i class="fas fa-check-circle mr-1"></i>Active
-                    </span>
-                  {% endif %}
-                </td>
-                <td class="px-6 py-4">
-                  {% if user.is_blocked %}
-                    <button onclick="confirmUnblock({{ user.id }}, '{{ user.username }}')"
-                            class="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-bold rounded-xl hover:shadow-lg transition-all">
-                      <i class="fas fa-unlock mr-1"></i>Unblock
-                    </button>
-                  {% else %}
-                    <button onclick="confirmBlock({{ user.id }}, '{{ user.username }}')"
-                            class="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-bold rounded-xl hover:shadow-lg transition-all">
-                      <i class="fas fa-ban mr-1"></i>Block
-                    </button>
-                  {% endif %}
-                </td>
-              </tr>
-            {% empty %}
-              <tr>
-                <td colspan="7" class="px-6 py-20 text-center">
-                  <div class="inline-flex items-center justify-center w-24 h-24 bg-gray-100 rounded-full mb-6">
-                    <i class="fas fa-users text-4xl text-gray-400"></i>
-                  </div>
-                  <h3 class="text-xl font-bold text-gray-900 mb-2">No Users Found</h3>
-                  <p class="text-gray-500 mb-4">
-                    {% if search_query %}
-                      Try adjusting your search criteria
-                    {% else %}
-                      No users available at the moment
-                    {% endif %}
-                  </p>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Enhanced Pagination -->
-      {% if page_obj.paginator.num_pages > 1 %}
-      <div class="px-8 py-4 border-t border-gray-100 bg-gray-50">
-        <div class="flex items-center justify-between">
-          <p class="text-sm text-gray-600">
-            Showing <span class="font-bold text-purple-600">{{ page_obj.start_index }}</span> to 
-            <span class="font-bold text-purple-600">{{ page_obj.end_index }}</span> of 
-            <span class="font-bold text-purple-600">{{ page_obj.paginator.count }}</span> entries
-          </p>
-          <div class="flex space-x-2">
-            {% if page_obj.has_previous %}
-              <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
-                 class="px-4 py-2 border-2 border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-100 transition-all">
-                <i class="fas fa-chevron-left"></i>
-              </a>
-            {% endif %}
-            
-            <span class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold">
-              {{ page_obj.number }}
-            </span>
-            
-            {% if page_obj.has_next %}
-              <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
-                 class="px-4 py-2 border-2 border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-100 transition-all">
-                <i class="fas fa-chevron-right"></i>
-              </a>
-            {% endif %}
-          </div>
-        </div>
-      </div>
-      {% endif %}
     </div>
-  </main>
 
-  <!-- Toast Container -->
-  <div id="toast-container" style="position:fixed; top:16px; right:16px; z-index:9999; display:flex; flex-direction:column; gap:8px;"></div>
+    <div
+      class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in transform hover:scale-105 transition-all"
+      style="animation-delay: 0.2s;">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-bold text-gray-500 uppercase mb-2">Blocked Users</p>
+          <p class="text-3xl font-black text-red-600">{{ blocked_count|default:0 }}</p>
+        </div>
+        <div
+          class="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+          <i class="fas fa-user-slash text-white text-2xl"></i>
+        </div>
+      </div>
+    </div>
 
-  <!-- Enhanced Confirm Dialog -->
-  <div id="confirm-overlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:9998; animation:fadeIn 0.2s;">
-    <div style="background:#fff; width:460px; max-width:92vw; border-radius:20px; box-shadow:0 25px 60px rgba(0,0,0,0.3); overflow:hidden; animation:slideUp 0.3s;">
-      <div style="padding:24px; border-bottom:2px solid #e5e7eb; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-        <h3 style="margin:0; font-size:20px; font-weight:900; color:#fff;">
-          <i class="fas fa-exclamation-triangle mr-2"></i>Confirm Action
-        </h3>
-      </div>
-      <div id="confirm-message" style="padding:24px; color:#374151; font-size:15px; line-height:1.6; white-space:pre-line;">
-        Are you sure?
-      </div>
-      <div style="display:flex; gap:12px; justify-content:flex-end; padding:20px 24px; background:#f9fafb; border-top:2px solid #e5e7eb;">
-        <button id="confirm-cancel" type="button" class="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50 font-bold transition-all">
-          <i class="fas fa-times mr-2"></i>Cancel
-        </button>
-        <button id="confirm-ok" type="button" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-lg font-bold transition-all">
-          <i class="fas fa-check mr-2"></i>Confirm
-        </button>
+    <div
+      class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in transform hover:scale-105 transition-all"
+      style="animation-delay: 0.3s;">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-bold text-gray-500 uppercase mb-2">New Today</p>
+          <p class="text-3xl font-black text-purple-600">{{ new_today|default:0 }}</p>
+        </div>
+        <div
+          class="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+          <i class="fas fa-user-plus text-white text-2xl"></i>
+        </div>
       </div>
     </div>
   </div>
 
-  <style>
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+  <!-- Search Form -->
+  <form method="get" class="mb-8 fade-in" style="animation-delay: 0.4s;">
+    <div class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100">
+      <div class="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-4">
+        <div class="relative flex-1 w-full">
+          <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          <input type="text" name="search" value="{{ search_query }}"
+            placeholder="Search by username, email, or name..."
+            class="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-500 transition-all font-medium">
+        </div>
+        <button type="submit"
+          class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold hover:shadow-lg transition-all w-full md:w-auto">
+          <i class="fas fa-search mr-2"></i>Search
+        </button>
+        {% if search_query %}
+        <a href="{% url 'customeradmin:user-management' %}"
+          class="px-6 py-3 text-gray-700 border-2 border-gray-300 rounded-xl hover:bg-gray-50 font-bold transition-all w-full md:w-auto text-center">
+          <i class="fas fa-times mr-2"></i>Clear
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </form>
+
+  <!-- Users Table -->
+  <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden fade-in"
+    style="animation-delay: 0.5s;">
+    <div class="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-black text-gray-900">All Users</h2>
+          <p class="text-sm text-gray-500 mt-1">Manage user accounts and permissions</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50 border-b-2 border-gray-200">
+          <tr>
+            <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">S.NO</th>
+            <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Username</th>
+            <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Email</th>
+            <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Name</th>
+            <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Joined</th>
+            <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Status</th>
+            <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider"
+              style="min-width: 120px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for user in users %}
+          <tr
+            class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all {% if user.is_blocked %}bg-red-50{% endif %}">
+            <td class="px-6 py-4 text-sm font-bold text-gray-900">{{ forloop.counter }}</td>
+                        <td class="px-6 py-4 text-sm">
+              <div class="flex items-center">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg mr-3">{% if user.first_name %}{{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}{% else %}{{ user.email|slice:":2"|upper }}{% endif %}</div>
+                <span class="font-bold text-gray-900">{% if user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}{{ user.email }}{% endif %}</span>
+              </div>
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-600">{{ user.email }}</td>
+            <td class="px-6 py-4 text-sm text-gray-600 font-medium">{{ user.first_name }} {{ user.last_name }}</td>
+            <td class="px-6 py-4 text-sm text-gray-600">{{ user.created_at|date:"d M Y" }}</td>
+            <td class="px-6 py-4">
+              {% if user.is_blocked %}
+              <span class="px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full">
+                <i class="fas fa-ban mr-1"></i>Blocked
+              </span>
+              {% else %}
+              <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">
+                <i class="fas fa-check-circle mr-1"></i>Active
+              </span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4" style="min-width: 120px;">
+              {% if user.is_blocked %}
+              <button onclick="confirmUnblock({{ user.id }}, '{{ user.email }}')"
+                class="px-4 py-2 text-white text-sm font-bold rounded-xl hover:shadow-lg transition-all"
+                style="background: linear-gradient(to right, #22c55e, #059669);">
+                <i class="fas fa-unlock mr-1"></i>Unblock
+              </button>
+              {% else %}
+              <button onclick="confirmBlock({{ user.id }}, '{{ user.email }}')"
+                class="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-bold rounded-xl hover:shadow-lg transition-all">
+                <i class="fas fa-ban mr-1"></i>Block
+              </button>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="px-6 py-20 text-center">
+              <div class="inline-flex items-center justify-center w-24 h-24 bg-gray-100 rounded-full mb-6">
+                <i class="fas fa-users text-4xl text-gray-400"></i>
+              </div>
+              <h3 class="text-xl font-bold text-gray-900 mb-2">No Users Found</h3>
+              <p class="text-gray-500 mb-4">
+                {% if search_query %}
+                Try adjusting your search criteria
+                {% else %}
+                No users available at the moment
+                {% endif %}
+              </p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Enhanced Pagination -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="px-8 py-4 border-t border-gray-100 bg-gray-50">
+      <div class="flex items-center justify-between">
+        <p class="text-sm text-gray-600">
+          Showing <span class="font-bold text-purple-600">{{ page_obj.start_index }}</span> to
+          <span class="font-bold text-purple-600">{{ page_obj.end_index }}</span> of
+          <span class="font-bold text-purple-600">{{ page_obj.paginator.count }}</span> entries
+        </p>
+        <div class="flex space-x-2">
+          {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
+            class="px-4 py-2 border-2 border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-100 transition-all">
+            <i class="fas fa-chevron-left"></i>
+          </a>
+          {% endif %}
+
+          <span class="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold">
+            {{ page_obj.number }}
+          </span>
+
+          {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}"
+            class="px-4 py-2 border-2 border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-100 transition-all">
+            <i class="fas fa-chevron-right"></i>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</main>
+
+<!-- Toast Container -->
+<div id="toast-container"
+  style="position:fixed; top:16px; right:16px; z-index:9999; display:flex; flex-direction:column; gap:8px;"></div>
+
+<!-- Enhanced Confirm Dialog -->
+<div id="confirm-overlay"
+  style="position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:9998; animation:fadeIn 0.2s;">
+  <div
+    style="background:#fff; width:460px; max-width:92vw; border-radius:20px; box-shadow:0 25px 60px rgba(0,0,0,0.3); overflow:hidden; animation:slideUp 0.3s;">
+    <div
+      style="padding:24px; border-bottom:2px solid #e5e7eb; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+      <h3 style="margin:0; font-size:20px; font-weight:900; color:#fff;">
+        <i class="fas fa-exclamation-triangle mr-2"></i>Confirm Action
+      </h3>
+    </div>
+    <div id="confirm-message"
+      style="padding:24px; color:#374151; font-size:15px; line-height:1.6; white-space:pre-line;">
+      Are you sure?
+    </div>
+    <div
+      style="display:flex; gap:12px; justify-content:flex-end; padding:20px 24px; background:#f9fafb; border-top:2px solid #e5e7eb;">
+      <button id="confirm-cancel" type="button"
+        class="px-6 py-3 border-2 border-gray-300 rounded-xl hover:bg-gray-50 font-bold transition-all">
+        <i class="fas fa-times mr-2"></i>Cancel
+      </button>
+      <button id="confirm-ok" type="button"
+        class="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:shadow-lg font-bold transition-all">
+        <i class="fas fa-check mr-2"></i>Confirm
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
     }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+
+    to {
+      opacity: 1;
     }
-    .fade-in {
-      animation: fadeIn 0.6s ease-out;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
-    .pulse {
-      animation: pulse 2s ease-in-out infinite;
+  }
+
+  .fade-in {
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  @keyframes pulse {
+
+    0%,
+    100% {
+      opacity: 1;
     }
-  </style>
+
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .pulse {
+    animation: pulse 2s ease-in-out infinite;
+  }
+</style>
 {% endblock %}
 
 {% block scripts %}
 {{ block.super }}
 <script>
-// Enhanced Toast
-function showToast(message, type='info', timeout=3000) {
-  const container = document.getElementById('toast-container') || (() => {
-    const el = document.createElement('div');
-    el.id = 'toast-container';
-    el.style.cssText = 'position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;';
-    document.body.appendChild(el);
-    return el;
-  })();
+  // Enhanced Toast
+  function showToast(message, type = 'info', timeout = 3000) {
+    const container = document.getElementById('toast-container') || (() => {
+      const el = document.createElement('div');
+      el.id = 'toast-container';
+      el.style.cssText = 'position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;';
+      document.body.appendChild(el);
+      return el;
+    })();
 
-  const types = {
-    success: { bg:'linear-gradient(135deg, #d1fae5, #a7f3d0)', c:'#166534', icon:'fa-check-circle' },
-    error: { bg:'linear-gradient(135deg, #fef2f2, #fecaca)', c:'#b91c1c', icon:'fa-times-circle' },
-    info: { bg:'linear-gradient(135deg, #dbeafe, #bfdbfe)', c:'#1d4ed8', icon:'fa-info-circle' },
-    warning: { bg:'linear-gradient(135deg, #fef3c7, #fed7aa)', c:'#92400e', icon:'fa-exclamation-triangle' },
-  };
-  const t = types[type] || types.info;
+    const types = {
+      success: { bg: 'linear-gradient(135deg, #d1fae5, #a7f3d0)', c: '#166534', icon: 'fa-check-circle' },
+      error: { bg: 'linear-gradient(135deg, #fef2f2, #fecaca)', c: '#b91c1c', icon: 'fa-times-circle' },
+      info: { bg: 'linear-gradient(135deg, #dbeafe, #bfdbfe)', c: '#1d4ed8', icon: 'fa-info-circle' },
+      warning: { bg: 'linear-gradient(135deg, #fef3c7, #fed7aa)', c: '#92400e', icon: 'fa-exclamation-triangle' },
+    };
+    const t = types[type] || types.info;
 
-  const toast = document.createElement('div');
-  toast.style.cssText = `padding:16px 20px;border-radius:12px;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,0.15);display:flex;align-items:center;gap:12px;background:${t.bg};color:${t.c};font-weight:600;border:2px solid ${t.c}33;animation:slideIn 0.3s;min-width:300px;`;
-  
-  toast.innerHTML = `
+    const toast = document.createElement('div');
+    toast.style.cssText = `padding:16px 20px;border-radius:12px;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,0.15);display:flex;align-items:center;gap:12px;background:${t.bg};color:${t.c};font-weight:600;border:2px solid ${t.c}33;animation:slideIn 0.3s;min-width:300px;`;
+
+    toast.innerHTML = `
     <i class="fas ${t.icon}" style="font-size:20px;"></i>
     <div style="flex:1;">${message}</div>
     <button onclick="this.parentElement.remove()" style="border:none;background:transparent;cursor:pointer;color:${t.c};font-size:18px;">
@@ -297,73 +347,73 @@ function showToast(message, type='info', timeout=3000) {
     </button>
   `;
 
-  container.appendChild(toast);
-  if (timeout) setTimeout(() => toast.remove(), timeout);
-}
+    container.appendChild(toast);
+    if (timeout) setTimeout(() => toast.remove(), timeout);
+  }
 
-// Enhanced Confirm Dialog
-function confirmDialog(message) {
-  const overlay = document.getElementById('confirm-overlay');
-  const msg = document.getElementById('confirm-message');
-  const ok = document.getElementById('confirm-ok');
-  const cancel = document.getElementById('confirm-cancel');
+  // Enhanced Confirm Dialog
+  function confirmDialog(message) {
+    const overlay = document.getElementById('confirm-overlay');
+    const msg = document.getElementById('confirm-message');
+    const ok = document.getElementById('confirm-ok');
+    const cancel = document.getElementById('confirm-cancel');
 
-  return new Promise((resolve) => {
-    msg.textContent = message;
-    overlay.style.display = 'flex';
+    return new Promise((resolve) => {
+      msg.textContent = message;
+      overlay.style.display = 'flex';
 
-    const cleanup = () => {
-      overlay.style.display = 'none';
-      ok.onclick = null;
-      cancel.onclick = null;
-      overlay.onclick = null;
-    };
+      const cleanup = () => {
+        overlay.style.display = 'none';
+        ok.onclick = null;
+        cancel.onclick = null;
+        overlay.onclick = null;
+      };
 
-    ok.onclick = () => { cleanup(); resolve(true); };
-    cancel.onclick = () => { cleanup(); resolve(false); };
-    overlay.onclick = (e) => { if (e.target === overlay) { cleanup(); resolve(false); } };
-  });
-}
+      ok.onclick = () => { cleanup(); resolve(true); };
+      cancel.onclick = () => { cleanup(); resolve(false); };
+      overlay.onclick = (e) => { if (e.target === overlay) { cleanup(); resolve(false); } };
+    });
+  }
 
-// Block/Unblock Functions
-async function confirmBlock(userId, username) {
-  const confirmed = await confirmDialog(
-    `⚠️ BLOCK USER CONFIRMATION\n\nAre you sure you want to BLOCK user "${username}"?\n\nThis action will:\n• Prevent the user from accessing the system\n• Block all user activities\n\nClick Confirm to proceed or Cancel to abort.`
-  );
-  if (!confirmed) return;
+  // Block/Unblock Functions
+  async function confirmBlock(userId, username) {
+    const confirmed = await confirmDialog(
+      `⚠️ BLOCK USER CONFIRMATION\n\nAre you sure you want to BLOCK user "${username}"?\n\nThis action will:\n• Prevent the user from accessing the system\n• Block all user activities\n\nClick Confirm to proceed or Cancel to abort.`
+    );
+    if (!confirmed) return;
 
-  showToast(`Blocking ${username}...`, 'info', 1500);
-  fetch(`/staff/block-user/${userId}/`, { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' } })
-    .then(r => r.json())
-    .then(data => {
-      if (data.success) {
-        showToast('✅ ' + (data.message || 'User blocked successfully'), 'success');
-        setTimeout(() => location.reload(), 700);
-      } else {
-        showToast('❌ Error: ' + (data.error || 'Block failed'), 'error');
-      }
-    })
-    .catch(() => showToast('❌ Network error occurred', 'error'));
-}
+    showToast(`Blocking ${username}...`, 'info', 1500);
+    fetch(`/staff/block-user/${userId}/`, { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' } })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          showToast('✅ ' + (data.message || 'User blocked successfully'), 'success');
+          setTimeout(() => location.reload(), 700);
+        } else {
+          showToast('❌ Error: ' + (data.error || 'Block failed'), 'error');
+        }
+      })
+      .catch(() => showToast('❌ Network error occurred', 'error'));
+  }
 
-async function confirmUnblock(userId, username) {
-  const confirmed = await confirmDialog(
-    `✅ UNBLOCK USER CONFIRMATION\n\nAre you sure you want to UNBLOCK user "${username}"?\n\nThis action will:\n• Restore user access to the system\n• Allow user to login and use all features\n\nClick Confirm to proceed or Cancel to abort.`
-  );
-  if (!confirmed) return;
+  async function confirmUnblock(userId, username) {
+    const confirmed = await confirmDialog(
+      `✅ UNBLOCK USER CONFIRMATION\n\nAre you sure you want to UNBLOCK user "${username}"?\n\nThis action will:\n• Restore user access to the system\n• Allow user to login and use all features\n\nClick Confirm to proceed or Cancel to abort.`
+    );
+    if (!confirmed) return;
 
-  showToast(`Unblocking ${username}...`, 'info', 1500);
-  fetch(`/staff/unblock-user/${userId}/`, { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' } })
-    .then(r => r.json())
-    .then(data => {
-      if (data.success) {
-        showToast('✅ ' + (data.message || 'User unblocked successfully'), 'success');
-        setTimeout(() => location.reload(), 700);
-      } else {
-        showToast('❌ Error: ' + (data.error || 'Unblock failed'), 'error');
-      }
-    })
-    .catch(() => showToast('❌ Network error occurred', 'error'));
-}
+    showToast(`Unblocking ${username}...`, 'info', 1500);
+    fetch(`/staff/unblock-user/${userId}/`, { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' } })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          showToast('✅ ' + (data.message || 'User unblocked successfully'), 'success');
+          setTimeout(() => location.reload(), 700);
+        } else {
+          showToast('❌ Error: ' + (data.error || 'Unblock failed'), 'error');
+        }
+      })
+      .catch(() => showToast('❌ Network error occurred', 'error'));
+  }
 </script>
 {% endblock %}

@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import cache_control
 from django.core.paginator import Paginator
-from django.db.models import Q, Max, Sum
+from django.db.models import Q, Max, Sum, F
 from django.db import transaction
 from django.utils import timezone
 from django.contrib.sessions.models import Session
@@ -28,14 +28,23 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
-
 from authenticate.models import Coupon, Order
 from .forms import CouponForm
 from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.template.response import TemplateResponse
-
-
+from django.views.decorators.http import require_POST
+from .models import Banner
+from .forms import BannerForm
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+from reportlab.platypus import Spacer
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from django.conf import settings
+from datetime import datetime
+import os
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
@@ -99,6 +108,86 @@ def admin_dashboard(request):
     User = get_user_model()
     total_users = User.objects.filter(is_superuser=False).count()
     
+    from django.db.models import Count, F
+    best_selling_products_qs = OrderItem.objects.filter(
+        order__status__in=['paid', 'shipped', 'delivered', 'out-for-delivery'],
+        product__isnull=False
+    ).values(
+        'product__id', 'product__name', 'product__category', 'product__brand'
+    ).annotate(
+        total_sold=Sum('quantity'),
+        total_revenue=Sum('total_price')
+    ).order_by('-total_sold')[:10]
+    
+    best_selling_products = []
+    for p in best_selling_products_qs:
+        best_selling_products.append({
+            'name': p['product__name'],
+            'category': p['product__category'],
+            'brand': p['product__brand'],
+            'total_sold': p['total_sold'],
+            'total_revenue': p['total_revenue'],
+        })
+    
+    best_selling_categories_qs = OrderItem.objects.filter(
+        order__status__in=['paid', 'shipped', 'delivered', 'out-for-delivery'],
+        product__isnull=False
+    ).values(
+        'product__category'
+    ).annotate(
+        total_sold=Sum('quantity'),
+        total_revenue=Sum('total_price')
+    ).order_by('-total_sold')[:10]
+    
+    category_display_map = {cat.name: cat.name for cat in Category.objects.filter(is_deleted=False)}
+    best_selling_categories = []
+    for cat in best_selling_categories_qs:
+        cat_dict = dict(cat)
+        cat_dict['category_name'] = category_display_map.get(cat['product__category'], cat['product__category'] or 'Unknown')
+        best_selling_categories.append(cat_dict)
+    
+    best_selling_brands_qs = OrderItem.objects.filter(
+        order__status__in=['paid', 'shipped', 'delivered', 'out-for-delivery'],
+        product__isnull=False,
+        product__brand__isnull=False
+    ).exclude(
+        product__brand=''
+    ).values(
+        'product__brand'
+    ).annotate(
+        total_sold=Sum('quantity'),
+        total_revenue=Sum('total_price')
+    ).order_by('-total_sold')[:10]
+    
+    best_selling_brands = []
+    for b in best_selling_brands_qs:
+        best_selling_brands.append({
+            'brand_name': b['product__brand'],
+            'total_sold': b['total_sold'],
+            'total_revenue': b['total_revenue'],
+        })
+    
+    current_year = timezone.now().year
+    monthly_sales = Order.objects.filter(
+        created_at__year=current_year,
+        status__in=['paid', 'shipped', 'delivered', 'out-for-delivery']
+    ).annotate(
+        month=TruncMonth('created_at')
+    ).values('month').annotate(
+        total=Sum('total_amount'),
+        count=Count('id')
+    ).order_by('month')
+    month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    chart_labels = month_names
+    chart_data = [0] * 12
+    chart_orders = [0] * 12
+    
+    for sale in monthly_sales:
+        if sale['month']:
+            month_idx = sale['month'].month - 1
+            chart_data[month_idx] = float(sale['total'] or 0)
+            chart_orders[month_idx] = sale['count']
+    
     context = {
         'total_products': total_products,
         'published_products': published_products,
@@ -110,16 +199,126 @@ def admin_dashboard(request):
         'today_orders_count': today_orders_count,
         'total_revenue': total_revenue,
         'total_users': total_users,
+        'best_selling_products': best_selling_products,
+        'best_selling_categories': best_selling_categories,
+        'best_selling_brands': best_selling_brands,
+        'chart_labels': chart_labels,
+        'chart_data': chart_data,
+        'chart_orders': chart_orders,
+        'current_year': current_year,
     }
     
-    print("=== DASHBOARD DEBUG ===")
-    print(f"Today's Sales: ₹{today_sales}")
-    print(f"Today's Orders: {today_orders_count}")
-    print(f"Total Revenue: ₹{total_revenue}")
-    print(f"Total Users: {total_users}")
-    print("=======================")
-    
     return render(request, 'admin_dashboard.html', context)
+
+
+@login_required
+def chart_data_api(request):
+    """API endpoint for fetching chart data with different filters"""
+    if not request.user.is_superuser:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    filter_type = request.GET.get('filter', 'monthly')
+    
+    from django.db.models import Count
+    from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, TruncYear
+    
+    today = timezone.now()
+    
+    if filter_type == 'daily':
+        start_date = today - timedelta(days=30)
+        sales = Order.objects.filter(
+            created_at__gte=start_date,
+            status__in=['paid', 'shipped', 'delivered', 'out-for-delivery']
+        ).annotate(
+            period=TruncDay('created_at')
+        ).values('period').annotate(
+            total=Sum('total_amount'),
+            count=Count('id')
+        ).order_by('period')
+        
+        labels = []
+        data = []
+        orders = []
+        for i in range(30):
+            day = start_date + timedelta(days=i)
+            labels.append(day.strftime('%d %b'))
+            sale = next((s for s in sales if s['period'] and s['period'].date() == day.date()), None)
+            data.append(float(sale['total']) if sale else 0)
+            orders.append(sale['count'] if sale else 0)
+            
+    elif filter_type == 'weekly':
+       
+        start_date = today - timedelta(weeks=12)
+        sales = Order.objects.filter(
+            created_at__gte=start_date,
+            status__in=['paid', 'shipped', 'delivered', 'out-for-delivery']
+        ).annotate(
+            period=TruncWeek('created_at')
+        ).values('period').annotate(
+            total=Sum('total_amount'),
+            count=Count('id')
+        ).order_by('period')
+        
+        labels = []
+        data = []
+        orders = []
+        sales_list = list(sales)
+        for i in range(12):
+            week_start = start_date + timedelta(weeks=i)
+            labels.append(f"Week {i+1}")
+            sale = next((s for s in sales_list if s['period'] and s['period'].date() <= week_start.date() + timedelta(days=6) and s['period'].date() >= week_start.date()), None)
+            data.append(float(sale['total']) if sale else 0)
+            orders.append(sale['count'] if sale else 0)
+            
+    elif filter_type == 'yearly':
+       
+        current_year = today.year
+        sales = Order.objects.filter(
+            created_at__year__gte=current_year - 4,
+            status__in=['paid', 'shipped', 'delivered', 'out-for-delivery']
+        ).annotate(
+            period=TruncYear('created_at')
+        ).values('period').annotate(
+            total=Sum('total_amount'),
+            count=Count('id')
+        ).order_by('period')
+        
+        labels = [str(current_year - i) for i in range(4, -1, -1)]
+        data = [0] * 5
+        orders = [0] * 5
+        for sale in sales:
+            if sale['period']:
+                year_idx = sale['period'].year - (current_year - 4)
+                if 0 <= year_idx < 5:
+                    data[year_idx] = float(sale['total'] or 0)
+                    orders[year_idx] = sale['count']
+    else:
+        current_year = today.year
+        sales = Order.objects.filter(
+            created_at__year=current_year,
+            status__in=['paid', 'shipped', 'delivered', 'out-for-delivery']
+        ).annotate(
+            period=TruncMonth('created_at')
+        ).values('period').annotate(
+            total=Sum('total_amount'),
+            count=Count('id')
+        ).order_by('period')
+        
+        labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        data = [0] * 12
+        orders = [0] * 12
+        for sale in sales:
+            if sale['period']:
+                month_idx = sale['period'].month - 1
+                data[month_idx] = float(sale['total'] or 0)
+                orders[month_idx] = sale['count']
+    
+    return JsonResponse({
+        'labels': labels,
+        'data': data,
+        'orders': orders,
+        'filter': filter_type
+    })
 
 
 
@@ -148,7 +347,7 @@ def product_view(request):
             Q(name__icontains=search_query) |
             Q(sku__icontains=search_query) |
             Q(brand__icontains=search_query) |
-            Q(category__icontains=search_query)
+            Q(category__name__icontains=search_query)
         )
     
     
@@ -165,6 +364,11 @@ def product_view(request):
     paginator = Paginator(products, 10) 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+
+    all_products = Product.objects.all()
+    published_count = all_products.filter(status='published').count()
+    low_stock_count = all_products.filter(status='low-stock').count()
+    out_of_stock_count = all_products.filter(Q(status='out-of-stock') | Q(stock_quantity=0)).count()
     
     return render(request, 'products/product_list.html', {
         'products': page_obj.object_list,
@@ -173,6 +377,9 @@ def product_view(request):
         'current_status': status_filter,
         'status_choices': Product.STATUS_CHOICES,
         'total_products': products.count(),
+        'published_count': published_count,        
+        'low_stock_count': low_stock_count,        
+        'out_of_stock_count': out_of_stock_count, 
     })
 
 
@@ -363,6 +570,7 @@ def edit_product(request, product_id):
         'images_count': images_count,
         'images_remaining': images_remaining,
         'min_images_required': max(0, 3 - images_count),
+        'categories': Category.objects.filter(is_deleted=False, is_listed=True),
     })
 
 
@@ -383,13 +591,10 @@ def delete_product_image(request, image_id):
 
 @login_required
 def custom_logout(request):
-    """Custom logout view that redirects to admin login"""
-    from django.contrib.auth import logout
     if request.method == 'POST':
         logout(request)
         messages.success(request, "You have been successfully logged out.")
-        return redirect('login_to_account')  
-    return redirect('login_to_account')
+    return redirect('customeradmin:login_to_account')
 
 
 
@@ -421,7 +626,6 @@ def soft_delete_product(request, product_id):
 
 @login_required
 def restore_product(request, product_id):
-    """Restore a soft-deleted product"""
     if not request.user.is_superuser:
         messages.error(request, "You do not have permission.")
         return redirect('/')
@@ -444,7 +648,6 @@ def restore_product(request, product_id):
 
 @login_required
 def deleted_products_view(request):
-    """View to show all soft-deleted products"""
     if not request.user.is_superuser:
         messages.error(request, "You do not have permission to view this page.")
         return redirect('/')
@@ -503,6 +706,18 @@ def category_view(request):
     if request.GET.get('clear'):
         return redirect('category-list')
     
+    all_categories = Category.objects.filter(is_deleted=False)
+    listed_count = all_categories.filter(is_listed=True).count()
+    unlisted_count = all_categories.filter(is_listed=False).count()
+    
+    from django.utils import timezone
+    current_month = timezone.now().month
+    current_year = timezone.now().year
+    new_this_month = all_categories.filter(
+        created_at__month=current_month,
+        created_at__year=current_year
+    ).count()
+    
     paginator = Paginator(categories, 5)  
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -511,8 +726,10 @@ def category_view(request):
         'categories': page_obj,
         'page_obj': page_obj,
         'search_query': search_query,
+        'listed_count': listed_count,
+        'unlisted_count': unlisted_count,
+        'new_this_month': new_this_month,
     })
-
 
 
 @login_required
@@ -588,42 +805,25 @@ def soft_delete_category(request, category_id):
         logger.error(f"Error soft deleting category: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)})
 
-@login_required
-def restore_category(request, category_id):
-    if not request.user.is_superuser:
-        messages.error(request, "You do not have permission.")
-        return redirect('/')
-    
-    try:
-        category = get_object_or_404(Category.all_objects, id=category_id)
-        if not category.is_deleted:
-            messages.warning(request, f"Category '{category.name}' is not deleted.")
-            return redirect('category-list')
-        
-        category.restore()
-        messages.success(request, f"Category '{category.name}' has been restored successfully.")
-    except Exception as e:
-        logger.error(f"Error restoring category: {str(e)}")
-        messages.error(request, f"Error restoring category: {str(e)}")
-    
-    return redirect('category-list')
+
 
 @login_required
 def deleted_categories_view(request):
     if not request.user.is_superuser:
         messages.error(request, "You do not have permission to view this page.")
         return redirect('/')
-    
+
     deleted_categories = Category.all_objects.filter(is_deleted=True).order_by('-deleted_at')
-    
+
     paginator = Paginator(deleted_categories, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
-    return render(request, 'categories/deleted_categories.html', {  
+
+    return render(request, 'category/deleted_categories.html', {
         'categories': page_obj,
         'page_obj': page_obj,
     })
+
 
 @login_required
 @require_POST 
@@ -642,7 +842,6 @@ def toggle_category_listed(request, category_id):
 
 @login_required
 def deleted_categories_view(request):
-    """View to show all soft-deleted categories"""
     if not request.user.is_superuser:
         messages.error(request, "You do not have permission to view this page.")
         return redirect('/')
@@ -658,36 +857,43 @@ def deleted_categories_view(request):
         'page_obj': page_obj,
     })
 
+
+
 @login_required
+@require_POST
 def restore_category(request, category_id):
-    """Restore a soft-deleted category"""
     if not request.user.is_superuser:
         messages.error(request, "You do not have permission.")
         return redirect('/')
-    
+
+    category = get_object_or_404(Category.all_objects, id=category_id)
+
+    if not category.is_deleted:
+        messages.warning(
+            request,
+            f"Category '{category.name}' is not deleted."
+        )
+        return redirect("customeradmin:deleted-categories")
+
     try:
-        category = get_object_or_404(Category.all_objects, id=category_id)
-        if not category.is_deleted:
-            messages.warning(request, f"Category '{category.name}' is not deleted.")
-            return redirect('deleted-categories')
-        
         category.restore()
-        messages.success(request, f"Category '{category.name}' has been restored successfully.")
-        
+        messages.success(
+            request,
+            f"Category '{category.name}' restored successfully."
+        )
     except Exception as e:
-        logger.error(f"Error restoring category: {str(e)}")
-        messages.error(request, f"Error restoring category: {str(e)}")
-    
-    return redirect('deleted-categories')
+        logger.error(f"Error restoring category: {e}")
+        messages.error(request, "Error restoring category.")
+
+    return redirect("customeradmin:deleted-categories")
 
 
-'''User Management'''
+
 
 User = get_user_model()
 
 @login_required
 def user_management_view(request):
-    """Admin user management with search, pagination, and sorting"""
     if not request.user.is_superuser:
         messages.error(request, "You do not have permission to access this page.")
         return redirect('/')
@@ -709,12 +915,19 @@ def user_management_view(request):
     paginator = Paginator(users, 5)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    all_users = User.objects.filter(is_superuser=False)
+    active_count = all_users.filter(is_blocked=False).count()
+    blocked_count = all_users.filter(is_blocked=True).count()
+    new_today = all_users.filter(created_at__date=timezone.now().date()).count()
     
     return render(request, 'User/user_management.html', {  
-    'users': page_obj,
-    'page_obj': page_obj,
-    'search_query': search_query,
-})
+        'users': page_obj,
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'active_count': active_count,
+        'blocked_count': blocked_count,
+        'new_today': new_today,
+    })
 
 @login_required
 @require_POST
@@ -741,7 +954,7 @@ def block_user(request, user_id):
                 data = session.get_decoded()
                 if str(user.id) == data.get('_auth_user_id'):
                     session.delete()
-            except:
+            except Exception:  # ✅ Better - only catches standard exceptions
                 continue
         
         return JsonResponse({
@@ -755,7 +968,6 @@ def block_user(request, user_id):
 @login_required
 @require_POST
 def unblock_user(request, user_id):
-    """Unblock user with confirmation"""
     if not request.user.is_superuser:
         return JsonResponse({'success': False, 'error': 'Permission denied'})
     
@@ -783,10 +995,8 @@ def order_list(request):
         messages.error(request, "You do not have permission to view this page.")
         return redirect("admindashboard")
 
-    # Base queryset
     orders = Order.objects.all().order_by("-created_at")
 
-    # Search by order number or user fields
     search = (request.GET.get("search") or "").strip()
     if search:
         orders = orders.filter(
@@ -796,13 +1006,10 @@ def order_list(request):
             | Q(user__last_name__icontains=search)
         )
 
-
-    # Status filter
     status_filter = request.GET.get("status") or ""
     if status_filter and status_filter != "all":
         orders = orders.filter(status=status_filter)
 
-    # Date range filters
     date_from = request.GET.get("from") or ""
     date_to = request.GET.get("to") or ""
     if date_from:
@@ -810,7 +1017,6 @@ def order_list(request):
     if date_to:
         orders = orders.filter(created_at__date__lte=date_to)
 
-    # Sorting
     sort = (request.GET.get("sort") or "").strip()
     sort_map = {
          "datedesc": "-created_at",
@@ -821,16 +1027,13 @@ def order_list(request):
     if sort in sort_map:
         orders = orders.order_by(sort_map[sort])
 
-    # Clear filters shortcut
     if request.GET.get("clear"):
         return redirect("customeradmin:order-list")
 
-    # Pagination
     paginator = Paginator(orders, 10)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    # Build a non-empty choices tuple for the list dropdown
     if hasattr(Order, "Status") and getattr(Order.Status, "choices", None):
         status_tuple = Order.Status.choices
     elif hasattr(Order, "ORDERSTATUSCHOICES") and Order.ORDERSTATUSCHOICES:
@@ -1059,9 +1262,6 @@ def return_requests_list(request):
 @login_required
 @never_cache
 def return_request_detail(request, return_id):
-    """
-    Admin view to show return request details and allow refund processing
-    """
     return_request = get_object_or_404(ReturnRequest, id=return_id)
     
     if request.method == 'POST':
@@ -1228,7 +1428,6 @@ def _sales_qs(start, end):
 
 
 def _aggregate(qs):
-    """Dict with gross, discount, coupon, net, count."""
     gross = qs.aggregate(total=Sum("total_amount"))["total"] or Decimal("0")
     discount = qs.aggregate(total=Sum("discount_amount"))["total"] or Decimal("0")
     coupon = qs.aggregate(total=Sum("coupon_discount"))["total"] or Decimal("0")
@@ -1283,6 +1482,9 @@ def sales_report(request):
             coupon=Sum("coupon_discount"),
             count=Sum(Value(1)),
         )
+        .annotate(
+            net=F("gross") - F("discount") - F("coupon")
+        )
         .order_by("period")
     )
 
@@ -1308,42 +1510,181 @@ def sales_report(request):
         raise
 
 def _pdf_response(data, title="Sales Report"):
+    
+    
+    font_path = os.path.join(
+        settings.BASE_DIR,
+        'static',
+        'fonts',
+        'DejaVuSans.ttf'
+    )
+    pdfmetrics.registerFont(TTFont('DejaVu', font_path))
+    
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    doc = SimpleDocTemplate(
+        buffer, 
+        pagesize=A4,
+        rightMargin=40,
+        leftMargin=40,
+        topMargin=40,
+        bottomMargin=40
+    )
     elements = []
     styles = getSampleStyleSheet()
-    elements.append(Paragraph(title, styles["Title"]))
-    table_data = [["Date", "Orders", "Gross", "Discount", "Coupon", "Net"]]
-    for row in data:
-        net = row["gross"] - row["discount"] - row["coupon"]
-        table_data.append(
-            [
-                str(row["period"]),
-                str(row["count"]),
-                f"₹{row['gross']}",
-                f"₹{row['discount']}",
-                f"₹{row['coupon']}",
-                f"₹{net}",
-            ]
-        )
-    t = Table(table_data, hAlign="CENTER")
-    t.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, 0), 10),
-                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
-                ("GRID", (0, 0), (-1, -1), 1, colors.black),
-            ]
-        )
+    
+    company_style = ParagraphStyle(
+        'CompanyHeader',
+        parent=styles['Heading1'],
+        fontSize=24,
+        textColor=colors.HexColor('#4A5568'),
+        spaceAfter=6,
+        alignment=TA_CENTER,
+        fontName='DejaVu'
     )
+    elements.append(Paragraph("SITWELL FURNITURE", company_style))
+    
+    title_style = ParagraphStyle(
+        'ReportTitle',
+        parent=styles['Heading2'],
+        fontSize=16,
+        textColor=colors.HexColor('#667eea'),
+        spaceAfter=20,
+        alignment=TA_CENTER,
+        fontName='DejaVu'
+    )
+    elements.append(Paragraph(title.upper(), title_style))
+    
+    date_style = ParagraphStyle(
+        'DateStyle',
+        parent=styles['Normal'],
+        fontSize=9,
+        textColor=colors.grey,
+        spaceAfter=20,
+        alignment=TA_CENTER,
+        fontName='DejaVu'
+    )
+    generated_date = datetime.now().strftime("%B %d, %Y at %I:%M %p")
+    elements.append(Paragraph(f"Generated on: {generated_date}", date_style))
+    
+    elements.append(Spacer(1, 20))
+    
+    total_orders = sum(row["count"] for row in data)
+    total_gross = sum(row["gross"] or 0 for row in data)
+    total_discount = sum(row["discount"] or 0 for row in data)
+    total_coupon = sum(row["coupon"] or 0 for row in data)
+    total_net = total_gross - total_discount - total_coupon
+    
+    summary_data = [
+        ["SUMMARY", "", "", ""],
+        ["Total Orders", str(total_orders), "Total Discounts", f"₹{total_discount:,.2f}"],
+        ["Gross Sales", f"₹{total_gross:,.2f}", "Coupon Discounts", f"₹{total_coupon:,.2f}"],
+        ["NET SALES", f"₹{total_net:,.2f}", "", ""],
+    ]
+    
+    summary_table = Table(summary_data, colWidths=[120, 120, 120, 120])
+    summary_table.setStyle(TableStyle([
+       
+        ('SPAN', (0, 0), (3, 0)),
+        ('BACKGROUND', (0, 0), (3, 0), colors.HexColor('#667eea')),
+        ('TEXTCOLOR', (0, 0), (3, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (3, 0), 'CENTER'),
+        ('FONTNAME', (0, 0), (3, 0), 'DejaVu'),
+        ('FONTSIZE', (0, 0), (3, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (3, 0), 12),
+        ('TOPPADDING', (0, 0), (3, 0), 12),
+        
+        ('BACKGROUND', (0, 1), (3, 2), colors.HexColor('#F7FAFC')),
+        ('FONTNAME', (0, 1), (3, 2), 'DejaVu'),
+        ('ALIGN', (1, 1), (1, 2), 'RIGHT'),
+        ('ALIGN', (3, 1), (3, 2), 'RIGHT'),
+        ('FONTSIZE', (0, 1), (3, 2), 10),
+        ('TOPPADDING', (0, 1), (3, 2), 8),
+        ('BOTTOMPADDING', (0, 1), (3, 2), 8),
+        
+        ('SPAN', (0, 3), (1, 3)),
+        ('SPAN', (2, 3), (3, 3)),
+        ('BACKGROUND', (0, 3), (1, 3), colors.HexColor('#48BB78')),
+        ('TEXTCOLOR', (0, 3), (1, 3), colors.whitesmoke),
+        ('FONTNAME', (0, 3), (1, 3), 'DejaVu'),
+        ('FONTSIZE', (0, 3), (1, 3), 12),
+        ('ALIGN', (0, 3), (1, 3), 'CENTER'),
+        ('TOPPADDING', (0, 3), (1, 3), 10),
+        ('BOTTOMPADDING', (0, 3), (1, 3), 10),
+        
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#E2E8F0')),
+        ('BOX', (0, 0), (-1, -1), 2, colors.HexColor('#CBD5E0')),
+    ]))
+    
+    elements.append(summary_table)
+    elements.append(Spacer(1, 30))
+    
+    breakdown_style = ParagraphStyle(
+        'BreakdownHeader',
+        parent=styles['Heading3'],
+        fontSize=12,
+        textColor=colors.HexColor('#4A5568'),
+        spaceAfter=10,
+        fontName='DejaVu'
+    )
+    elements.append(Paragraph("DAILY BREAKDOWN", breakdown_style))
+    
+    table_data = [["Date", "Orders", "Gross Sales", "Discounts", "Coupons", "Net Sales"]]
+    
+    for row in data:
+        net = (row["gross"] or 0) - (row["discount"] or 0) - (row["coupon"] or 0)
+        table_data.append([
+            row["period"].strftime("%d %b %Y") if hasattr(row["period"], 'strftime') else str(row["period"]),
+            str(row["count"]),
+            f"₹{row['gross']:,.2f}" if row['gross'] else "₹0.00",
+            f"₹{row['discount']:,.2f}" if row['discount'] else "₹0.00",
+            f"₹{row['coupon']:,.2f}" if row['coupon'] else "₹0.00",
+            f"₹{net:,.2f}",
+        ])
+    
+    t = Table(table_data, colWidths=[80, 50, 85, 85, 85, 95])
+    t.setStyle(TableStyle([
+        
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A5568')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'DejaVu'),
+        ('FONTSIZE', (0, 0), (-1, 0), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        ('TOPPADDING', (0, 0), (-1, 0), 10),
+        
+        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+        ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#2D3748')),
+        ('ALIGN', (0, 1), (0, -1), 'LEFT'),
+        ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
+        ('FONTNAME', (0, 1), (-1, -1), 'DejaVu'),
+        ('FONTSIZE', (0, 1), (-1, -1), 8),
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ('LEFTPADDING', (0, 1), (-1, -1), 8),
+        ('RIGHTPADDING', (0, 1), (-1, -1), 8),
+        
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F7FAFC')]),
+        
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E2E8F0')),
+        ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#CBD5E0')),
+    ]))
+    
     elements.append(t)
+    
+    elements.append(Spacer(1, 20))
+    footer_style = ParagraphStyle(
+        'Footer',
+        parent=styles['Normal'],
+        fontSize=8,
+        textColor=colors.grey,
+        alignment=TA_CENTER,
+        fontName='DejaVu'
+    )
+    elements.append(Paragraph("--- End of Report ---", footer_style))
+    
     doc.build(elements)
     buffer.seek(0)
+    
     response = HttpResponse(buffer, content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="{title.replace(" ", "_")}.pdf"'
     return response
@@ -1379,12 +1720,27 @@ def sales_report_download(request, format):
     print("=== SALES REPORT DOWNLOAD DEBUG ===")
     print(f"Format: {format}")
     
-    filters = request.session.get("report_filters")
-    if not filters:
-        return HttpResponse("No report filters found", status=400)
+    filter_type = request.GET.get("filter", "day")
     
-    start = make_aware(datetime.fromisoformat(filters["start"]))
-    end = make_aware(datetime.fromisoformat(filters["end"]))
+    try:
+        if request.GET.get("from") and request.GET.get("to"):
+           
+            start_str = request.GET.get("from")
+            end_str = request.GET.get("to")
+            start = make_aware(datetime.strptime(start_str, "%Y-%m-%d"))
+            end = make_aware(datetime.strptime(end_str, "%Y-%m-%d")) + timedelta(days=1)
+        else:
+            filters = request.session.get("report_filters")
+            if not filters:
+                return HttpResponse("No report filters found", status=400)
+            start = datetime.fromisoformat(filters["start"])
+            end = datetime.fromisoformat(filters["end"])
+    except Exception as e:
+        print(f"Error parsing dates: {e}")
+        import traceback
+        traceback.print_exc()
+        return HttpResponse("Invalid date parameters", status=400)
+    
     qs = _sales_qs(start, end)
     daily = (
         qs.annotate(period=TruncDate("created_at"))
@@ -1408,7 +1764,6 @@ def sales_report_download(request, format):
 
 @login_required
 def coupon_export(request, format):
-    """Bonus: export coupon list to PDF / Excel"""
     if not request.user.is_superuser:
         return HttpResponse("Forbidden", status=403)
     coupons = Coupon.objects.all().order_by("-created_at")
@@ -1479,196 +1834,196 @@ def _coupon_excel(coupons):
     return response
 
 
-# # ---------- BANNER MANAGEMENT ----------
-# @login_required
-# @cache_control(no_cache=True, must_revalidate=True, no_store=True)
-# def banner_list(request):
-#     """List all banners with search and filters"""
-#     if not request.user.is_superuser:
-#         messages.error(request, "Permission denied.")
-#         return redirect("/")
+@login_required
+def banner_list(request):
+    """List all banners with filtering and pagination"""
+    banners = Banner.objects.all().order_by('-created_at')
     
-#     qs = Banner.objects.all().order_by('-priority', '-created_at')
+    position_filter = request.GET.get('position')
+    status_filter = request.GET.get('status')
     
-#     # Search functionality
-#     search_query = request.GET.get('search', '').strip()
-#     if search_query:
-#         qs = qs.filter(
-#             Q(title__icontains=search_query) |
-#             Q(headline__icontains=search_query) |
-#             Q(description__icontains=search_query)
-#         )
+    if position_filter:
+        banners = banners.filter(position=position_filter)
+    if status_filter:
+        banners = banners.filter(status=status_filter)
     
-#     # Filter by type
-#     banner_type = request.GET.get('type', '')
-#     if banner_type:
-#         qs = qs.filter(banner_type=banner_type)
     
-#     # Filter by status
-#     status_filter = request.GET.get('status', '')
-#     if status_filter == 'active':
-#         qs = qs.filter(is_active=True)
-#     elif status_filter == 'inactive':
-#         qs = qs.filter(is_active=False)
+    paginator = Paginator(banners, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     
-#     # Filter by validity
-#     validity_filter = request.GET.get('validity', '')
-#     today = timezone.now()
-#     if validity_filter == 'valid':
-#         qs = qs.filter(is_active=True, valid_from__lte=today, valid_to__gte=today)
-#     elif validity_filter == 'expired':
-#         qs = qs.filter(valid_to__lt=today)
-#     elif validity_filter == 'upcoming':
-#         qs = qs.filter(valid_from__gt=today)
-    
-#     # Get banner statistics
-#     total_banners = qs.count()
-#     active_banners = qs.filter(is_active=True).count()
-#     valid_banners = qs.filter(is_active=True, valid_from__lte=today, valid_to__gte=today).count()
-#     expired_banners = qs.filter(valid_to__lt=today).count()
-    
-#     paginator = Paginator(qs, 20)
-#     page_obj = paginator.get_page(request.GET.get("page"))
+    context = {
+        'page_obj': page_obj,
+        'position_choices': Banner.POSITION_CHOICES,
+        'status_choices': Banner.STATUS_CHOICES,
+        'position_filter': position_filter,
+        'status_filter': status_filter,
+    }
+    return render(request, 'banner/banner_list.html', context)
 
-#     context = {
-#         "banners": page_obj,
-#         "page_obj": page_obj,
-#         "search_query": search_query,
-#         "banner_types": Banner.BANNER_TYPES,
-#         "current_type": banner_type,
-#         "current_status": status_filter,
-#         "current_validity": validity_filter,
-#         "total_banners": total_banners,
-#         "active_banners": active_banners,
-#         "valid_banners": valid_banners,
-#         "expired_banners": expired_banners,
-#         "today": today,
-#     }
-#     return render(request, "banners/banner_list.html", context)
-
-
-# @login_required
-# @cache_control(no_cache=True, must_revalidate=True, no_store=True)
-# def banner_add(request):
-#     """Add new banner"""
-#     if not request.user.is_superuser:
-#         messages.error(request, "Permission denied.")
-#         return redirect("/")
+@login_required
+def banner_add(request):
+    """Add new banner"""
+    if request.method == 'POST':
+        form = BannerForm(request.POST, request.FILES)
+        if form.is_valid():
+            banner = form.save()
+            messages.success(request, f'Banner "{banner.title}" created successfully!')
+            return redirect('customeradmin:banner-list')
+    else:
+        form = BannerForm()
     
-#     if request.method == "POST":
-#         form = BannerForm(request.POST, request.FILES)
-#         if form.is_valid():
-#             banner = form.save(commit=False)
-#             banner.created_by = request.user
-#             banner.save()
-#             messages.success(request, f"Banner '{banner.title}' created successfully.")
-#             return redirect("customeradmin:banner-list")
-#     else:
-#         form = BannerForm()
+    context = {
+        'form': form,
+        'title': 'Add New Banner',
+        'position_choices': Banner.POSITION_CHOICES,
+    }
+    return render(request, 'banner/banner_form.html', context)
+
+@login_required
+def banner_edit(request, banner_id):
+    banner = get_object_or_404(Banner, id=banner_id)
     
-#     return render(request, "banners/banner_form.html", {"form": form})
+    if request.method == 'POST':
+        form = BannerForm(request.POST, request.FILES, instance=banner)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Banner "{banner.title}" updated successfully!')
+            return redirect('customeradmin:banner-list')
+    else:
+        form = BannerForm(instance=banner)
+    
+    context = {
+        'form': form,
+        'title': 'Edit Banner',
+        'banner': banner,
+        'position_choices': Banner.POSITION_CHOICES,
+    }
+    return render(request, 'banner/banner_form.html', context)
+
+@login_required
+def banner_delete(request, banner_id):
+    banner = get_object_or_404(Banner, id=banner_id)
+    
+    if request.method == 'POST':
+        banner_title = banner.title
+        banner.delete()
+        messages.success(request, f'Banner "{banner_title}" deleted successfully!')
+        return redirect('customeradmin:banner-list')
+    
+    context = {
+        'banner': banner,
+    }
+    return render(request, 'banner/banner_delete_confirm.html', context)
 
 
-# @login_required
-# @cache_control(no_cache=True, must_revalidate=True, no_store=True)
-# def banner_edit(request, banner_id):
-#     """Edit existing banner"""
-#     if not request.user.is_superuser:
-#         messages.error(request, "Permission denied.")
-#         return redirect("/")
+@login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+def wallet_transactions_list(request):
+    """List all wallet transactions with filtering and pagination"""
+    if not request.user.is_superuser:
+        messages.error(request, "You do not have permission to access this page.")
+        return redirect('/')
     
-#     banner = get_object_or_404(Banner, id=banner_id)
+    from authenticate.models import WalletTransaction
     
-#     if request.method == "POST":
-#         form = BannerForm(request.POST, request.FILES, instance=banner)
-#         if form.is_valid():
-#             form.save()
-#             messages.success(request, f"Banner '{banner.title}' updated successfully.")
-#             return redirect("customeradmin:banner-list")
-#     else:
-#         form = BannerForm(instance=banner)
+    transactions = WalletTransaction.objects.select_related('wallet__user', 'order').all()
     
-#     return render(request, "banners/banner_form.html", {
-#         "form": form, 
-#         "banner": banner
-#     })
+
+    txn_type_filter = request.GET.get('type', '')
+    user_filter = request.GET.get('user', '')
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+    
+    if txn_type_filter:
+        transactions = transactions.filter(txn_type=txn_type_filter)
+    
+    if user_filter:
+        transactions = transactions.filter(
+            Q(wallet__user__email__icontains=user_filter) |
+            Q(wallet__user__first_name__icontains=user_filter) |
+            Q(wallet__user__last_name__icontains=user_filter)
+        )
+    
+    if date_from:
+        try:
+            from_date = datetime.strptime(date_from, '%Y-%m-%d')
+            transactions = transactions.filter(created_at__date__gte=from_date)
+        except ValueError:
+            pass
+    
+    if date_to:
+        try:
+            to_date = datetime.strptime(date_to, '%Y-%m-%d')
+            transactions = transactions.filter(created_at__date__lte=to_date)
+        except ValueError:
+            pass
+    
+    total_credits = transactions.filter(txn_type='credit').aggregate(total=Sum('amount'))['total'] or 0
+    total_debits = transactions.filter(txn_type='debit').aggregate(total=Sum('amount'))['total'] or 0
+    total_transactions = transactions.count()
+    
+    paginator = Paginator(transactions, 20)
+    page = request.GET.get('page', 1)
+    transactions = paginator.get_page(page)
+    
+    context = {
+        'transactions': transactions,
+        'total_credits': total_credits,
+        'total_debits': total_debits,
+        'total_transactions': total_transactions,
+        'txn_type_filter': txn_type_filter,
+        'user_filter': user_filter,
+        'date_from': date_from,
+        'date_to': date_to,
+    }
+    
+    return render(request, 'wallet/wallet_transactions_list.html', context)
 
 
-# @login_required
-# @require_POST
-# def banner_delete(request, banner_id):
-#     """Delete banner"""
-#     if not request.user.is_superuser:
-#         return JsonResponse({"success": False, "error": "Permission denied"})
+@login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+def wallet_transaction_detail(request, transaction_id):
+    """Detailed view for a single wallet transaction"""
+    if not request.user.is_superuser:
+        messages.error(request, "You do not have permission to access this page.")
+        return redirect('/')
     
-#     banner = get_object_or_404(Banner, id=banner_id)
-#     banner.delete()
-#     return JsonResponse({"success": True})
-
-
-# @login_required
-# @require_POST
-# def banner_toggle_status(request, banner_id):
-#     """Toggle banner active/inactive status"""
-#     if not request.user.is_superuser:
-#         return JsonResponse({"success": False, "error": "Permission denied"})
+    from authenticate.models import WalletTransaction
     
-#     banner = get_object_or_404(Banner, id=banner_id)
-#     banner.is_active = not banner.is_active
-#     banner.save()
+    transaction = get_object_or_404(
+        WalletTransaction.objects.select_related('wallet__user', 'order'),
+        id=transaction_id
+    )
     
-#     status = "activated" if banner.is_active else "deactivated"
-#     return JsonResponse({
-#         "success": True, 
-#         "message": f"Banner '{banner.title}' {status}."
-#     })
-
-
-# @login_required
-# @require_POST
-# def banner_track_click(request, banner_id):
-#     """Track banner clicks via AJAX"""
-#     banner = get_object_or_404(Banner, id=banner_id)
-#     banner.increment_clicks()
-#     return JsonResponse({"success": True})
-
-
-# # Helper function to get valid banners
-# def get_valid_banners(banner_type=None, category=None, page_path=None):
-#     """Get valid banners for display"""
-#     today = timezone.now()
-#     qs = Banner.objects.filter(
-#         is_active=True,
-#         valid_from__lte=today,
-#         valid_to__gte=today
-#     )
+    source_info = {
+        'type': 'Unknown',
+        'description': transaction.note or 'No description available',
+        'order': None,
+    }
     
-#     if banner_type:
-#         qs = qs.filter(banner_type=banner_type)
+    if transaction.order:
+        order = transaction.order
+        source_info['order'] = order
+        
+        if 'refund' in transaction.note.lower() or 'return' in transaction.note.lower():
+            source_info['type'] = 'Product Return Refund'
+        elif 'cancel' in transaction.note.lower():
+            source_info['type'] = 'Order Cancellation Refund'
+        elif transaction.txn_type == 'debit':
+            source_info['type'] = 'Wallet Payment'
+        else:
+            source_info['type'] = 'Order Related Credit'
+    else:
+        if transaction.txn_type == 'credit':
+            source_info['type'] = 'Manual Credit / Bonus'
+        else:
+            source_info['type'] = 'Manual Debit'
     
-#     if category:
-#         qs = qs.filter(
-#             models.Q(target_category=category) | 
-#             models.Q(target_category='')
-#         )
+    context = {
+        'transaction': transaction,
+        'user': transaction.wallet.user,
+        'source_info': source_info,
+    }
     
-#     if page_path:
-#         qs = qs.filter(
-#             models.Q(target_page=page_path) | 
-#             models.Q(target_page='')
-#         )
-    
-#     # Filter by device
-#     # This is a simplified version - you'd implement proper device detection
-#     qs = qs.filter(show_on_desktop=True)  # Default to desktop
-    
-#     return qs.order_by('-priority', '-created_at')
-
-
-# @login_required
-# @require_POST
-# def banner_track_impression(request, banner_id):
-#     """Track banner impressions via AJAX"""
-#     banner = get_object_or_404(Banner, id=banner_id)
-#     banner.increment_impressions()
-#     return JsonResponse({"success": True})
+    return render(request, 'wallet/wallet_transaction_detail.html', context)

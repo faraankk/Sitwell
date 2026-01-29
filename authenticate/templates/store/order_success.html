@@ -14,7 +14,7 @@
     .success-card {
         background: white;
         border-radius: 15px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
         padding: 50px 40px;
         text-align: center;
     }
@@ -41,6 +41,7 @@
             transform: scale(0);
             opacity: 0;
         }
+
         to {
             transform: scale(1);
             opacity: 1;
@@ -67,6 +68,7 @@
             opacity: 0;
             transform: translateY(20px);
         }
+
         to {
             opacity: 1;
             transform: translateY(0);
@@ -284,7 +286,7 @@
         <!-- Order Number Box -->
         <div class="order-number-box">
             <div class="order-label">Your Order ID</div>
-            <div class="order-number">{{ order.order_number  }}</div>
+            <div class="order-number">{{ order.order_number }}</div>
         </div>
 
         <!-- Info Text -->
@@ -302,11 +304,11 @@
             </div>
             <div class="preview-item">
                 <span class="preview-label">Total Amount:</span>
-                <span class="preview-value">₹{{ order.totalamount|floatformat:2 }}</span>
+                <span class="preview-value">₹{{ order.total_amount|floatformat:2 }}</span>
             </div>
             <div class="preview-item">
                 <span class="preview-label">Payment Status:</span>
-                <span class="preview-value">{{ order.get_paymentstatus_display }}</span>
+                <span class="preview-value">{{ order.get_payment_status_display }}</span>
             </div>
             <div class="preview-item">
                 <span class="preview-label">Order Status:</span>
@@ -318,17 +320,17 @@
             </div>
             <div class="preview-item">
                 <span class="preview-label">Order Date:</span>
-                <span class="preview-value">{{ order.createdat|date:"F d, Y g:i A" }}</span>
+                <span class="preview-value">{{ order.created_at|date:"F d, Y g:i A" }}</span>
             </div>
-            
+
             <!-- Optional: Quick Items List -->
             {% if order.items.all %}
             <div class="preview-items-list">
                 <div style="font-size: 12px; color: #6c757d; margin-top: 10px;">Items Ordered:</div>
                 {% for item in order.items.all %}
                 <div class="preview-item-row">
-                    <span class="preview-item-name">{{ item.productname }} (x{{ item.quantity }})</span>
-                    <span class="preview-item-price">₹{{ item.productprice|floatformat:2 }}</span>
+                    <span class="preview-item-name">{{ item.product_name }} (x{{ item.quantity }})</span>
+                    <span class="preview-item-price">₹{{ item.product_price|floatformat:2 }}</span>
                 </div>
                 {% endfor %}
             </div>

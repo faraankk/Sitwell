@@ -17,13 +17,13 @@
         padding: 15px 20px;
         margin-bottom: 25px;
         border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         display: flex;
         align-items: center;
         gap: 8px;
         list-style: none;
     }
-    
+
     .breadcrumb-item {
         display: flex;
         align-items: center;
@@ -36,22 +36,22 @@
         text-decoration: none;
         transition: all 0.3s ease;
     }
-    
+
     .breadcrumb-item a:hover {
         color: #667eea;
     }
-    
+
     .breadcrumb-item.active {
         color: #667eea;
         font-weight: 600;
     }
-    
+
     .breadcrumb-item::after {
         content: '/';
         margin: 0 10px;
         color: #ddd;
     }
-    
+
     .breadcrumb-item:last-child::after {
         content: '';
         margin: 0;
@@ -64,7 +64,7 @@
     .content-card {
         background: white;
         border-radius: 15px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         padding: 40px;
         animation: fadeIn 0.4s ease-out;
     }
@@ -74,6 +74,7 @@
             opacity: 0;
             transform: translateY(20px);
         }
+
         to {
             opacity: 1;
             transform: translateY(0);
@@ -102,9 +103,12 @@
     }
 
     @keyframes pulse {
-        0%, 100% {
+
+        0%,
+        100% {
             transform: scale(1);
         }
+
         50% {
             transform: scale(1.05);
         }
@@ -127,7 +131,7 @@
         margin: 0;
         font-size: 15px;
     }
-    
+
     .order-info {
         background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         padding: 25px;
@@ -177,7 +181,7 @@
         font-size: 15px;
         font-weight: 500;
     }
-    
+
     .form-group {
         margin-bottom: 30px;
     }
@@ -194,7 +198,7 @@
         margin-right: 8px;
         color: #667eea;
     }
-    
+
     .form-control {
         width: 100%;
         padding: 14px 16px;
@@ -207,7 +211,7 @@
         min-height: 150px;
         font-family: inherit;
     }
-    
+
     .form-control:focus {
         border-color: #667eea;
         outline: none;
@@ -225,7 +229,7 @@
         color: #6c757d;
         margin-top: 6px;
     }
-    
+
     .btn-primary {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: none;
@@ -247,7 +251,7 @@
     .btn-primary:active {
         transform: translateY(0);
     }
-    
+
     .btn-secondary {
         background-color: transparent;
         border: 2px solid #6c757d;
@@ -268,7 +272,7 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
     }
-    
+
     .error {
         color: #dc3545;
         font-size: 13px;
@@ -395,10 +399,11 @@
             <i class="fas fa-info-circle"></i>
             <div>
                 <strong>Return Policy</strong>
-                <p>Returns are accepted within 7 days of delivery. Please ensure items are in original condition with tags attached.</p>
+                <p>Returns are accepted within 7 days of delivery. Please ensure items are in original condition with
+                    tags attached.</p>
             </div>
         </div>
-        
+
         <!-- Order Information -->
         <div class="order-info">
             <h6><i class="fas fa-receipt"></i>Order Details</h6>
@@ -421,7 +426,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Return Form -->
         <form method="post" id="returnForm">
             {% csrf_token %}
@@ -434,10 +439,10 @@
                     <span id="charCount">0</span>/500 characters
                 </div>
                 {% if form.reason.errors %}
-                    <div class="error">{{ form.reason.errors.0 }}</div>
+                <div class="error">{{ form.reason.errors.0 }}</div>
                 {% endif %}
             </div>
-            
+
             <!-- Form Actions -->
             <div class="form-actions">
                 <a href="{% url 'order_detail' order.order_number %}" class="btn-secondary">
@@ -459,10 +464,10 @@
     const charCount = document.getElementById('charCount');
 
     if (textarea && charCount) {
-        textarea.addEventListener('input', function() {
+        textarea.addEventListener('input', function () {
             const count = this.value.length;
             charCount.textContent = count;
-            
+
             if (count > 450) {
                 charCount.style.color = '#dc3545';
             } else if (count > 400) {
@@ -481,19 +486,19 @@
     const submitBtn = document.getElementById('submit-btn');
 
     if (returnForm && submitBtn) {
-        returnForm.addEventListener('submit', function(e) {
+        returnForm.addEventListener('submit', function (e) {
             const reason = textarea.value.trim();
-            
+
             if (!reason) {
                 e.preventDefault();
-                alert('Please provide a reason for the return');
+                showToast('Please provide a reason for the return', 'warning');
                 textarea.focus();
                 return;
             }
 
             if (reason.length < 10) {
                 e.preventDefault();
-                alert('Please provide a more detailed reason (at least 10 characters)');
+                showToast('Please provide a more detailed reason (at least 10 characters)', 'warning');
                 textarea.focus();
                 return;
             }

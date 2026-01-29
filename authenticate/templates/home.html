@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load banner_tags %}
 
 {% block title %}Home - Sitwell{% endblock %}
 
@@ -265,30 +266,88 @@
         box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
     }
 
-    @media (max-width: 1200px) {
-        .products {
-            grid-template-columns: repeat(3, 1fr);
-        }
+    /* Banner Section Styles */
+    .banner-section {
+        margin: 0 0 40px 0;
+        position: relative;
+    }
+
+    .banner-item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 15px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    }
+
+    .banner-image img {
+        width: 100%;
+        height: 400px;
+        object-fit: cover;
+    }
+
+    .banner-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: white;
+        z-index: 2;
+        padding: 20px;
+    }
+
+    .banner-heading {
+        font-size: 3rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+    }
+
+    .banner-subheading {
+        font-size: 1.2rem;
+        margin-bottom: 1.5rem;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+    }
+
+    .btn-banner {
+        background: #ff6b6b;
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 25px;
+        font-size: 1.1rem;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+    }
+
+    .btn-banner:hover {
+        background: #ff5252;
+        transform: translateY(-2px);
     }
 
     @media (max-width: 768px) {
-        .flash-sales h2,
-        .best-selling h2 {
-            font-size: 28px;
+        .banner-image img {
+            height: 250px;
         }
-
-        .sale-time span {
-            min-width: 50px;
-            height: 50px;
-            font-size: 20px;
-            padding: 10px 14px;
+        
+        .banner-heading {
+            font-size: 2rem;
         }
-
+        
+        .banner-subheading {
+            font-size: 1rem;
+        }
+        
+        .banner-content {
+            padding: 0 20px;
+        }
+        
         .products {
             grid-template-columns: repeat(2, 1fr);
             gap: 20px;
         }
-
+        
         .product img {
             height: 200px;
         }
@@ -298,16 +357,20 @@
         .products {
             grid-template-columns: 1fr;
         }
-
+        
         .sale-time {
             gap: 10px;
         }
-
+        
         .sale-time::before {
             font-size: 16px;
         }
     }
 </style>
+{% endblock %}
+
+{% block banner %}
+    {% get_banners 'hero' %}
 {% endblock %}
 
 {% block content %}

@@ -94,6 +94,8 @@ class ProductForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['category'].queryset = Category.objects.filter(is_deleted=False, is_listed=True)
+        self.fields['category'].required = False
         self.fields['discount_type'].required = False
         self.fields['discount_value'].required = False
         self.fields['tax_type'].required = False
@@ -249,10 +251,11 @@ class OrderStatusForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.order = order
 
-        if hasattr(Order, "Status") and getattr(Order.Status, "choices", None):
-            status_tuple = Order.Status.choices
-        elif hasattr(Order, "ORDERSTATUSCHOICES") and getattr(Order, "ORDERSTATUSCHOICES", ()):
-            status_tuple = Order.ORDERSTATUSCHOICES
+        # Use only valid transitions if order has the method
+        if order and hasattr(order, 'get_allowed_next_statuses'):
+            status_tuple = order.get_allowed_next_statuses()
+        elif hasattr(Order, "ORDER_STATUS_CHOICES"):
+            status_tuple = Order.ORDER_STATUS_CHOICES
         else:
             status_tuple = (
                 ("pending", "Pending"),
@@ -271,7 +274,10 @@ class OrderStatusForm(forms.Form):
         new_status = self.cleaned_data["status"]
         if self.order and hasattr(self.order, "can_transition_to"):
             if not self.order.can_transition_to(new_status):
-                raise forms.ValidationError("Invalid status transition for this order.")
+                raise forms.ValidationError(
+                    f"Cannot change order status from '{self.order.status}' to '{new_status}'. "
+                    f"This transition is not allowed."
+                )
         return new_status
     
 
@@ -280,7 +286,7 @@ class OrderStatusForm(forms.Form):
 class CouponForm(forms.ModelForm):
     class Meta:
         model = Coupon
-        fields = ["code", "discount_percent", "min_order_amount",
+        fields = ["code", "description", "discount_percent", "min_order_amount",
                   "max_usage", "valid_from", "valid_to", "is_active"]
         widgets = {
             "valid_from": forms.DateTimeInput(
@@ -302,7 +308,75 @@ class CouponForm(forms.ModelForm):
     
 
 
+from django import forms
+from .models import Banner
 
+class BannerForm(forms.ModelForm):
+    class Meta:
+        model = Banner
+        fields = ['title', 'image', 'mobile_image', 'position', 'status', 'order',
+                 'heading', 'subheading', 'button_text', 'button_link',
+                 'start_date', 'end_date']
+        
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent',
+                'placeholder': 'Enter banner title'
+            }),
+            'image': forms.FileInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent',
+                'accept': 'image/*'
+            }),
+            'mobile_image': forms.FileInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent',
+                'accept': 'image/*'
+            }),
+            'position': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent'
+            }),
+            'order': forms.NumberInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent',
+                'min': '0'
+            }),
+            'heading': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent',
+                'placeholder': 'Main banner text'
+            }),
+            'subheading': forms.Textarea(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent',
+                'rows': '3',
+                'placeholder': 'Secondary text'
+            }),
+            'button_text': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent',
+                'placeholder': 'Button text (e.g., Shop Now)'
+            }),
+            'button_link': forms.URLInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent',
+                'placeholder': 'https://example.com'
+            }),
+            'start_date': forms.DateTimeInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent',
+                'type': 'datetime-local'
+            }),
+            'end_date': forms.DateTimeInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent',
+                'type': 'datetime-local'
+            }),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+        
+        if start_date and end_date and start_date >= end_date:
+            raise forms.ValidationError("End date must be after start date")
+        
+        return cleaned_data
 
 
 

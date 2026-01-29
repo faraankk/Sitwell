@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,7 +25,7 @@
         /* Header */
         .header {
             background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             padding: 20px 0;
         }
 
@@ -151,7 +152,7 @@
             margin-bottom: 12px;
             border-radius: 10px;
             font-weight: 600;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
             display: flex;
             align-items: center;
             gap: 10px;
@@ -163,6 +164,7 @@
                 opacity: 0;
                 transform: translateX(50px);
             }
+
             to {
                 opacity: 1;
                 transform: translateX(0);
@@ -198,7 +200,7 @@
             background: white;
             padding: 60px 50px;
             border-radius: 15px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
             text-align: center;
             max-width: 600px;
             width: 100%;
@@ -211,6 +213,7 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -527,20 +530,22 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Header -->
     <header class="header">
         <div class="header-container">
             <a href="{% url 'dummy_home' %}" class="logo">sitwell</a>
-            
+
             <nav>
                 <ul class="nav-menu">
-                    <li><a href="{% url 'dummy_home' %}"><i class="fas fa-home" style="margin-right: 6px;"></i>Home</a></li>
+                    <li><a href="{% url 'dummy_home' %}"><i class="fas fa-home" style="margin-right: 6px;"></i>Home</a>
+                    </li>
                     <li><a href="#"><i class="fas fa-envelope" style="margin-right: 6px;"></i>Contact</a></li>
                     <li><a href="#"><i class="fas fa-info-circle" style="margin-right: 6px;"></i>About</a></li>
                 </ul>
             </nav>
-            
+
             <div class="header-right">
                 <div class="search-container">
                     <input type="text" class="search-input" placeholder="What are you looking for?">
@@ -556,14 +561,14 @@
 
     <!-- Messages Display -->
     {% if messages %}
-        <div class="messages">
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">
-                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
-                    {{ message }}
-                </div>
-            {% endfor %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+            {{ message }}
         </div>
+        {% endfor %}
+    </div>
     {% endif %}
 
     <!-- Main Content -->
@@ -574,10 +579,10 @@
             </div>
             <h1 class="otp-title">OTP Verification</h1>
             <p class="otp-subtitle">Enter the 6-digit OTP sent to your email</p>
-            
+
             <form method="post" id="otpForm">
                 {% csrf_token %}
-                
+
                 <div class="otp-inputs">
                     <input type="text" class="otp-input" maxlength="1" id="otp1" autocomplete="off">
                     <input type="text" class="otp-input" maxlength="1" id="otp2" autocomplete="off">
@@ -586,20 +591,20 @@
                     <input type="text" class="otp-input" maxlength="1" id="otp5" autocomplete="off">
                     <input type="text" class="otp-input" maxlength="1" id="otp6" autocomplete="off">
                 </div>
-                
+
                 <input type="hidden" name="otp" id="combined-otp">
-                
+
                 <div class="timer-section">
                     <div class="timer">
                         <i class="fas fa-clock"></i>
                         <span id="timer-text">01:59</span>
                     </div>
                     <div class="resend-link">
-                        Didn't receive code? 
+                        Didn't receive code?
                         <a href="?resend={{ user_id_for_resend }}">Re-send</a>
                     </div>
                 </div>
-                
+
                 <button type="submit" class="submit-btn" id="submitBtn" disabled>
                     <i class="fas fa-check-circle" style="margin-right: 8px;"></i>Verify OTP
                 </button>
@@ -622,16 +627,19 @@
                         <button type="submit" class="newsletter-btn"><i class="fas fa-arrow-right"></i></button>
                     </form>
                 </div>
-                
+
                 <div class="footer-section">
                     <h3>Support</h3>
                     <ul>
-                        <li><a href="#"><i class="fas fa-map-marker-alt" style="margin-right: 6px;"></i>111 Bijoy sarani, Dhaka</a></li>
-                        <li><a href="#"><i class="fas fa-envelope" style="margin-right: 6px;"></i>sitwell@gmail.com</a></li>
-                        <li><a href="#"><i class="fas fa-phone" style="margin-right: 6px;"></i>+88015-88888-9999</a></li>
+                        <li><a href="#"><i class="fas fa-map-marker-alt" style="margin-right: 6px;"></i>111 Bijoy
+                                sarani, Dhaka</a></li>
+                        <li><a href="#"><i class="fas fa-envelope" style="margin-right: 6px;"></i>sitwell@gmail.com</a>
+                        </li>
+                        <li><a href="#"><i class="fas fa-phone" style="margin-right: 6px;"></i>+88015-88888-9999</a>
+                        </li>
                     </ul>
                 </div>
-                
+
                 <div class="footer-section">
                     <h3>Account</h3>
                     <ul>
@@ -642,7 +650,7 @@
                         <li><a href="#">Shop</a></li>
                     </ul>
                 </div>
-                
+
                 <div class="footer-section">
                     <h3>Quick Link</h3>
                     <ul>
@@ -652,7 +660,7 @@
                         <li><a href="#">Contact</a></li>
                     </ul>
                 </div>
-                
+
                 <div class="footer-section">
                     <h3>Download App</h3>
                     <p style="font-size: 13px; color: #999; margin-bottom: 15px;">Save $3 with App New User Only</p>
@@ -671,13 +679,15 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="footer-bottom">
                 <p>© Copyright Sitwell 2025. All rights reserved</p>
             </div>
         </div>
     </footer>
 
+    <!-- Global Toast System -->
+    <script src="{% static 'js/toast.js' %}"></script>
     <script>
         const otpInputs = document.querySelectorAll('.otp-input');
         const combinedOtpField = document.getElementById('combined-otp');
@@ -702,7 +712,7 @@
                 }
                 updateCombinedOTP();
             });
-            
+
             input.addEventListener('keydown', (e) => {
                 if (e.key === 'Backspace') {
                     if (e.target.value === '' && index > 0) {
@@ -727,11 +737,11 @@
             });
         });
 
-        otpForm.addEventListener('submit', function(e) {
+        otpForm.addEventListener('submit', function (e) {
             updateCombinedOTP();
             if (combinedOtpField.value.length !== 6) {
                 e.preventDefault();
-                alert('Please enter the complete 6-digit OTP');
+                showToast('Please enter the complete 6-digit OTP', 'warning');
                 return false;
             }
         });
@@ -768,4 +778,5 @@
         otpInputs[0].focus();
     </script>
 </body>
+
 </html>

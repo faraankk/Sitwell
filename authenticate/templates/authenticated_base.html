@@ -1,20 +1,21 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Sitwell{% endblock %}</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css " rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css    " rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/home.css' %}">
-    
+
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
@@ -24,7 +25,7 @@
             background-color: #f9fafb;
         }
 
-        /* Left Navigation Sidebar Styles */
+        /* ----------  LEFT NAVIGATION  ---------- */
         .profile-sidebar-nav {
             position: fixed;
             left: -300px;
@@ -34,7 +35,7 @@
             background: white;
             z-index: 1000;
             transition: left 0.3s ease;
-            box-shadow: 2px 0 15px rgba(0,0,0,0.1);
+            box-shadow: 2px 0 15px rgba(0, 0, 0, 0.1);
             overflow-y: auto;
             padding-top: 20px;
         }
@@ -46,7 +47,7 @@
         .profile-sidebar {
             background: white;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
             margin: 20px;
         }
@@ -97,14 +98,14 @@
             margin-right: 10px;
         }
 
-        /* Overlay for mobile */
+        /* ----------  NAVBAR OVERLAY & TOGGLE  ---------- */
         .navbar-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.5);
             z-index: 999;
             display: none;
         }
@@ -113,7 +114,6 @@
             display: block;
         }
 
-        /* Navbar toggle button */
         .navbar-toggle-btn {
             position: fixed;
             top: 100px;
@@ -150,17 +150,10 @@
             }
         }
 
-        /* Main content wrapper */
-        .main-wrapper {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Header - MATCHING BASE.HTML STYLE */
+        /* ----------  HEADER  ---------- */
         header {
             background: #fff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             position: sticky;
             top: 0;
             z-index: 100;
@@ -222,7 +215,7 @@
             color: #667eea;
         }
 
-        /* Search Bar */
+        /* ----------  SEARCH  ---------- */
         .search-container {
             display: flex;
             align-items: center;
@@ -235,7 +228,7 @@
 
         .search-container:focus-within {
             background: #fff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .search-input {
@@ -259,7 +252,7 @@
             color: #667eea;
         }
 
-        /* User Profile Dropdown */
+        /* ----------  USER PROFILE DROPDOWN  ---------- */
         .user-profile {
             position: relative;
             display: inline-block;
@@ -302,7 +295,7 @@
             top: calc(100% + 10px);
             right: 0;
             background: white;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
             border-radius: 12px;
             padding: 8px 0;
             min-width: 220px;
@@ -316,6 +309,7 @@
                 opacity: 0;
                 transform: translateY(-10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -362,7 +356,7 @@
             border-top: 1px solid #e9ecef;
         }
 
-        /* Notification/Cart Icons */
+        /* ----------  NOTIFICATION / CART ICONS  ---------- */
         .nav-icons {
             display: flex;
             gap: 15px;
@@ -403,48 +397,86 @@
             justify-content: center;
         }
 
-        /* Banner with Background Image */
-        .banner {
-            margin: 25px 40px;
-            height: 250px;
-            background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(51,51,51,0.7) 100%),
-                        url('/media/sofa.webp') center/cover;
-            border-radius: 12px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 32px;
-            text-align: center;
+        /* ----------  DYNAMIC HERO BANNER  (replaces old .banner)  ---------- */
+        .banner-section {
+            margin: 25px 40px 40px;
             position: relative;
+            border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .1);
         }
 
-        .banner-text {
-            z-index: 2;
-            font-weight: bold;
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
-            padding: 0 20px;
+        .banner-item {
+            position: relative;
         }
 
-        .banner::before {
-            content: '';
+        .banner-image img {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .banner-content {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
-            animation: shine 3s infinite;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #fff;
+            z-index: 2;
+            padding: 20px;
         }
 
-        @keyframes shine {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+        .banner-heading {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, .7);
         }
 
-        /* Main content area */
+        .banner-subheading {
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, .7);
+        }
+
+        .btn-banner {
+            background: #ff6b6b;
+            color: #fff;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            text-decoration: none;
+            display: inline-block;
+            transition: all .3s ease;
+        }
+
+        .btn-banner:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+
+        @media(max-width:768px) {
+            .banner-section {
+                margin: 15px 20px 30px;
+            }
+
+            .banner-image img {
+                height: 250px;
+            }
+
+            .banner-heading {
+                font-size: 2rem;
+            }
+
+            .banner-subheading {
+                font-size: 1rem;
+            }
+        }
+
+        /* ----------  MAIN CONTENT  ---------- */
         main {
             flex: 1;
             max-width: 1400px;
@@ -459,7 +491,7 @@
             margin-left: 300px;
         }
 
-        /* Responsive */
+        /* ----------  RESPONSIVE  ---------- */
         @media (max-width: 768px) {
             .header-content {
                 flex-direction: column;
@@ -479,12 +511,6 @@
 
             .logo {
                 font-size: 28px;
-            }
-
-            .banner {
-                height: 150px;
-                font-size: 20px;
-                margin: 15px 20px;
             }
 
             main {
@@ -516,14 +542,11 @@
                 width: 100%;
                 font-size: 16px;
             }
-
-            .banner-text {
-                font-size: 16px;
-            }
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
+
 <body>
     <div class="main-wrapper">
         <!-- Left Navigation Toggle Button -->
@@ -540,19 +563,23 @@
                 <!-- Profile Picture Section -->
                 <div style="text-align: center; margin-bottom: 20px;">
                     {% if user.profile_image %}
-                        <img src="{{ user.profile_image.url }}" alt="Profile Picture" class="profile-image">
+                    <img src="{{ user.profile_image.url }}" alt="Profile Picture" class="profile-image">
                     {% else %}
-                        <div class="profile-image" style="display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                            <i class="fas fa-user" style="font-size: 3rem; color: white;"></i>
-                        </div>
+                    <div class="profile-image"
+                        style="display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="fas fa-user" style="font-size: 3rem; color: white;"></i>
+                    </div>
                     {% endif %}
-                    <h6 style="margin: 10px 0 5px; color: #333; font-weight: 600;">{{ user.full_name|default:"Customer Name" }}</h6>
+                    <h6 style="margin: 10px 0 5px; color: #333; font-weight: 600;">{{ user.full_name|default:"Customer
+                        Name" }}</h6>
                     <p style="font-size: 12px; color: #999;">{{ user.email }}</p>
                 </div>
 
                 <!-- Navigation Menu -->
                 <div class="profile-nav">
-                    <h6 style="color: #666; margin-bottom: 15px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Manage My Account</h6>
+                    <h6
+                        style="color: #666; margin-bottom: 15px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Manage My Account</h6>
                     <div style="display: flex; flex-direction: column;">
                         <a href="{% url 'user_profile' %}" class="nav-link">
                             <i class="fas fa-user"></i>My Profile
@@ -577,7 +604,7 @@
         <header>
             <div class="header-content">
                 <a href="{% url 'dummy_home' %}" class="logo">sitwell</a>
-                
+
                 <nav>
                     <a href="{% url 'dummy_home' %}"><i class="fas fa-home" style="margin-right: 6px;"></i>Home</a>
                     <a href="{% url 'product_list' %}"><i class="fas fa-box" style="margin-right: 6px;"></i>Products</a>
@@ -586,10 +613,10 @@
                 </nav>
 
                 <div style="display: flex; gap: 20px; align-items: center;">
-                    <div class="search-container">
-                        <input type="text" class="search-input" placeholder="Search products...">
-                        <button class="search-btn"><i class="fas fa-search"></i></button>
-                    </div>
+                    <form action="{% url 'product_list' %}" method="get" class="search-container">
+                        <input type="text" name="search" class="search-input" placeholder="Search products..." value="{{ request.GET.search }}">
+                        <button type="submit" class="search-btn"><i class="fas fa-search"></i></button>
+                    </form>
 
                     <div class="nav-icons">
                         <!-- Wishlist -->
@@ -606,47 +633,52 @@
                     </div>
 
                     {% if user.is_authenticated %}
-                        <div class="user-profile">
-                            <button class="profile-toggle" onclick="toggleProfileDropdown()">
-                                <div class="user-avatar">
-                                    {{ user.first_name.0|default:user.email.0|upper }}
-                                </div>
-                                <span>{{ user.first_name|default:"User" }}</span>
-                                <i class="fas fa-chevron-down" style="font-size: 12px;"></i>
-                            </button>
-
-                            <div class="profile-dropdown" id="profileDropdown">
-                                <a href="{% url 'user_profile' %}">
-                                    <i class="fas fa-user"></i>My Profile
-                                </a>
-                                <a href="{% url 'user_orders' %}">
-                                    <i class="fas fa-shopping-bag"></i>My Orders
-                                </a>
-                                <a href="{% url 'wishlist' %}">
-                                    <i class="fas fa-heart"></i>My Wishlist
-                                </a>
-                                {% if user.is_staff %}
-                                <div class="dropdown-divider"></div>
-                                <a href="/staff/">
-                                    <i class="fas fa-user-shield"></i>Staff Panel
-                                </a>
-                                {% endif %}
-                                <div class="dropdown-divider"></div>
-                                <a href="{% url 'logout' %}">
-                                    <i class="fas fa-sign-out-alt"></i>Logout
-                                </a>
+                    <div class="user-profile">
+                        <button class="profile-toggle" onclick="toggleProfileDropdown()">
+                            <div class="user-avatar">
+                                {{ user.first_name.0|default:user.email.0|upper }}
                             </div>
+                            <span>{{ user.first_name|default:"User" }}</span>
+                            <i class="fas fa-chevron-down" style="font-size: 12px;"></i>
+                        </button>
+
+                        <div class="profile-dropdown" id="profileDropdown">
+                            <a href="{% url 'user_profile' %}">
+                                <i class="fas fa-user"></i>My Profile
+                            </a>
+                            <a href="{% url 'user_orders' %}">
+                                <i class="fas fa-shopping-bag"></i>My Orders
+                            </a>
+                            <a href="{% url 'wishlist' %}">
+                                <i class="fas fa-heart"></i>My Wishlist
+                            </a>
+                            {% if user.is_staff %}
+                            <div class="dropdown-divider"></div>
+                            <a href="/staff/">
+                                <i class="fas fa-user-shield"></i>Staff Panel
+                            </a>
+                            {% endif %}
+                            <div class="dropdown-divider"></div>
+                            <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" style="background:none;border:none;cursor:pointer;">
+                                    Logout
+                                </button>
+                            </form>
+
+
+
                         </div>
+                    </div>
                     {% endif %}
                 </div>
             </div>
-            
-            {% block banner %}
-            <div class="banner">
-                <div class="banner-text">Up to 10% off Voucher - Discover Amazing Furniture Deals</div>
-            </div>
-            {% endblock %}
         </header>
+
+        {% block banner %}
+        {% load banner_tags %}
+        {% get_banners 'hero' %}
+        {% endblock %}
 
         <main id="mainContent">
             {% block content %}
@@ -654,19 +686,27 @@
         </main>
 
         {% block footer %}
-        <footer style="background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%); color: #ccc; padding: 80px 0 0 0; margin-top: 100px;">
+        <footer
+            style="background: linear-gradient(135deg, #1a1a1a 0%, #0a0a1a 100%); color: #ccc; padding: 80px 0 0 0; margin-top: 100px;">
             <div style="max-width: 1400px; margin: 0 auto; padding: 0 40px;">
                 <!-- Main Footer Content -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 60px; margin-bottom: 60px;">
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 60px; margin-bottom: 60px;">
                     <!-- Sitwell Section -->
                     <div>
-                        <h3 style="color: white; margin-bottom: 25px; font-size: 24px; font-weight: 800; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">sitwell</h3>
-                        <p style="color: #999; font-size: 14px; margin-bottom: 20px; line-height: 1.8;">Transform your space with premium furniture that combines style, comfort, and quality.</p>
+                        <h3
+                            style="color: white; margin-bottom: 25px; font-size: 24px; font-weight: 800; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                            sitwell</h3>
+                        <p style="color: #999; font-size: 14px; margin-bottom: 20px; line-height: 1.8;">Transform your
+                            space with premium furniture that combines style, comfort, and quality.</p>
                         <div style="margin-top: 25px;">
-                            <p style="color: white; font-weight: 700; margin-bottom: 15px; font-size: 15px;">📧 Subscribe for exclusive deals</p>
+                            <p style="color: white; font-weight: 700; margin-bottom: 15px; font-size: 15px;">📧
+                                Subscribe for exclusive deals</p>
                             <div style="display: flex; gap: 10px;">
-                                <input type="email" placeholder="Enter your email" style="flex: 1; padding: 12px 16px; border-radius: 10px; border: 2px solid #333; background-color: #222; color: white; font-size: 14px; transition: all 0.3s ease;">
-                                <button style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 24px; border-radius: 10px; cursor: pointer; font-weight: 700; transition: all 0.3s ease; white-space: nowrap;">
+                                <input type="email" placeholder="Enter your email"
+                                    style="flex: 1; padding: 12px 16px; border-radius: 10px; border: 2px solid #333; background-color: #222; color: white; font-size: 14px; transition: all 0.3s ease;">
+                                <button
+                                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 24px; border-radius: 10px; cursor: pointer; font-weight: 700; transition: all 0.3s ease; white-space: nowrap;">
                                     <i class="fas fa-paper-plane" style="margin-right: 6px;"></i>Subscribe
                                 </button>
                             </div>
@@ -675,24 +715,30 @@
 
                     <!-- Support Section -->
                     <div>
-                        <h3 style="color: white; margin-bottom: 25px; font-size: 18px; font-weight: 700; position: relative; padding-left: 15px;">
-                            <span style="position: absolute; left: 0; top: 0; width: 4px; height: 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 2px;"></span>
+                        <h3
+                            style="color: white; margin-bottom: 25px; font-size: 18px; font-weight: 700; position: relative; padding-left: 15px;">
+                            <span
+                                style="position: absolute; left: 0; top: 0; width: 4px; height: 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 2px;"></span>
                             Support
                         </h3>
                         <div style="display: flex; flex-direction: column; gap: 15px;">
-                            <a href="#" style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease; display: flex; align-items: center; gap: 10px;">
+                            <a href="#"
+                                style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease; display: flex; align-items: center; gap: 10px;">
                                 <i class="fas fa-map-marker-alt" style="color: #667eea; width: 20px;"></i>
                                 <span>III, Bijoy sarani, Dhaka, DH 15/5, Bangladesh</span>
                             </a>
-                            <a href="mailto:sitwell@gmail.com" style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease; display: flex; align-items: center; gap: 10px;">
+                            <a href="mailto:sitwell@gmail.com"
+                                style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease; display: flex; align-items: center; gap: 10px;">
                                 <i class="fas fa-envelope" style="color: #667eea; width: 20px;"></i>
                                 <span>sitwell@gmail.com</span>
                             </a>
-                            <a href="tel:+8801888889999" style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease; display: flex; align-items: center; gap: 10px;">
+                            <a href="tel:+8801888889999"
+                                style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease; display: flex; align-items: center; gap: 10px;">
                                 <i class="fas fa-phone" style="color: #667eea; width: 20px;"></i>
                                 <span>+8801-88888-9999</span>
                             </a>
-                            <a href="#" style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease; display: flex; align-items: center; gap: 10px;">
+                            <a href="#"
+                                style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease; display: flex; align-items: center; gap: 10px;">
                                 <i class="fas fa-clock" style="color: #667eea; width: 20px;"></i>
                                 <span>Mon - Sat: 9:00 AM - 8:00 PM</span>
                             </a>
@@ -701,64 +747,95 @@
 
                     <!-- Quick Links Section -->
                     <div>
-                        <h3 style="color: white; margin-bottom: 25px; font-size: 18px; font-weight: 700; position: relative; padding-left: 15px;">
-                            <span style="position: absolute; left: 0; top: 0; width: 4px; height: 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 2px;"></span>
+                        <h3
+                            style="color: white; margin-bottom: 25px; font-size: 18px; font-weight: 700; position: relative; padding-left: 15px;">
+                            <span
+                                style="position: absolute; left: 0; top: 0; width: 4px; height: 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 2px;"></span>
                             Quick Links
                         </h3>
                         <div style="display: flex; flex-direction: column; gap: 12px;">
-                            <a href="{% url 'user_profile' %}" style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
-                                <i class="fas fa-chevron-right" style="margin-right: 8px; font-size: 10px; color: #667eea;"></i>My Account
+                            <a href="{% url 'user_profile' %}"
+                                style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
+                                <i class="fas fa-chevron-right"
+                                    style="margin-right: 8px; font-size: 10px; color: #667eea;"></i>My Account
                             </a>
-                            <a href="{% url 'cart' %}" style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
-                                <i class="fas fa-chevron-right" style="margin-right: 8px; font-size: 10px; color: #667eea;"></i>Shopping Cart
+                            <a href="{% url 'cart' %}"
+                                style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
+                                <i class="fas fa-chevron-right"
+                                    style="margin-right: 8px; font-size: 10px; color: #667eea;"></i>Shopping Cart
                             </a>
-                            <a href="{% url 'product_list' %}" style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
-                                <i class="fas fa-chevron-right" style="margin-right: 8px; font-size: 10px; color: #667eea;"></i>Shop
+                            <a href="{% url 'product_list' %}"
+                                style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
+                                <i class="fas fa-chevron-right"
+                                    style="margin-right: 8px; font-size: 10px; color: #667eea;"></i>Shop
                             </a>
-                            <a href="{% url 'wishlist' %}" style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
-                                <i class="fas fa-chevron-right" style="margin-right: 8px; font-size: 10px; color: #667eea;"></i>Wishlist
+                            <a href="{% url 'wishlist' %}"
+                                style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
+                                <i class="fas fa-chevron-right"
+                                    style="margin-right: 8px; font-size: 10px; color: #667eea;"></i>Wishlist
                             </a>
-                            <a href="#" style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
-                                <i class="fas fa-chevron-right" style="margin-right: 8px; font-size: 10px; color: #667eea;"></i>Track Order
+                            <a href="#"
+                                style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
+                                <i class="fas fa-chevron-right"
+                                    style="margin-right: 8px; font-size: 10px; color: #667eea;"></i>Track Order
                             </a>
                         </div>
                     </div>
 
                     <!-- Company Section -->
                     <div>
-                        <h3 style="color: white; margin-bottom: 25px; font-size: 18px; font-weight: 700; position: relative; padding-left: 15px;">
-                            <span style="position: absolute; left: 0; top: 0; width: 4px; height: 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 2px;"></span>
+                        <h3
+                            style="color: white; margin-bottom: 25px; font-size: 18px; font-weight: 700; position: relative; padding-left: 15px;">
+                            <span
+                                style="position: absolute; left: 0; top: 0; width: 4px; height: 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 2px;"></span>
                             Company
                         </h3>
                         <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px;">
-                            <a href="#" style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
-                                <i class="fas fa-chevron-right" style="margin-right: 8px; font-size: 10px; color: #667eea;"></i>About Us
+                            <a href="#"
+                                style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
+                                <i class="fas fa-chevron-right"
+                                    style="margin-right: 8px; font-size: 10px; color: #667eea;"></i>About Us
                             </a>
-                            <a href="#" style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
-                                <i class="fas fa-chevron-right" style="margin-right: 8px; font-size: 10px; color: #667eea;"></i>Contact
+                            <a href="#"
+                                style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
+                                <i class="fas fa-chevron-right"
+                                    style="margin-right: 8px; font-size: 10px; color: #667eea;"></i>Contact
                             </a>
-                            <a href="#" style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
-                                <i class="fas fa-chevron-right" style="margin-right: 8px; font-size: 10px; color: #667eea;"></i>Privacy Policy
+                            <a href="#"
+                                style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
+                                <i class="fas fa-chevron-right"
+                                    style="margin-right: 8px; font-size: 10px; color: #667eea;"></i>Privacy Policy
                             </a>
-                            <a href="#" style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
-                                <i class="fas fa-chevron-right" style="margin-right: 8px; font-size: 10px; color: #667eea;"></i>Terms & Conditions
+                            <a href="#"
+                                style="color: #999; text-decoration: none; font-size: 14px; transition: all 0.3s ease;">
+                                <i class="fas fa-chevron-right"
+                                    style="margin-right: 8px; font-size: 10px; color: #667eea;"></i>Terms & Conditions
                             </a>
                         </div>
-                        
+
                         <!-- Social Links -->
                         <div style="margin-top: 25px;">
-                            <p style="color: white; font-weight: 700; margin-bottom: 15px; font-size: 15px;">Follow Us</p>
+                            <p style="color: white; font-weight: 700; margin-bottom: 15px; font-size: 15px;">Follow Us
+                            </p>
                             <div style="display: flex; gap: 12px;">
-                                <a href="#" style="width: 42px; height: 42px; background: #333; color: #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; text-decoration: none;" class="social-icon">
+                                <a href="#"
+                                    style="width: 42px; height: 42px; background: #333; color: #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; text-decoration: none;"
+                                    class="social-icon">
                                     <i class="fab fa-facebook-f"></i>
                                 </a>
-                                <a href="#" style="width: 42px; height: 42px; background: #333; color: #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; text-decoration: none;" class="social-icon">
+                                <a href="#"
+                                    style="width: 42px; height: 42px; background: #333; color: #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; text-decoration: none;"
+                                    class="social-icon">
                                     <i class="fab fa-twitter"></i>
                                 </a>
-                                <a href="#" style="width: 42px; height: 42px; background: #333; color: #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; text-decoration: none;" class="social-icon">
+                                <a href="#"
+                                    style="width: 42px; height: 42px; background: #333; color: #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; text-decoration: none;"
+                                    class="social-icon">
                                     <i class="fab fa-instagram"></i>
                                 </a>
-                                <a href="#" style="width: 42px; height: 42px; background: #333; color: #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; text-decoration: none;" class="social-icon">
+                                <a href="#"
+                                    style="width: 42px; height: 42px; background: #333; color: #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; text-decoration: none;"
+                                    class="social-icon">
                                     <i class="fab fa-linkedin-in"></i>
                                 </a>
                             </div>
@@ -768,7 +845,8 @@
 
                 <!-- Bottom Footer -->
                 <div style="border-top: 1px solid #333; padding: 30px 0;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
                         <p style="color: #666; font-size: 14px; margin: 0;">
                             © 2025 <span style="color: #667eea; font-weight: 700;">Sitwell</span>. All rights reserved.
                         </p>
@@ -791,18 +869,18 @@
                 color: #667eea !important;
                 transform: translateX(5px);
             }
-            
+
             footer .social-icon:hover {
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
                 color: white !important;
                 transform: translateY(-3px) !important;
             }
-            
+
             footer button:hover {
                 transform: translateY(-2px);
                 box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
             }
-            
+
             footer input:focus {
                 outline: none;
                 border-color: #667eea;
@@ -810,10 +888,11 @@
             }
 
             @media (max-width: 768px) {
-                footer > div {
+                footer>div {
                     padding: 0 20px !important;
                 }
-                footer > div > div:first-child {
+
+                footer>div>div:first-child {
                     gap: 40px !important;
                 }
             }
@@ -828,17 +907,17 @@
         }
 
         // Close dropdown when clicking outside
-        document.addEventListener('click', function(event) {
+        document.addEventListener('click', function (event) {
             const dropdown = document.getElementById('profileDropdown');
             const toggle = event.target.closest('.profile-toggle');
-            
+
             if (!toggle && dropdown) {
                 dropdown.classList.remove('show');
             }
         });
 
         // Search functionality
-        document.querySelector('.search-btn').addEventListener('click', function() {
+        document.querySelector('.search-btn').addEventListener('click', function () {
             const query = document.querySelector('.search-input').value;
             if (query.trim()) {
                 window.location.href = `/search/?q=${encodeURIComponent(query)}`;
@@ -846,7 +925,7 @@
         });
 
         // Enter key search
-        document.querySelector('.search-input').addEventListener('keypress', function(e) {
+        document.querySelector('.search-input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 document.querySelector('.search-btn').click();
             }
@@ -858,12 +937,12 @@
             const overlay = document.querySelector('.navbar-overlay');
             const toggleBtn = document.querySelector('.navbar-toggle-btn');
             const content = document.getElementById('mainContent');
-            
+
             if (navbar) {
                 navbar.classList.toggle('active');
                 if (overlay) overlay.classList.toggle('active');
                 if (toggleBtn) toggleBtn.classList.toggle('active');
-                
+
                 // Only push content on desktop
                 if (window.innerWidth > 768 && content) {
                     content.classList.toggle('content-pushed');
@@ -872,32 +951,34 @@
         }
 
         /* ======  wishlist counter support  ====== */
-        function updateWishlistCount(count){
+        function updateWishlistCount(count) {
             document.querySelector('.wishlist-count').textContent = count || 0;
         }
         /* auto-load on first paint */
         document.addEventListener('DOMContentLoaded', () => {
             if ("{{ user.is_authenticated|yesno:'1,0' }}" === "1") {
                 fetch("{% url 'wishlist_item_count' %}")
-                  .then(r => r.json())
-                  .then(d => updateWishlistCount(d.count));
+                    .then(r => r.json())
+                    .then(d => updateWishlistCount(d.count));
             }
         });
 
 
         /* ======  cart counter support  ====== */
-        function updateCartCount(count){
+        function updateCartCount(count) {
             document.querySelector('.cart-count').textContent = count || 0;
         }
         /* auto-load on first paint */
         document.addEventListener('DOMContentLoaded', () => {
             if ("{{ user.is_authenticated|yesno:'1,0' }}" === "1") {
                 fetch("{% url 'cart_item_count' %}")
-                .then(r => r.json())
-                .then(d => updateCartCount(d.count));
+                    .then(r => r.json())
+                    .then(d => updateCartCount(d.count));
             }
         });
     </script>
+    <script src="{% static 'js/toast.js' %}"></script>
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>
