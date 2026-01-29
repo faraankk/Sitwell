@@ -66,8 +66,15 @@
     }
 
     @keyframes pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.05); }
+
+        0%,
+        100% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.05);
+        }
     }
 
     .empty-title {
@@ -353,12 +360,20 @@
     }
 
     @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
     }
 
     /* Responsive Design */
     @media (max-width: 768px) {
+
         .wishlist-grid,
         .unavailable-grid {
             grid-template-columns: 1fr;
@@ -420,84 +435,84 @@
     </div>
 
     {% if total_items == 0 %}
-        <!-- Empty State -->
-        <div class="empty-state">
-            <div class="empty-icon">
-                <i class="fas fa-heart-broken"></i>
-            </div>
-            <h3 class="empty-title">Your wishlist is empty</h3>
-            <p class="empty-text">Start adding products you love to come back to later!</p>
-            <a href="{% url 'dummy_home' %}" class="browse-btn">
-                <i class="fas fa-shopping-bag"></i> Browse Products
-            </a>
+    <!-- Empty State -->
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-heart-broken"></i>
         </div>
+        <h3 class="empty-title">Your wishlist is empty</h3>
+        <p class="empty-text">Start adding products you love to come back to later!</p>
+        <a href="{% url 'dummy_home' %}" class="browse-btn">
+            <i class="fas fa-shopping-bag"></i> Browse Products
+        </a>
+    </div>
     {% else %}
-        <!-- Available Items -->
-        <div class="wishlist-grid" id="wishlist-grid">
-            {% for item in available_items %}
-                <div class="wishlist-card" data-product-id="{{ item.product.pk }}">
-                    <div class="wishlist-card-image">
-                        {% with item.product.images.first as main_image %}
-                            {% if main_image %}
-                                <img src="{{ main_image.image.url }}" alt="{{ item.product.name }}">
-                            {% else %}
-                                <img src="{% static 'images/no-image.png' %}" alt="No image">
-                            {% endif %}
-                        {% endwith %}
-                    </div>
-                    <div class="wishlist-card-body">
-                        <h6 class="product-title">{{ item.product.name }}</h6>
-                        <div class="product-meta">
-                            <i class="fas fa-tag"></i>
-                            {{ item.product.brand|default:"No brand" }} | {{ item.product.get_category_display }}
-                        </div>
-                        <div class="product-price">₹{{ item.product.price }}</div>
-                        <div class="action-buttons">
-                            <a href="{% url 'product_detail' item.product.pk %}" class="wishlist-btn btn-view">
-                                <i class="fas fa-eye"></i> View
-                            </a>
-                            <button class="wishlist-btn btn-cart" onclick="moveToCart(this,{{ item.product.pk }})">
-                                <i class="fas fa-shopping-cart"></i> Cart
-                            </button>
-                            <button class="wishlist-btn btn-remove" onclick="removeCard(this,{{ item.product.pk }})">
-                                <i class="fas fa-trash"></i> Remove
-                            </button>
-                        </div>
-                    </div>
+    <!-- Available Items -->
+    <div class="wishlist-grid" id="wishlist-grid">
+        {% for item in available_items %}
+        <div class="wishlist-card" data-product-id="{{ item.product.pk }}">
+            <div class="wishlist-card-image">
+                {% with item.product.images.first as main_image %}
+                {% if main_image %}
+                <img src="{{ main_image.image.url }}" alt="{{ item.product.name }}">
+                {% else %}
+                <img src="{% static 'images/no-image.png' %}" alt="No image">
+                {% endif %}
+                {% endwith %}
+            </div>
+            <div class="wishlist-card-body">
+                <h6 class="product-title">{{ item.product.name }}</h6>
+                <div class="product-meta">
+                    <i class="fas fa-tag"></i>
+                    {{ item.product.brand|default:"No brand" }} | {{ item.product.get_category_display }}
                 </div>
+                <div class="product-price">₹{{ item.product.price }}</div>
+                <div class="action-buttons">
+                    <a href="{% url 'product_detail' item.product.pk %}" class="wishlist-btn btn-view">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                    <button class="wishlist-btn btn-cart" onclick="moveToCart(this,{{ item.product.pk }})">
+                        <i class="fas fa-shopping-cart"></i> Cart
+                    </button>
+                    <button class="wishlist-btn btn-remove" onclick="removeCard(this,{{ item.product.pk }})">
+                        <i class="fas fa-trash"></i> Remove
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Unavailable Items -->
+    {% if unavailable_items %}
+    <div class="unavailable-section">
+        <div class="unavailable-header">
+            <i class="fas fa-exclamation-triangle"></i>
+            Unavailable Items
+        </div>
+        <div class="unavailable-alert">
+            <i class="fas fa-info-circle me-2"></i>
+            These products are no longer available. They will be automatically removed from your wishlist soon.
+        </div>
+        <div class="unavailable-grid">
+            {% for item in unavailable_items %}
+            <div class="unavailable-card" data-product-id="{{ item.product.pk }}">
+                <div class="unavailable-badge">Unavailable</div>
+                <p class="text-muted mb-3">{{ item.product.name }}</p>
+                <button class="unavailable-remove" onclick="removeCard(this,{{ item.product.pk }})">
+                    <i class="fas fa-trash me-2"></i> Remove Now
+                </button>
+            </div>
             {% endfor %}
         </div>
+    </div>
+    {% endif %}
 
-        <!-- Unavailable Items -->
-        {% if unavailable_items %}
-            <div class="unavailable-section">
-                <div class="unavailable-header">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    Unavailable Items
-                </div>
-                <div class="unavailable-alert">
-                    <i class="fas fa-info-circle me-2"></i>
-                    These products are no longer available. They will be automatically removed from your wishlist soon.
-                </div>
-                <div class="unavailable-grid">
-                    {% for item in unavailable_items %}
-                        <div class="unavailable-card" data-product-id="{{ item.product.pk }}">
-                            <div class="unavailable-badge">Unavailable</div>
-                            <p class="text-muted mb-3">{{ item.product.name }}</p>
-                            <button class="unavailable-remove" onclick="removeCard(this,{{ item.product.pk }})">
-                                <i class="fas fa-trash me-2"></i> Remove Now
-                            </button>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-        {% endif %}
-
-        <!-- Summary -->
-        <div class="wishlist-summary">
-            <p class="summary-text">Total Items in Wishlist:</p>
-            <p class="summary-count" id="wl-count">{{ total_items }}</p>
-        </div>
+    <!-- Summary -->
+    <div class="wishlist-summary">
+        <p class="summary-text">Total Items in Wishlist:</p>
+        <p class="summary-count" id="wl-count">{{ total_items }}</p>
+    </div>
     {% endif %}
 </div>
 
@@ -506,64 +521,79 @@
     <i class="fas fa-check-circle me-2"></i> Added to cart!
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-/* ======  helpers  ====== */
-const getCookie = n => {
-    let v = null;
-    if (document.cookie && document.cookie !== '') {
-        const c = document.cookie.split(';');
-        for (let i = 0; i < c.length; i++) {
-            const p = c[i].trim();
-            if (p.substring(0, n.length + 1) === (n + '=')) {
-                v = decodeURIComponent(p.substring(n.length + 1));
-                break;
+    /* ======  helpers  ====== */
+    const getCookie = n => {
+        let v = null;
+        if (document.cookie && document.cookie !== '') {
+            const c = document.cookie.split(';');
+            for (let i = 0; i < c.length; i++) {
+                const p = c[i].trim();
+                if (p.substring(0, n.length + 1) === (n + '=')) {
+                    v = decodeURIComponent(p.substring(n.length + 1));
+                    break;
+                }
             }
         }
+        return v;
+    };
+    const csrf = getCookie('csrftoken');
+
+    /* ======  move to cart  ====== */
+    function moveToCart(btn, productId) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+
+        const body = new FormData();
+        body.append('quantity', 1);
+
+        fetch(`/cart/add/${productId}/`, { method: 'POST', headers: { 'X-CSRFToken': csrf }, body })
+            .then(r => r.json())
+            .then(d => {
+                if (!d.success) return showToast(d.message || 'Failed to add', 'error');
+                showToast('Added to cart!', 'success');
+                if (typeof updateCartCount === 'function') updateCartCount();
+                removeCardDirect(btn, productId);
+            })
+            .catch(() => showToast('Error – please try again', 'error'))
+            .finally(() => btn.disabled = false);
     }
-    return v;
-};
-const csrf = getCookie('csrftoken');
 
-/* ======  move to cart  ====== */
-function moveToCart(btn, productId) {
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+    /* ======  remove from wishlist (with confirmation)  ====== */
+    function removeCard(btn, productId) {
+        const card = btn.closest('[data-product-id]');
+        const productName = card.querySelector('.product-title')?.textContent || 'this item';
 
-    const body = new FormData();
-    body.append('quantity', 1);
-
-    fetch(`/cart/add/${productId}/`, {method: 'POST', headers: {'X-CSRFToken': csrf}, body})
-        .then(r => r.json())
-        .then(d => {
-            if (!d.success) return alert(d.message || 'Failed to add');
-            showToast();
-            if (typeof updateCartCount === 'function') updateCartCount();
-            removeCard(btn, productId);
-        })
-        .catch(() => alert('Error – please try again'))
-        .finally(() => btn.disabled = false);
-}
-
-/* ======  remove from wishlist  ====== */
-function removeCard(btn, productId) {
-    const card = btn.closest('[data-product-id]');
-    card.style.transition = 'opacity .4s';
-    card.style.opacity = '0';
-    setTimeout(() => card.remove(), 400);
-
-    fetch(`/wishlist/remove/${productId}/`, {method: 'POST', headers: {'X-CSRFToken': csrf}})
-        .then(r => r.json())
-        .then(d => {
-            document.getElementById('wl-count').textContent = d.wishlist_count;
-            if (d.wishlist_count === 0) location.reload();
+        Swal.fire({
+            title: 'Remove from wishlist?',
+            text: `Remove "${productName}" from your wishlist?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, remove it'
+        }).then(result => {
+            if (!result.isConfirmed) return;
+            removeCardDirect(btn, productId);
         });
-}
+    }
 
-/* ======  toast  ====== */
-function showToast() {
-    const t = document.getElementById('cartSuccess');
-    t.style.display = 'block';
-    setTimeout(() => t.style.display = 'none', 2500);
-}
+    /* ======  direct remove (no confirmation - used after moveToCart)  ====== */
+    function removeCardDirect(btn, productId) {
+        const card = btn.closest('[data-product-id]');
+        card.style.transition = 'opacity .4s';
+        card.style.opacity = '0';
+        setTimeout(() => card.remove(), 400);
+
+        fetch(`/wishlist/remove/${productId}/`, { method: 'POST', headers: { 'X-CSRFToken': csrf } })
+            .then(r => r.json())
+            .then(d => {
+                document.getElementById('wl-count').textContent = d.wishlist_count;
+                if (d.wishlist_count === 0) location.reload();
+            });
+    }
+
+
 </script>
 {% endblock %}

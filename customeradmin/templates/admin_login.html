@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login - Sitwell</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -23,7 +25,7 @@
             position: relative;
             overflow: hidden;
         }
-        
+
         /* Animated background */
         body::before {
             content: '';
@@ -32,33 +34,53 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 70% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+            background: radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
             animation: rotate 20s linear infinite;
             pointer-events: none;
         }
-        
+
         @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
         }
-        
+
         /* Floating particles */
         .particle {
             position: fixed;
             width: 10px;
             height: 10px;
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.2);
             border-radius: 50%;
             animation: float 15s ease-in-out infinite;
             pointer-events: none;
         }
-        
+
         @keyframes float {
-            0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
+
+            0%,
+            100% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-100vh) translateX(50px);
+                opacity: 0;
+            }
         }
 
         .login-container {
@@ -74,24 +96,25 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             animation: slideUp 0.6s ease-out;
         }
-        
+
         @keyframes slideUp {
             from {
                 opacity: 0;
                 transform: translateY(40px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
-        
+
         /* Logo section */
         .logo-section {
             text-align: center;
             margin-bottom: 40px;
         }
-        
+
         .logo-icon {
             width: 80px;
             height: 80px;
@@ -104,12 +127,21 @@
             box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
             animation: pulse 2s ease-in-out infinite;
         }
-        
+
         @keyframes pulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4); }
-            50% { transform: scale(1.05); box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6); }
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            }
+
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+            }
         }
-        
+
         .logo-text {
             font-size: 32px;
             font-weight: 900;
@@ -125,7 +157,7 @@
             text-align: center;
             margin-bottom: 12px;
         }
-        
+
         .login-subtitle {
             text-align: center;
             color: #6b7280;
@@ -151,7 +183,8 @@
             position: relative;
         }
 
-        input[type="text"], input[type="password"] {
+        input[type="text"],
+        input[type="password"] {
             width: 100%;
             padding: 16px 20px 16px 50px;
             border: 2px solid #e5e7eb;
@@ -163,14 +196,16 @@
             font-weight: 500;
         }
 
-        input[type="text"]:focus, input[type="password"]:focus {
+        input[type="text"]:focus,
+        input[type="password"]:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 6px rgba(102, 126, 234, 0.1);
             transform: translateY(-2px);
         }
 
-        input[type="text"]::placeholder, input[type="password"]::placeholder {
+        input[type="text"]::placeholder,
+        input[type="password"]::placeholder {
             color: #9ca3af;
         }
 
@@ -184,7 +219,7 @@
             color: #9ca3af;
             transition: all 0.3s ease;
         }
-        
+
         .input-wrapper:focus-within .input-icon {
             color: #667eea;
         }
@@ -239,7 +274,7 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        
+
         .login-button::before {
             content: '';
             position: absolute;
@@ -247,10 +282,10 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
             transition: left 0.5s;
         }
-        
+
         .login-button:hover::before {
             left: 100%;
         }
@@ -280,12 +315,13 @@
             gap: 12px;
             animation: slideIn 0.4s ease-out;
         }
-        
+
         @keyframes slideIn {
             from {
                 opacity: 0;
                 transform: translateX(-20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateX(0);
@@ -303,13 +339,13 @@
             color: #059669;
             border: 2px solid #6ee7b7;
         }
-        
+
         .alert-info {
             background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
             color: #2563eb;
             border: 2px solid #93c5fd;
         }
-        
+
         .alert-warning {
             background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
             color: #d97706;
@@ -319,7 +355,7 @@
         .errorlist {
             display: none;
         }
-        
+
         /* Footer */
         .login-footer {
             text-align: center;
@@ -336,38 +372,39 @@
                 padding: 40px 24px;
                 border-radius: 20px;
             }
-            
+
             .logo-icon {
                 width: 70px;
                 height: 70px;
                 border-radius: 16px;
             }
-            
+
             .logo-text {
                 font-size: 28px;
             }
-            
+
             .login-title {
                 font-size: 28px;
             }
-            
-            input[type="text"], input[type="password"] {
+
+            input[type="text"],
+            input[type="password"] {
                 padding: 14px 18px 14px 46px;
                 font-size: 15px;
             }
-            
+
             .input-icon {
                 left: 16px;
                 width: 18px;
                 height: 18px;
             }
-            
+
             .password-toggle {
                 right: 16px;
                 width: 18px;
                 height: 18px;
             }
-            
+
             .login-button {
                 padding: 16px 18px;
                 font-size: 15px;
@@ -375,6 +412,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Floating particles -->
     <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
@@ -383,7 +421,7 @@
     <div class="particle" style="left: 55%; animation-delay: 6s;"></div>
     <div class="particle" style="left: 70%; animation-delay: 8s;"></div>
     <div class="particle" style="left: 85%; animation-delay: 10s;"></div>
-    
+
     <div class="login-container">
         <!-- Logo Section -->
         <div class="logo-section">
@@ -393,40 +431,48 @@
             <h1 class="login-title">Admin Portal</h1>
             <p class="login-subtitle">Sign in to manage your store</p>
         </div>
-        
+
         <!-- Messages -->
         {% if messages %}
-            <div class="messages">
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">
-                        {% if message.tags == 'error' %}
-                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                            </svg>
-                        {% elif message.tags == 'success' %}
-                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                        {% else %}
-                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                            </svg>
-                        {% endif %}
-                        {{ message }}
-                    </div>
-                {% endfor %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {% if message.tags == 'error' %}
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                        clip-rule="evenodd" />
+                </svg>
+                {% elif message.tags == 'success' %}
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clip-rule="evenodd" />
+                </svg>
+                {% else %}
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clip-rule="evenodd" />
+                </svg>
+                {% endif %}
+                {{ message }}
             </div>
+            {% endfor %}
+        </div>
         {% endif %}
 
         <!-- Login Form -->
         <form class="login-form" action="{% url 'customeradmin:login_to_account' %}" method="POST">
             {% csrf_token %}
-            
+
             <div class="form-group">
                 <label for="{{ form.username.id_for_label }}" class="form-label">Email Address</label>
                 <div class="input-wrapper">
                     <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                        </path>
                     </svg>
                     {{ form.username }}
                 </div>
@@ -436,37 +482,41 @@
                 <label for="{{ form.password.id_for_label }}" class="form-label">Password</label>
                 <div class="input-wrapper">
                     <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                        </path>
                     </svg>
                     {{ form.password }}
-                    <svg class="password-toggle" fill="none" stroke="currentColor" viewBox="0 0 24 24" onclick="togglePassword()">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    <svg class="password-toggle" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        onclick="togglePassword()">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                        </path>
                     </svg>
                 </div>
             </div>
 
-            <a href="#" class="forgot-password" onclick="handleForgotPassword(event)">
-                Forgot password? →
-            </a>
-
+           
             <button type="submit" class="login-button">
                 Sign In
             </button>
         </form>
-        
+
         <div class="login-footer">
             © 2025 Sitwell. All rights reserved.
         </div>
     </div>
 
+    <div class="toast-container" id="toast-container"></div>
     <script>
         function togglePassword() {
             const passwordInput = document.querySelector('input[type="password"], input[type="text"][name="password"]');
             const passwordToggle = document.querySelector('.password-toggle');
-            
+
             if (!passwordInput || !passwordToggle) return;
-            
+
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
                 passwordToggle.innerHTML = `
@@ -483,9 +533,9 @@
 
         function handleForgotPassword(e) {
             e.preventDefault();
-            alert('Password reset feature coming soon!');
+            showToast('Password reset feature coming soon!', 'info');
         }
-        
+
         // Auto-dismiss messages after 5 seconds
         setTimeout(() => {
             const messages = document.querySelectorAll('.alert');
@@ -494,7 +544,7 @@
                 setTimeout(() => msg.remove(), 400);
             });
         }, 5000);
-        
+
         // Add keyframe for slide out
         const style = document.createElement('style');
         style.textContent = `
@@ -508,4 +558,5 @@
         document.head.appendChild(style);
     </script>
 </body>
+
 </html>

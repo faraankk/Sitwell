@@ -152,6 +152,7 @@
              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Items</th>
              <th class="px-6 py-4 text-right text-xs font-black text-gray-700 uppercase tracking-wider">Total</th>
              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Status</th>
+             <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Payment</th>
              <!-- NEW: Added column for Reason (shows cancel/return reasons) -->
              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Reason</th>
              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Update</th>
@@ -215,6 +216,25 @@
                  {% endif %}
                {% endwith %}
              </td>
+             <td class="px-6 py-4">
+              {% if o.payment_method == 'card' %}
+                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
+                  <i class="fas fa-credit-card"></i> Card
+                </span>
+              {% elif o.payment_method == 'cod' or o.payment_method == 'Cash on Delivery' %}
+                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800">
+                  <i class="fas fa-money-bill-wave"></i> COD
+                </span>
+              {% elif o.payment_method == 'wallet' %}
+                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800">
+                  <i class="fas fa-wallet"></i> Wallet
+                </span>
+              {% else %}
+                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-800">
+                  {{ o.payment_method|default:"N/A" }}
+                </span>
+              {% endif %}
+            </td>
              <!-- NEW: Reason column - Shows cancel/return reasons from model -->
              <td class="px-6 py-4 text-sm text-gray-600">
                {% if o.cancellation_reason %}
@@ -244,7 +264,7 @@
            </tr>
            {% empty %}
            <tr>
-             <td colspan="9" class="px-6 py-20 text-center">  <!-- Updated colspan to 9 for new column -->
+             <td colspan="10" class="px-6 py-20 text-center"> <!-- Updated colspan to 9 for new column -->
                <div class="inline-flex items-center justify-center w-24 h-24 bg-gray-100 rounded-full mb-6">
                  <i class="fas fa-shopping-bag text-4xl text-gray-400"></i>
                </div>

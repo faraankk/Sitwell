@@ -13,7 +13,7 @@
     .content-card {
         background: white;
         border-radius: 15px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         padding: 40px;
         margin-bottom: 20px;
         max-width: 700px;
@@ -27,7 +27,7 @@
         padding: 15px 20px;
         margin-bottom: 25px;
         border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         display: flex;
         align-items: center;
         gap: 8px;
@@ -36,7 +36,7 @@
         margin-left: auto;
         margin-right: auto;
     }
-    
+
     .breadcrumb-item {
         display: flex;
         align-items: center;
@@ -49,22 +49,22 @@
         text-decoration: none;
         transition: all 0.3s ease;
     }
-    
+
     .breadcrumb-item a:hover {
         color: #667eea;
     }
-    
+
     .breadcrumb-item.active {
         color: #667eea;
         font-weight: 600;
     }
-    
+
     .breadcrumb-item::after {
         content: '/';
         margin: 0 10px;
         color: #ddd;
     }
-    
+
     .breadcrumb-item:last-child::after {
         content: '';
         margin: 0;
@@ -111,7 +111,7 @@
         margin: 0;
         font-size: 15px;
     }
-    
+
     .alert-info {
         background: linear-gradient(135deg, #e3f2fd 0%, #e8eaf6 100%);
         border-left: 4px solid #2196f3;
@@ -135,11 +135,11 @@
         font-size: 14px;
         line-height: 1.5;
     }
-    
+
     .form-group {
         margin-bottom: 25px;
     }
-    
+
     .form-group label {
         font-weight: 600;
         color: #333;
@@ -147,7 +147,7 @@
         display: block;
         font-size: 14px;
     }
-    
+
     .form-control {
         width: 100%;
         border: 2px solid #e9ecef;
@@ -157,7 +157,7 @@
         transition: all 0.3s ease;
         background: #f8f9fa;
     }
-    
+
     .form-control:focus {
         border-color: #667eea;
         outline: none;
@@ -168,7 +168,7 @@
     .form-control:hover {
         border-color: #d4d8dd;
     }
-    
+
     .form-control:disabled {
         background-color: #f8f9fa;
         color: #6c757d;
@@ -182,7 +182,7 @@
         margin-top: 6px;
         font-style: italic;
     }
-    
+
     .btn-primary {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: none;
@@ -195,7 +195,7 @@
         transition: all 0.3s ease;
         box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
-    
+
     .btn-primary:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
@@ -204,7 +204,7 @@
     .btn-primary:active {
         transform: translateY(0);
     }
-    
+
     .btn-cancel {
         background-color: transparent;
         border: 2px solid #6c757d;
@@ -218,14 +218,14 @@
         font-weight: 600;
         transition: all 0.3s ease;
     }
-    
+
     .btn-cancel:hover {
         background-color: #6c757d;
         color: white;
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
     }
-    
+
     .error {
         color: #dc3545;
         font-size: 13px;
@@ -344,7 +344,7 @@
         padding-top: 25px;
         border-top: 2px solid #f0f0f0;
     }
-    
+
     @media (max-width: 768px) {
         .content-card {
             padding: 25px 20px;
@@ -394,9 +394,10 @@
 
 
 {% if user.first_name %}
-    <p style="text-align: right; color: #666; margin-bottom: 30px; max-width: 700px; margin-left: auto; margin-right: auto;">
-        Welcome! <span style="color: #667eea; font-weight: 600;">{{ user.first_name }}</span>
-    </p>
+<p
+    style="text-align: right; color: #666; margin-bottom: 30px; max-width: 700px; margin-left: auto; margin-right: auto;">
+    Welcome! <span style="color: #667eea; font-weight: 600;">{{ user.first_name }}</span>
+</p>
 {% endif %}
 
 
@@ -410,16 +411,17 @@
         <h4>Change Email Address</h4>
         <p>Update the email address associated with your account</p>
     </div>
-    
+
     <!-- Info Alert -->
     <div class="alert-info">
         <i class="fas fa-info-circle"></i>
-        <p>A verification email will be sent to your new email address. You must verify it before the change takes effect.</p>
+        <p>A verification email will be sent to your new email address. You must verify it before the change takes
+            effect.</p>
     </div>
-    
+
     <form method="post" id="emailChangeForm">
         {% csrf_token %}
-        
+
         <div class="form-group">
             <label>Current Email Address</label>
             <div class="current-email-display">
@@ -427,24 +429,26 @@
                 {{ user.email }}
             </div>
         </div>
-        
+
         <div class="form-group">
-            <label for="{{ form.new_email.id_for_label }}">New Email Address <span style="color: #dc3545;">*</span></label>
+            <label for="{{ form.new_email.id_for_label }}">New Email Address <span
+                    style="color: #dc3545;">*</span></label>
             {{ form.new_email }}
             <div id="email-validation" class="validation-message"></div>
             {% if form.new_email.errors %}
-                <div class="error">{{ form.new_email.errors.0 }}</div>
+            <div class="error">{{ form.new_email.errors.0 }}</div>
             {% endif %}
         </div>
-        
+
         <div class="form-group">
-            <label for="{{ form.password.id_for_label }}">Current Password <span style="color: #dc3545;">*</span></label>
+            <label for="{{ form.password.id_for_label }}">Current Password <span
+                    style="color: #dc3545;">*</span></label>
             {{ form.password }}
             <small class="form-hint">
                 <i class="fas fa-lock" style="margin-right: 5px;"></i>Enter your current password to confirm this change
             </small>
             {% if form.password.errors %}
-                <div class="error">{{ form.password.errors.0 }}</div>
+            <div class="error">{{ form.password.errors.0 }}</div>
             {% endif %}
         </div>
 
@@ -461,7 +465,7 @@
                 <li>The verification link will expire in 24 hours</li>
             </ul>
         </div>
-        
+
         <!-- Form Actions -->
         <div class="form-actions">
             <a href="{% url 'user_profile' %}" class="btn-cancel">
@@ -478,24 +482,24 @@
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         // Auto-open the navbar on desktop
         if (window.innerWidth > 768) {
             const navbar = document.getElementById('leftNavbar');
             const content = document.getElementById('mainContent');
             const toggleBtn = document.querySelector('.navbar-toggle-btn');
-            
+
             if (navbar && content && toggleBtn) {
                 navbar.classList.add('active');
                 content.classList.add('content-pushed');
                 toggleBtn.classList.add('active');
             }
         }
-        
+
         // Set security tab as active in sidebar
         const sidebarLinks = document.querySelectorAll('.profile-sidebar-nav .nav-link');
         sidebarLinks.forEach(link => link.classList.remove('active'));
-        
+
         const securityLink = document.querySelector('.profile-sidebar-nav .nav-link[href*="security"]');
         if (securityLink) {
             securityLink.classList.add('active');
@@ -506,18 +510,18 @@
     const emailField = document.getElementById('id_new_email');
     const validationMessage = document.getElementById('email-validation');
     const currentEmail = '{{ user.email }}';
-    
+
     if (emailField && validationMessage) {
-        emailField.addEventListener('input', function() {
+        emailField.addEventListener('input', function () {
             const email = this.value.trim();
-            
+
             if (!email) {
                 this.classList.remove('email-valid', 'email-invalid');
                 validationMessage.textContent = '';
                 validationMessage.className = 'validation-message';
                 return;
             }
-            
+
             if (email === currentEmail) {
                 this.classList.remove('email-valid');
                 this.classList.add('email-invalid');
@@ -536,7 +540,7 @@
             }
         });
     }
-    
+
     function validateEmail(email) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
@@ -545,9 +549,9 @@
     // Form submission with loading state
     const form = document.getElementById('emailChangeForm');
     const submitBtn = document.getElementById('submit-btn');
-    
+
     if (form && submitBtn) {
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', function (e) {
             // Validate before submitting
             const newEmail = emailField.value.trim();
             const password = document.getElementById('id_password').value;

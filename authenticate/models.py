@@ -74,6 +74,20 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
 
+    
+    def block_user(self, blocked_by="Admin"):
+        self.is_blocked = True
+        self.blocked_at = timezone.now()
+        self.blocked_by = blocked_by
+        self.save(update_fields=["is_blocked", "blocked_at", "blocked_by"])
+
+    def unblock_user(self):
+        self.is_blocked = False
+        self.blocked_at = None
+        self.blocked_by = None
+        self.save(update_fields=["is_blocked", "blocked_at", "blocked_by"])
+
+
 class UserAddress(models.Model):
     ADDRESS_TYPES = [
         ('home', 'Home'),
@@ -211,7 +225,7 @@ class Order(models.Model):
                 original_total += original_price * item.quantity
         self.discount_amount = original_total - self.subtotal
         self.tax_amount = self.subtotal * Decimal('0.18')
-        self.shipping_charge = Decimal('0.00') if self.subtotal >= Decimal('500.00') else Decimal('50.00')
+        self.shipping_charge = Decimal('0.00') if self.subtotal >= Decimal('10000.00') else Decimal('199.00')
         self.total_amount = self.subtotal + self.tax_amount + self.shipping_charge
         self.save(update_fields=['subtotal', 'discount_amount', 'tax_amount', 'shipping_charge', 'total_amount'])
         return {
@@ -455,6 +469,7 @@ class WishlistItem(models.Model):
 
 class Coupon(models.Model):
     code = models.CharField(max_length=50, unique=True, db_index=True)
+    description = models.CharField(max_length=255, blank=True, null=True)  # Added description field
     discount_percent = models.PositiveIntegerField(default=10)  # 1-100
     min_order_amount = models.DecimalField(max_digits=10, decimal_places=2, default=500)
     max_usage = models.PositiveIntegerField(default=100)

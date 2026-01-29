@@ -94,6 +94,8 @@ class ProductForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['category'].queryset = Category.objects.filter(is_deleted=False, is_listed=True)
+        self.fields['category'].required = False
         self.fields['discount_type'].required = False
         self.fields['discount_value'].required = False
         self.fields['tax_type'].required = False
@@ -284,7 +286,7 @@ class OrderStatusForm(forms.Form):
 class CouponForm(forms.ModelForm):
     class Meta:
         model = Coupon
-        fields = ["code", "discount_percent", "min_order_amount",
+        fields = ["code", "description", "discount_percent", "min_order_amount",
                   "max_usage", "valid_from", "valid_to", "is_active"]
         widgets = {
             "valid_from": forms.DateTimeInput(

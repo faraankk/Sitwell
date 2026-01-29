@@ -19,35 +19,51 @@
         z-index: 0;
         pointer-events: none;
     }
-    
+
     .particle {
         position: absolute;
         background: rgba(102, 126, 234, 0.1);
         border-radius: 50%;
         animation: float 20s ease-in-out infinite;
     }
-    
+
     @keyframes float {
-        0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.1; }
-        50% { transform: translateY(-100px) rotate(180deg); opacity: 0.3; }
+
+        0%,
+        100% {
+            transform: translateY(0) rotate(0deg);
+            opacity: 0.1;
+        }
+
+        50% {
+            transform: translateY(-100px) rotate(180deg);
+            opacity: 0.3;
+        }
     }
-    
+
     /* Fade in animations */
     .fade-in {
         animation: fadeInUp 1s ease-out;
     }
-    
+
     @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
-    
+
     /* Form animations */
     .form-group {
         position: relative;
         margin-bottom: 2rem;
     }
-    
+
     .form-input {
         width: 100%;
         padding: 1rem 1.5rem;
@@ -59,13 +75,13 @@
         transition: all 0.3s ease;
         outline: none;
     }
-    
+
     .form-input:focus {
         border-color: #667eea;
         box-shadow: 0 0 0 6px rgba(102, 126, 234, 0.1);
         background: rgba(255, 255, 255, 1);
     }
-    
+
     .form-label {
         position: absolute;
         left: 1.5rem;
@@ -78,16 +94,16 @@
         transition: all 0.3s ease;
         pointer-events: none;
     }
-    
-    .form-input:focus + .form-label,
-    .form-input:not(:placeholder-shown) + .form-label {
+
+    .form-input:focus+.form-label,
+    .form-input:not(:placeholder-shown)+.form-label {
         top: -0.5rem;
         left: 1rem;
         font-size: 0.875rem;
         color: #667eea;
         background: white;
     }
-    
+
     /* Button animation */
     .btn-primary {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -104,7 +120,7 @@
         text-transform: uppercase;
         letter-spacing: 1px;
     }
-    
+
     .btn-primary::before {
         content: '';
         position: absolute;
@@ -112,19 +128,19 @@
         left: -100%;
         width: 100%;
         height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
         transition: left 0.5s;
     }
-    
+
     .btn-primary:hover::before {
         left: 100%;
     }
-    
+
     .btn-primary:hover {
         transform: translateY(-3px);
         box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
     }
-    
+
     /* Card animations */
     .contact-card {
         background: rgba(255, 255, 255, 0.95);
@@ -135,12 +151,12 @@
         transition: all 0.3s ease;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
     }
-    
+
     .contact-card:hover {
         transform: translateY(-10px);
         box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
     }
-    
+
     /* Icon animations */
     .contact-icon {
         width: 4rem;
@@ -155,12 +171,12 @@
         margin-bottom: 1.5rem;
         transition: all 0.3s ease;
     }
-    
+
     .contact-icon:hover {
         transform: scale(1.1) rotate(5deg);
         box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
     }
-    
+
     /* Map container */
     .map-container {
         border-radius: 1.5rem;
@@ -168,22 +184,22 @@
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
         transition: all 0.3s ease;
     }
-    
+
     .map-container:hover {
         transform: translateY(-5px);
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
     }
-    
+
     /* Responsive design */
     @media (max-width: 768px) {
         .contact-card {
             padding: 1.5rem;
         }
-        
+
         .form-input {
             padding: 0.875rem 1.25rem;
         }
-        
+
         .btn-primary {
             padding: 0.875rem 2rem;
         }
@@ -207,27 +223,33 @@
     <div class="max-w-7xl mx-auto px-6">
         <!-- Header -->
         <div class="text-center mb-16 fade-in">
-            <h1 class="text-5xl md:text-6xl font-black mb-6" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            <h1 class="text-5xl md:text-6xl font-black mb-6"
+                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                 Get In <span style="color: #f59e0b;">Touch</span>
             </h1>
             <p class="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                Have a question about our furniture? Need help with your order? We're here to help you create the perfect living space.
+                Have a question about our furniture? Need help with your order? We're here to help you create the
+                perfect living space.
             </p>
         </div>
 
         <!-- Contact Form & Info Grid -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 4rem;">
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 4rem;">
             <!-- Contact Form -->
             <div style="grid-column: span 2;" class="fade-in" style="animation-delay: 0.3s;">
                 <div class="contact-card">
                     <div style="margin-bottom: 2rem;">
-                        <h2 style="font-size: 2rem; font-weight: 700; color: #333; margin-bottom: 0.5rem;">Send Us a Message</h2>
+                        <h2 style="font-size: 2rem; font-weight: 700; color: #333; margin-bottom: 0.5rem;">Send Us a
+                            Message</h2>
                         <p style="color: #6b7280;">We'll get back to you within 24 hours</p>
                     </div>
-                    
-                    <form id="contactForm" method="POST" action="{% url 'contact_submit' %}" style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+                    <form id="contactForm" method="POST" action="{% url 'contact_submit' %}"
+                        style="display: flex; flex-direction: column; gap: 1.5rem;">
                         {% csrf_token %}
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                        <div
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
                             <div class="form-group">
                                 <input type="text" name="name" class="form-input" placeholder=" " required>
                                 <label class="form-label">Your Name</label>
@@ -237,17 +259,17 @@
                                 <label class="form-label">Email Address</label>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <input type="text" name="subject" class="form-input" placeholder=" ">
                             <label class="form-label">Subject</label>
                         </div>
-                        
+
                         <div class="form-group">
                             <textarea rows="6" name="message" class="form-input" placeholder=" " required></textarea>
                             <label class="form-label">Your Message</label>
                         </div>
-                        
+
                         <button type="submit" class="btn-primary" style="width: fit-content;">
                             <i class="fas fa-paper-plane" style="margin-right: 0.5rem;"></i>
                             Send Message
@@ -257,13 +279,15 @@
             </div>
 
             <!-- Contact Information -->
-            <div style="display: flex; flex-direction: column; gap: 2rem;" class="fade-in" style="animation-delay: 0.5s;">
+            <div style="display: flex; flex-direction: column; gap: 2rem;" class="fade-in"
+                style="animation-delay: 0.5s;">
                 <!-- Address -->
                 <div class="contact-card" style="text-align: center;">
                     <div class="contact-icon" style="margin-left: auto; margin-right: auto;">
                         <i class="fas fa-map-marker-alt"></i>
                     </div>
-                    <h3 style="font-size: 1.25rem; font-weight: 700; color: #333; margin-bottom: 0.5rem;">Visit Our Showroom</h3>
+                    <h3 style="font-size: 1.25rem; font-weight: 700; color: #333; margin-bottom: 0.5rem;">Visit Our
+                        Showroom</h3>
                     <p style="color: #6b7280;">
                         123 Furniture Street<br>
                         Design District<br>
@@ -278,7 +302,8 @@
                     </div>
                     <h3 style="font-size: 1.25rem; font-weight: 700; color: #333; margin-bottom: 0.5rem;">Call Us</h3>
                     <p style="color: #6b7280;">
-                        <a href="tel:+1234567890" style="color: #6b7280; text-decoration: none; transition: color 0.3s;">
+                        <a href="tel:+1234567890"
+                            style="color: #6b7280; text-decoration: none; transition: color 0.3s;">
                             +1 (234) 567-8900
                         </a><br>
                         Mon-Fri: 9AM-6PM<br>
@@ -293,10 +318,12 @@
                     </div>
                     <h3 style="font-size: 1.25rem; font-weight: 700; color: #333; margin-bottom: 0.5rem;">Email Us</h3>
                     <p style="color: #6b7280;">
-                        <a href="mailto:hello@sitwell.com" style="color: #6b7280; text-decoration: none; transition: color 0.3s;">
+                        <a href="mailto:hello@sitwell.com"
+                            style="color: #6b7280; text-decoration: none; transition: color 0.3s;">
                             hello@sitwell.com
                         </a><br>
-                        <a href="mailto:support@sitwell.com" style="color: #6b7280; text-decoration: none; transition: color 0.3s;">
+                        <a href="mailto:support@sitwell.com"
+                            style="color: #6b7280; text-decoration: none; transition: color 0.3s;">
                             support@sitwell.com
                         </a>
                     </p>
@@ -312,13 +339,9 @@
                     <p style="color: #6b7280;">Located in the heart of the design district</p>
                 </div>
                 <div class="map-container">
-                    <iframe 
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.9476519200005!2d-74.00425358459369!3d40.74844407932847!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c259a9b3117469%3A0xd134e199a405a163!2sEmpire%20State%20Building!5e0!3m2!1sen!2sus!4v1635959873010!5m2!1sen!2sus" 
-                        width="100%" 
-                        height="400" 
-                        style="border:0;" 
-                        allowfullscreen="" 
-                        loading="lazy">
+                    <iframe
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.9476519200005!2d-74.00425358459369!3d40.74844407932847!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c259a9b3117469%3A0xd134e199a405a163!2sEmpire%20State%20Building!5e0!3m2!1sen!2sus!4v1635959873010!5m2!1sen!2sus"
+                        width="100%" height="400" style="border:0;" allowfullscreen="" loading="lazy">
                     </iframe>
                 </div>
             </div>
@@ -328,25 +351,31 @@
         <div style="margin-top: 4rem;" class="fade-in" style="animation-delay: 0.9s;">
             <div class="contact-card">
                 <div style="text-align: center; margin-bottom: 2rem;">
-                    <h2 style="font-size: 2rem; font-weight: 700; color: #333; margin-bottom: 1rem;">Frequently Asked Questions</h2>
+                    <h2 style="font-size: 2rem; font-weight: 700; color: #333; margin-bottom: 1rem;">Frequently Asked
+                        Questions</h2>
                     <p style="color: #6b7280;">Quick answers to common questions</p>
                 </div>
-                
+
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
                     <div>
                         <h3 style="font-weight: 600; color: #333; margin-bottom: 0.5rem;">🚚 Do you offer delivery?</h3>
-                        <p style="color: #6b7280; margin-bottom: 1rem;">Yes! We offer free delivery within 50 miles and white-glove setup service.</p>
-                        
+                        <p style="color: #6b7280; margin-bottom: 1rem;">Yes! We offer free delivery within 50 miles and
+                            white-glove setup service.</p>
+
                         <h3 style="font-weight: 600; color: #333; margin-bottom: 0.5rem;">⏰ What are your hours?</h3>
                         <p style="color: #6b7280; margin-bottom: 1rem;">Mon-Fri: 9AM-6PM, Sat: 10AM-4PM, Sun: Closed</p>
                     </div>
-                    
+
                     <div>
-                        <h3 style="font-weight: 600; color: #333; margin-bottom: 0.5rem;">💳 What payment methods do you accept?</h3>
-                        <p style="color: #6b7280; margin-bottom: 1rem;">We accept all major credit cards, PayPal, and offer financing options.</p>
-                        
-                        <h3 style="font-weight: 600; color: #333; margin-bottom: 0.5rem;">🔄 What's your return policy?</h3>
-                        <p style="color: #6b7280; margin-bottom: 1rem;">30-day return policy on most items. Custom orders are final.</p>
+                        <h3 style="font-weight: 600; color: #333; margin-bottom: 0.5rem;">💳 What payment methods do you
+                            accept?</h3>
+                        <p style="color: #6b7280; margin-bottom: 1rem;">We accept all major credit cards, PayPal, and
+                            offer financing options.</p>
+
+                        <h3 style="font-weight: 600; color: #333; margin-bottom: 0.5rem;">🔄 What's your return policy?
+                        </h3>
+                        <p style="color: #6b7280; margin-bottom: 1rem;">30-day return policy on most items. Custom
+                            orders are final.</p>
                     </div>
                 </div>
             </div>
@@ -357,74 +386,74 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('contactForm');
-    const inputs = document.querySelectorAll('.form-input');
-    
-    // Add interactive focus effects
-    inputs.forEach(input => {
-        input.addEventListener('focus', function() {
-            this.parentElement.style.transform = 'translateY(-2px)';
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('contactForm');
+        const inputs = document.querySelectorAll('.form-input');
+
+        // Add interactive focus effects
+        inputs.forEach(input => {
+            input.addEventListener('focus', function () {
+                this.parentElement.style.transform = 'translateY(-2px)';
+            });
+
+            input.addEventListener('blur', function () {
+                this.parentElement.style.transform = 'translateY(0)';
+            });
         });
-        
-        input.addEventListener('blur', function() {
-            this.parentElement.style.transform = 'translateY(0)';
+
+        // Form submission
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const button = this.querySelector('.btn-primary');
+            const originalText = button.innerHTML;
+            const formData = new FormData(this);
+
+            // Loading state
+            button.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 0.5rem;"></i>Sending...';
+            button.disabled = true;
+
+            // Send form data
+            fetch('{% url "contact_submit" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        button.innerHTML = '<i class="fas fa-check" style="margin-right: 0.5rem;"></i>Message Sent!';
+                        button.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                        form.reset();
+
+                        // Show success message
+                        showToast('Thank you! Your message has been sent successfully.', 'success');
+                    } else {
+                        button.innerHTML = '<i class="fas fa-times" style="margin-right: 0.5rem;"></i>Error!';
+                        button.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+                        showToast('Error: ' + data.message, 'error');
+                    }
+
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                        button.style.background = '';
+                    }, 2000);
+                })
+                .catch(error => {
+                    button.innerHTML = '<i class="fas fa-times" style="margin-right: 0.5rem;"></i>Error!';
+                    button.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+                    showToast('An error occurred. Please try again.', 'error');
+
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                        button.style.background = '';
+                    }, 2000);
+                });
         });
     });
-    
-    // Form submission
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const button = this.querySelector('.btn-primary');
-        const originalText = button.innerHTML;
-        const formData = new FormData(this);
-        
-        // Loading state
-        button.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 0.5rem;"></i>Sending...';
-        button.disabled = true;
-        
-        // Send form data
-        fetch('{% url "contact_submit" %}', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                button.innerHTML = '<i class="fas fa-check" style="margin-right: 0.5rem;"></i>Message Sent!';
-                button.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-                form.reset();
-                
-                // Show success message
-                alert('Thank you! Your message has been sent successfully.');
-            } else {
-                button.innerHTML = '<i class="fas fa-times" style="margin-right: 0.5rem;"></i>Error!';
-                button.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
-                alert('Error: ' + data.message);
-            }
-            
-            setTimeout(() => {
-                button.innerHTML = originalText;
-                button.disabled = false;
-                button.style.background = '';
-            }, 2000);
-        })
-        .catch(error => {
-            button.innerHTML = '<i class="fas fa-times" style="margin-right: 0.5rem;"></i>Error!';
-            button.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
-            alert('An error occurred. Please try again.');
-            
-            setTimeout(() => {
-                button.innerHTML = originalText;
-                button.disabled = false;
-                button.style.background = '';
-            }, 2000);
-        });
-    });
-});
 </script>
 {% endblock %}

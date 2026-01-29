@@ -40,14 +40,7 @@ class Product(models.Model):
         ('blocked', 'Blocked'),  
     ]
     
-    CATEGORY_CHOICES = [
-        ('sofa', 'Sofa'),
-        ('chair', 'Chair'),
-        ('table', 'Table'),
-        ('bed', 'Bed'), 
-        ('storage', 'Storage'),
-        ('accessories', 'Accessories'),
-    ]
+    
     
     DISCOUNT_TYPES = [
         ('none', 'No Discount'),
@@ -62,7 +55,14 @@ class Product(models.Model):
     
     name = models.CharField(max_length=200)
     sku = models.CharField(max_length=50, unique=True)
-    category = models.CharField(max_length=100, choices=CATEGORY_CHOICES, default='sofa')
+    category = models.ForeignKey(
+        'Category', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='products',
+        limit_choices_to={'is_deleted': False, 'is_listed': True}
+    )
     brand = models.CharField(max_length=100, blank=True)
     short_description = models.TextField(blank=True)
     detailed_description = models.TextField(blank=True)
@@ -394,7 +394,11 @@ class ProductOffer(models.Model):
 # --------------------  CATEGORY OFFER  --------------------
 class CategoryOffer(models.Model):
     offer = models.OneToOneField(Offer, on_delete=models.CASCADE, related_name='category_offer')
-    category = models.CharField(max_length=50, choices=Product.CATEGORY_CHOICES)
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.CASCADE,
+        related_name='offers'
+    )
 
     def __str__(self):
         return f"Category Offer: {self.offer.name} ({self.category})"

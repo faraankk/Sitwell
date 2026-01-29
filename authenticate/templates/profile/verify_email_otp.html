@@ -19,13 +19,13 @@
         padding: 15px 20px;
         margin-bottom: 25px;
         border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         display: flex;
         align-items: center;
         gap: 8px;
         list-style: none;
     }
-    
+
     .breadcrumb-item {
         display: flex;
         align-items: center;
@@ -38,22 +38,22 @@
         text-decoration: none;
         transition: all 0.3s ease;
     }
-    
+
     .breadcrumb-item a:hover {
         color: #667eea;
     }
-    
+
     .breadcrumb-item.active {
         color: #667eea;
         font-weight: 600;
     }
-    
+
     .breadcrumb-item::after {
         content: '/';
         margin: 0 10px;
         color: #ddd;
     }
-    
+
     .breadcrumb-item:last-child::after {
         content: '';
         margin: 0;
@@ -66,7 +66,7 @@
     .content-card {
         background: white;
         border-radius: 15px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         padding: 40px;
         animation: fadeIn 0.4s ease-out;
     }
@@ -76,6 +76,7 @@
             opacity: 0;
             transform: translateY(20px);
         }
+
         to {
             opacity: 1;
             transform: translateY(0);
@@ -104,9 +105,12 @@
     }
 
     @keyframes pulse {
-        0%, 100% {
+
+        0%,
+        100% {
             transform: scale(1);
         }
+
         50% {
             transform: scale(1.05);
         }
@@ -409,24 +413,16 @@
                 <i class="fas fa-envelope-open"></i>
             </div>
             <h4>Verify Your New Email</h4>
-            <p>We've sent a 6-digit verification code to your new email address.<br>Please enter it below to complete the process.</p>
+            <p>We've sent a 6-digit verification code to your new email address.<br>Please enter it below to complete
+                the process.</p>
         </div>
 
         <form method="post" id="otpForm">
             {% csrf_token %}
             <div class="form-group">
                 <label for="otp">Enter Verification Code</label>
-                <input 
-                    type="text" 
-                    id="otp" 
-                    name="otp" 
-                    maxlength="6" 
-                    placeholder="000000" 
-                    required 
-                    pattern="[0-9]{6}" 
-                    title="Please enter a 6-digit number"
-                    autocomplete="off"
-                >
+                <input type="text" id="otp" name="otp" maxlength="6" placeholder="000000" required pattern="[0-9]{6}"
+                    title="Please enter a 6-digit number" autocomplete="off">
             </div>
 
             <!-- Timer Box -->
@@ -448,7 +444,7 @@
         <!-- Info Notice -->
         <div class="info-notice">
             <p>
-                Didn't receive the code? Check your spam folder or 
+                Didn't receive the code? Check your spam folder or
                 <a href="{% url 'change_email' %}">request a new code</a>.
             </p>
         </div>
@@ -458,13 +454,13 @@
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         // Auto-open the navbar on desktop
         if (window.innerWidth > 768) {
             const navbar = document.getElementById('leftNavbar');
             const content = document.getElementById('mainContent');
             const toggleBtn = document.querySelector('.navbar-toggle-btn');
-            
+
             if (navbar && content && toggleBtn) {
                 navbar.classList.add('active');
                 content.classList.add('content-pushed');
@@ -480,7 +476,7 @@
         otpField.focus();
 
         // Only allow numbers
-        otpField.addEventListener('input', function() {
+        otpField.addEventListener('input', function () {
             this.value = this.value.replace(/[^0-9]/g, '');
             if (this.value.length > 6) {
                 this.value = this.value.slice(0, 6);
@@ -497,7 +493,7 @@
         });
 
         // Auto-submit when 6 digits entered (optional)
-        otpField.addEventListener('input', function() {
+        otpField.addEventListener('input', function () {
             if (this.value.length === 6) {
                 // Optional: Auto-submit after 500ms
                 // setTimeout(() => document.getElementById('otpForm').submit(), 500);
@@ -506,7 +502,7 @@
     }
 
     // Countdown Timer
-    let remainingTime = {{ remaining_time|default:300 }};
+    let remainingTime = {{ remaining_time|default: 300 }};
     const timerDisplay = document.getElementById('timerDisplay');
     const timerBox = document.getElementById('timerBox');
 
@@ -520,7 +516,7 @@
             timerDisplay.textContent = 'EXPIRED';
             timerBox.classList.add('expired');
             clearInterval(timerInterval);
-            
+
             // Disable form
             otpField.disabled = true;
             document.getElementById('verifyBtn').disabled = true;
@@ -537,12 +533,12 @@
     const verifyBtn = document.getElementById('verifyBtn');
 
     if (form && verifyBtn) {
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', function (e) {
             const otp = otpField.value;
 
             if (otp.length !== 6) {
                 e.preventDefault();
-                alert('Please enter the complete 6-digit code');
+                showToast('Please enter the complete 6-digit code', 'warning');
                 otpField.focus();
                 return;
             }
@@ -555,12 +551,12 @@
     }
 
     // Paste support (auto-fill from clipboard)
-    otpField.addEventListener('paste', function(e) {
+    otpField.addEventListener('paste', function (e) {
         e.preventDefault();
         const pastedData = (e.clipboardData || window.clipboardData).getData('text');
         const numbers = pastedData.replace(/[^0-9]/g, '').slice(0, 6);
         this.value = numbers;
-        
+
         // Trigger input event for validation
         this.dispatchEvent(new Event('input'));
     });

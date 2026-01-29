@@ -76,6 +76,38 @@ class SignUpForm(forms.ModelForm):
         if email:
             if CustomUser.objects.filter(email=email).exists():
                 raise forms.ValidationError("A user with this email already exists.")
+            
+            if '@' in email:
+                local_part, domain = email.rsplit('@', 1)
+                
+                if local_part.isdigit():
+                    raise forms.ValidationError("Email address cannot have only numbers before @.")
+                
+                suspicious_domains = {
+                    'gmial.com': 'gmail.com',
+                    'gamil.com': 'gmail.com',
+                    'gimal.com': 'gmail.com',
+                    'gmaill.com': 'gmail.com',
+                    'amil.com': 'gmail.com',
+                    'gmail.co': 'gmail.com',
+                    'gmail.cm': 'gmail.com',
+                    'gmail.om': 'gmail.com',
+                    'gnail.com': 'gmail.com',
+                    'gail.com': 'gmail.com',
+                    'hotmal.com': 'hotmail.com',
+                    'hotmial.com': 'hotmail.com',
+                    'hotmai.com': 'hotmail.com',
+                    'yahooo.com': 'yahoo.com',
+                    'yaho.com': 'yahoo.com',
+                    'outloo.com': 'outlook.com',
+                    'outlok.com': 'outlook.com',
+                }
+                
+                domain_lower = domain.lower()
+                if domain_lower in suspicious_domains:
+                    suggestion = suspicious_domains[domain_lower]
+                    raise forms.ValidationError(f"Invalid email domain. Did you mean @{suggestion}?")
+        
         return email
 
     def clean_password1(self):

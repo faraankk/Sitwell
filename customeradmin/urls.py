@@ -6,6 +6,7 @@ app_name = 'customeradmin'
 urlpatterns = [
     path('adminlogin/', views.login_to_account, name='login_to_account'),
     path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('api/chart-data/', views.chart_data_api, name='chart-data-api'),
     path('products/', views.product_view, name='product-list'),
     path('products/add/', views.add_product, name='add-product'),
     path('products/edit/<int:product_id>/', views.edit_product, name='edit-product'),
@@ -55,4 +56,8 @@ urlpatterns = [
     path('banners/add/', views.banner_add, name='banner-add'),
     path('banners/edit/<int:banner_id>/', views.banner_edit, name='banner-edit'),
     path('banners/delete/<int:banner_id>/', views.banner_delete, name='banner-delete'),
+
+    # Wallet Management
+    path('wallet/transactions/', views.wallet_transactions_list, name='wallet-transactions'),
+    path('wallet/transactions/<int:transaction_id>/', views.wallet_transaction_detail, name='wallet-transaction-detail'),
 ]

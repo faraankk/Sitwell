@@ -13,7 +13,7 @@
     .content-card {
         background: white;
         border-radius: 15px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         padding: 40px;
         margin-bottom: 20px;
         max-width: 900px;
@@ -27,7 +27,7 @@
         padding: 15px 20px;
         margin-bottom: 25px;
         border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         display: flex;
         align-items: center;
         gap: 8px;
@@ -36,7 +36,7 @@
         margin-left: auto;
         margin-right: auto;
     }
-    
+
     .breadcrumb-item {
         display: flex;
         align-items: center;
@@ -49,22 +49,22 @@
         text-decoration: none;
         transition: all 0.3s ease;
     }
-    
+
     .breadcrumb-item a:hover {
         color: #667eea;
     }
-    
+
     .breadcrumb-item.active {
         color: #667eea;
         font-weight: 600;
     }
-    
+
     .breadcrumb-item::after {
         content: '/';
         margin: 0 10px;
         color: #ddd;
     }
-    
+
     .breadcrumb-item:last-child::after {
         content: '';
         margin: 0;
@@ -116,7 +116,7 @@
         border-radius: 50%;
         object-fit: cover;
         border: 4px solid white;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
     }
 
     .profile-placeholder {
@@ -171,11 +171,11 @@
         color: #6c757d;
         margin-top: 10px;
     }
-    
+
     .form-group {
         margin-bottom: 25px;
     }
-    
+
     .form-group label {
         font-weight: 600;
         color: #333;
@@ -183,7 +183,7 @@
         display: block;
         font-size: 14px;
     }
-    
+
     .form-control {
         width: 100%;
         border: 2px solid #e9ecef;
@@ -193,7 +193,7 @@
         transition: all 0.3s ease;
         background: #f8f9fa;
     }
-    
+
     .form-control:focus {
         border-color: #667eea;
         outline: none;
@@ -222,7 +222,7 @@
         margin-top: 6px;
         font-style: italic;
     }
-    
+
     .btn-save {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: none;
@@ -235,7 +235,7 @@
         transition: all 0.3s ease;
         box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
-    
+
     .btn-save:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
@@ -244,7 +244,7 @@
     .btn-save:active {
         transform: translateY(0);
     }
-    
+
     .btn-cancel {
         background-color: transparent;
         border: 2px solid #6c757d;
@@ -258,14 +258,14 @@
         font-weight: 600;
         transition: all 0.3s ease;
     }
-    
+
     .btn-cancel:hover {
         background-color: #6c757d;
         color: white;
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
     }
-    
+
     .error {
         color: #dc3545;
         font-size: 13px;
@@ -318,7 +318,7 @@
         padding-top: 25px;
         border-top: 2px solid #f0f0f0;
     }
-    
+
     @media (max-width: 768px) {
         .content-card {
             padding: 25px 20px;
@@ -383,9 +383,10 @@
 
 
 {% if user.first_name %}
-    <p style="text-align: right; color: #666; margin-bottom: 30px; max-width: 900px; margin-left: auto; margin-right: auto;">
-        Welcome! <span style="color: #667eea; font-weight: 600;">{{ user.first_name }}</span>
-    </p>
+<p
+    style="text-align: right; color: #666; margin-bottom: 30px; max-width: 900px; margin-left: auto; margin-right: auto;">
+    Welcome! <span style="color: #667eea; font-weight: 600;">{{ user.first_name }}</span>
+</p>
 {% endif %}
 
 
@@ -401,12 +402,12 @@
     <div class="profile-image-section">
         <div class="profile-image-wrapper">
             {% if user.profile_image %}
-                <img id="profile-preview" src="{{ user.profile_image.url }}" alt="Profile Picture" class="profile-preview">
+            <img id="profile-preview" src="{{ user.profile_image.url }}" alt="Profile Picture" class="profile-preview">
             {% else %}
-                <div id="profile-placeholder" class="profile-placeholder">
-                    <i class="fas fa-user"></i>
-                </div>
-                <img id="profile-preview" src="" alt="Profile Picture" class="profile-preview" style="display: none;">
+            <div id="profile-placeholder" class="profile-placeholder">
+                <i class="fas fa-user"></i>
+            </div>
+            <img id="profile-preview" src="" alt="Profile Picture" class="profile-preview" style="display: none;">
             {% endif %}
         </div>
         <div class="image-upload-btn">
@@ -414,17 +415,17 @@
                 <i class="fas fa-camera"></i>Change Profile Picture
             </label>
             {% if user.profile_image %}
-                <p class="current-image-text">Current image will be replaced</p>
+            <p class="current-image-text">Current image will be replaced</p>
             {% endif %}
         </div>
     </div>
 
     <form method="post" enctype="multipart/form-data" id="profileForm">
         {% csrf_token %}
-        
+
         <!-- Hidden file input -->
         {{ form.profile_image }}
-        
+
         <!-- Personal Information Section -->
         <div class="form-section">
             <div class="form-section-title">
@@ -433,29 +434,32 @@
 
             <div class="form-grid">
                 <div class="form-group">
-                    <label for="{{ form.first_name.id_for_label }}">First Name <span style="color: #dc3545;">*</span></label>
+                    <label for="{{ form.first_name.id_for_label }}">First Name <span
+                            style="color: #dc3545;">*</span></label>
                     {{ form.first_name }}
                     {% if form.first_name.errors %}
-                        <div class="error">{{ form.first_name.errors.0 }}</div>
+                    <div class="error">{{ form.first_name.errors.0 }}</div>
                     {% endif %}
                 </div>
                 <div class="form-group">
-                    <label for="{{ form.last_name.id_for_label }}">Last Name <span style="color: #dc3545;">*</span></label>
+                    <label for="{{ form.last_name.id_for_label }}">Last Name <span
+                            style="color: #dc3545;">*</span></label>
                     {{ form.last_name }}
                     {% if form.last_name.errors %}
-                        <div class="error">{{ form.last_name.errors.0 }}</div>
+                    <div class="error">{{ form.last_name.errors.0 }}</div>
                     {% endif %}
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="{{ form.phone_number.id_for_label }}">Phone Number <span style="color: #dc3545;">*</span></label>
+                <label for="{{ form.phone_number.id_for_label }}">Phone Number <span
+                        style="color: #dc3545;">*</span></label>
                 {{ form.phone_number }}
                 <small class="form-hint">
                     <i class="fas fa-phone" style="margin-right: 5px;"></i>Enter your 10-digit mobile number
                 </small>
                 {% if form.phone_number.errors %}
-                    <div class="error">{{ form.phone_number.errors.0 }}</div>
+                <div class="error">{{ form.phone_number.errors.0 }}</div>
                 {% endif %}
             </div>
 
@@ -463,10 +467,11 @@
                 <label for="{{ form.date_of_birth.id_for_label }}">Date of Birth</label>
                 {{ form.date_of_birth }}
                 <small class="form-hint">
-                    <i class="fas fa-calendar" style="margin-right: 5px;"></i>Optional - helps us personalize your experience
+                    <i class="fas fa-calendar" style="margin-right: 5px;"></i>Optional - helps us personalize your
+                    experience
                 </small>
                 {% if form.date_of_birth.errors %}
-                    <div class="error">{{ form.date_of_birth.errors.0 }}</div>
+                <div class="error">{{ form.date_of_birth.errors.0 }}</div>
                 {% endif %}
             </div>
         </div>
@@ -481,10 +486,11 @@
                 <label for="{{ form.bio.id_for_label }}">Bio / About Me</label>
                 {{ form.bio }}
                 <small class="form-hint">
-                    <i class="fas fa-pen" style="margin-right: 5px;"></i>Tell us a bit about yourself (optional, max 500 characters)
+                    <i class="fas fa-pen" style="margin-right: 5px;"></i>Tell us a bit about yourself (optional, max 500
+                    characters)
                 </small>
                 {% if form.bio.errors %}
-                    <div class="error">{{ form.bio.errors.0 }}</div>
+                <div class="error">{{ form.bio.errors.0 }}</div>
                 {% endif %}
             </div>
         </div>
@@ -505,24 +511,24 @@
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         // Auto-open the navbar on desktop
         if (window.innerWidth > 768) {
             const navbar = document.getElementById('leftNavbar');
             const content = document.getElementById('mainContent');
             const toggleBtn = document.querySelector('.navbar-toggle-btn');
-            
+
             if (navbar && content && toggleBtn) {
                 navbar.classList.add('active');
                 content.classList.add('content-pushed');
                 toggleBtn.classList.add('active');
             }
         }
-        
+
         // Set edit profile as active in sidebar
         const sidebarLinks = document.querySelectorAll('.profile-sidebar-nav .nav-link');
         sidebarLinks.forEach(link => link.classList.remove('active'));
-        
+
         const editLink = document.querySelector('.profile-sidebar-nav .nav-link[href*="edit_profile"]');
         if (editLink) {
             editLink.classList.add('active');
@@ -532,7 +538,7 @@
     // Preview profile image
     const profileImageInput = document.getElementById('id_profile_image');
     if (profileImageInput) {
-        profileImageInput.addEventListener('change', function(e) {
+        profileImageInput.addEventListener('change', function (e) {
             const file = e.target.files[0];
             if (file) {
                 // Validate file type
@@ -550,10 +556,10 @@
                 }
 
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     const preview = document.getElementById('profile-preview');
                     const placeholder = document.getElementById('profile-placeholder');
-                    
+
                     preview.src = e.target.result;
                     preview.style.display = 'block';
                     if (placeholder) {
@@ -568,7 +574,7 @@
     // Auto-format phone number
     const phoneField = document.getElementById('id_phone_number');
     if (phoneField) {
-        phoneField.addEventListener('input', function() {
+        phoneField.addEventListener('input', function () {
             let value = this.value.replace(/\D/g, '');
 
             if (!value.startsWith("91")) {
@@ -595,8 +601,8 @@
     if (bioField) {
         const maxLength = 500;
         const hint = bioField.nextElementSibling;
-        
-        bioField.addEventListener('input', function() {
+
+        bioField.addEventListener('input', function () {
             const remaining = maxLength - this.value.length;
             if (remaining < 50) {
                 hint.style.color = remaining < 0 ? '#dc3545' : '#ffc107';
@@ -611,9 +617,9 @@
     // Form submission with loading state
     const form = document.getElementById('profileForm');
     const submitBtn = document.getElementById('submit-btn');
-    
+
     if (form && submitBtn) {
-        form.addEventListener('submit', function() {
+        form.addEventListener('submit', function () {
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Saving...';
             submitBtn.disabled = true;
             submitBtn.style.opacity = '0.7';

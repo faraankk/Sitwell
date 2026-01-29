@@ -1,0 +1,175 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Wallet Transactions - Admin{% endblock %}
+
+{% block body %}
+<header class="bg-white shadow-sm border-b border-gray-100 px-8 py-5 flex-shrink-0">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-black"
+                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                Wallet Management</h1>
+            <p class="text-sm text-gray-500 mt-1">View and manage all wallet transactions</p>
+        </div>
+    </div>
+</header>
+
+<main class="flex-1 overflow-auto p-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div
+            class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 aspect-square flex flex-col items-center justify-center text-center">
+            <div class="w-16 h-16 rounded-xl flex items-center justify-center mb-4"
+                style="background: linear-gradient(135deg, #10b981, #059669);">
+                <i class="fas fa-arrow-down text-white text-2xl"></i>
+            </div>
+            <p class="text-sm text-gray-500 font-medium mb-2">Total Credits</p>
+            <p class="text-2xl font-black text-green-600">Rs.{{ total_credits|floatformat:2 }}</p>
+        </div>
+        <div
+            class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 aspect-square flex flex-col items-center justify-center text-center">
+            <div class="w-16 h-16 rounded-xl flex items-center justify-center mb-4"
+                style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                <i class="fas fa-arrow-up text-white text-2xl"></i>
+            </div>
+            <p class="text-sm text-gray-500 font-medium mb-2">Total Debits</p>
+            <p class="text-2xl font-black text-red-600">Rs.{{ total_debits|floatformat:2 }}</p>
+        </div>
+        <div
+            class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 aspect-square flex flex-col items-center justify-center text-center">
+            <div class="w-16 h-16 rounded-xl flex items-center justify-center mb-4"
+                style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                <i class="fas fa-exchange-alt text-white text-2xl"></i>
+            </div>
+            <p class="text-sm text-gray-500 font-medium mb-2">Total Transactions</p>
+            <p class="text-2xl font-black text-purple-600">{{ total_transactions }}</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 mb-8">
+        <form method="get" class="flex flex-wrap gap-4 items-end">
+            <div class="flex-1 min-w-48">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Search User</label>
+                <input type="text" name="user" value="{{ user_filter }}" placeholder="Email or name..."
+                    class="w-full px-4 py-2 border-2 border-gray-200 rounded-xl">
+            </div>
+            <div class="w-40">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Type</label>
+                <select name="type" class="w-full px-4 py-2 border-2 border-gray-200 rounded-xl bg-white">
+                    <option value="">All Types</option>
+                    <option value="credit" {% if txn_type_filter == 'credit' %}selected{% endif %}>Credit</option>
+                    <option value="debit" {% if txn_type_filter == 'debit' %}selected{% endif %}>Debit</option>
+
+                </select>
+            </div>
+            <div class="w-40">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">From Date</label>
+                <input type="date" name="date_from" value="{{ date_from }}"
+                    class="w-full px-4 py-2 border-2 border-gray-200 rounded-xl">
+            </div>
+            <div class="w-40">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">To Date</label>
+                <input type="date" name="date_to" value="{{ date_to }}"
+                    class="w-full px-4 py-2 border-2 border-gray-200 rounded-xl">
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="px-6 py-2 text-white rounded-xl font-semibold"
+                    style="background: linear-gradient(135deg, #6366f1, #8b5cf6);"><i
+                        class="fas fa-search mr-2"></i>Filter</button>
+                <a href="{% url 'customeradmin:wallet-transactions' %}"
+                    class="px-6 py-2 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 inline-flex items-center"><i
+                        class="fas fa-times mr-2"></i>Clear</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b-2 border-gray-200">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase">Transaction ID</th>
+                        <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase">Date</th>
+                        <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase">User</th>
+                        <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase">Type</th>
+                        <th class="px-6 py-4 text-right text-xs font-black text-gray-700 uppercase">Amount</th>
+                        <th class="px-6 py-4 text-center text-xs font-black text-gray-700 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for txn in transactions %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4"><span class="font-bold text-purple-600">#TXN{{ txn.id }}</span></td>
+                        <td class="px-6 py-4 text-sm text-gray-600">{{ txn.created_at|date:"d M Y, h:i A" }}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center">
+                                <div class="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3"
+                                    style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                                    {{ txn.wallet.user.first_name.0|upper|default:"U" }}{{ txn.wallet.user.last_name.0|upper|default:"" }}
+                                </div>
+
+                                    <p class="font-semibold text-gray-900">
+                                        {{ txn.wallet.user.first_name }} {{ txn.wallet.user.last_name }}
+                                    </p>
+
+                                    <p class="text-xs text-gray-500">{{ txn.wallet.user.email }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if txn.txn_type == 'credit' %}
+                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700"><i
+                                    class="fas fa-arrow-down mr-1"></i>Credit</span>
+                            {% else %}
+                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700"><i
+                                    class="fas fa-arrow-up mr-1"></i>Debit</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            {% if txn.txn_type == 'credit' %}
+                            <span class="text-lg font-black text-green-600">+Rs.{{ txn.amount|floatformat:2 }}</span>
+                            {% else %}
+                            <span class="text-lg font-black text-red-600">-Rs.{{ txn.amount|floatformat:2 }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <a href="{% url 'customeradmin:wallet-transaction-detail' txn.id %}"
+                                class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold text-purple-600 bg-purple-50 hover:bg-purple-100"><i
+                                    class="fas fa-eye mr-2"></i>View</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center">
+                            <div
+                                class="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-4">
+                                <i class="fas fa-wallet text-3xl text-gray-400"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900 mb-2">No Transactions Found</h3>
+                            <p class="text-gray-500">No wallet transactions match your filters.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if transactions.has_other_pages %}
+        <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <p class="text-sm text-gray-600">Showing {{ transactions.start_index }} to {{ transactions.end_index }} of
+                {{ transactions.paginator.count }} transactions</p>
+            <div class="flex gap-2">
+                {% if transactions.has_previous %}
+                <a href="?page={{ transactions.previous_page_number }}&type={{ txn_type_filter }}&user={{ user_filter }}&date_from={{ date_from }}&date_to={{ date_to }}"
+                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300"><i
+                        class="fas fa-chevron-left mr-1"></i>Previous</a>
+                {% endif %}
+                {% if transactions.has_next %}
+                <a href="?page={{ transactions.next_page_number }}&type={{ txn_type_filter }}&user={{ user_filter }}&date_from={{ date_from }}&date_to={{ date_to }}"
+                    class="px-4 py-2 text-white rounded-lg font-semibold"
+                    style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">Next<i
+                        class="fas fa-chevron-right ml-1"></i></a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</main>
+{% endblock %}

@@ -183,16 +183,17 @@
             <span>Orders</span>
           </a>
 
-          <a href="{% url 'customeradmin:customer-list' %}"
-            class="sidebar-item flex items-center px-4 py-3 text-sm font-medium rounded-xl {% if url_name == 'customer-list' %}active text-white{% else %}text-white/80 hover:text-white{% endif %}">
-            <i class="fas fa-users w-5 text-center mr-3 text-lg"></i>
-            <span>Customers</span>
-          </a>
 
           <a href="{% url 'customeradmin:sales-report' %}"
             class="sidebar-item flex items-center px-4 py-3 text-sm font-medium rounded-xl {% if url_name == 'sales-report' %}active text-white{% else %}text-white/80 hover:text-white{% endif %}">
             <i class="fas fa-chart-bar w-5 text-center mr-3 text-lg"></i>
             <span>Sales Report</span>
+          </a>
+
+          <a href="{% url 'customeradmin:wallet-transactions' %}"
+            class="sidebar-item flex items-center px-4 py-3 text-sm font-medium rounded-xl {% if url_name == 'wallet-transactions' or url_name == 'wallet-transaction-detail' %}active text-white{% else %}text-white/80 hover:text-white{% endif %}">
+            <i class="fas fa-wallet w-5 text-center mr-3 text-lg"></i>
+            <span>Wallet Management</span>
           </a>
 
           <!-- Logout -->
@@ -253,6 +254,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Global Toast System -->
+  <script src="{% static 'js/toast.js' %}"></script>
 
   {% block scripts %}{% endblock %}
 </body>

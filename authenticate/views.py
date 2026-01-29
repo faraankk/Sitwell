@@ -32,16 +32,14 @@ import logging
 import razorpay
 from django.views.decorators.csrf import csrf_exempt
 from django.views import View
-
+from customeradmin.models import Category
 from django.utils.decorators import method_decorator
 from django.urls import reverse
 from django.utils.http import urlencode
 from django.contrib.auth import get_user_model
 from django.views.decorators.http import require_POST
 from authenticate.utils import consume_coupon
-
-
-
+from django.http import JsonResponse
 from customeradmin.models import Banner
 
 
@@ -411,7 +409,6 @@ def send_test_email(request):
     send_mail(subject, message, from_email, recipient_list, fail_silently=False)
     return HttpResponse('Test email sent')
 
-@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def home_view(request):
     try:
         featured_products = Product.objects.filter(
@@ -545,12 +542,8 @@ def dummy_home_view(request):
 def product_list_view(request):
     """Enhanced product list with advanced search and filtering"""
     try:
-        # Base queryset with optimized queries
-        products = Product.objects.filter(
-            status='published'
-        ).prefetch_related('images')
+        products = Product.objects.filter( status__in=['published', 'out-of-stock', 'low-stock'] ).prefetch_related('images')
 
-        # Get filter parameters
         search_query = request.GET.get('search', '').strip()
         category_filter = request.GET.get('category')
         brand_filter = request.GET.get('brand')
@@ -559,24 +552,21 @@ def product_list_view(request):
         sort_by = request.GET.get('sort', 'newest')
         availability = request.GET.get('availability')
 
-        # Enhanced Search - search in multiple fields
         if search_query:
             products = products.filter(
                 Q(name__icontains=search_query) |
-                Q(description__icontains=search_query) |
+                Q(short_description__icontains=search_query) |
+                Q(detailed_description__icontains=search_query) |
                 Q(brand__icontains=search_query) |
                 Q(sku__icontains=search_query)
             )
-
-        # Category filtering (CharField)
+                
         if category_filter and category_filter != 'all':
-            products = products.filter(category__iexact=category_filter)
+            products = products.filter(category__name__iexact=category_filter)
 
-        # Brand filtering
         if brand_filter and brand_filter != 'all':
             products = products.filter(brand__icontains=brand_filter)
 
-        # Price range filtering
         if min_price:
             try:
                 min_price_float = float(min_price)
@@ -591,13 +581,11 @@ def product_list_view(request):
             except (ValueError, TypeError):
                 pass
 
-        # Availability filtering
         if availability == 'in_stock':
             products = products.filter(stock_quantity__gt=0)
         elif availability == 'out_of_stock':
             products = products.filter(stock_quantity__lte=0)
 
-        # Sorting options
         sort_options = {
             'price_low': 'price',
             'price_high': '-price',
@@ -612,17 +600,14 @@ def product_list_view(request):
         else:
             products = products.order_by('-created_at')
 
-        # Pagination
         paginator = Paginator(products, 12)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
-        # Get available filters for template (NO JOINS)
         all_published = Product.objects.filter(status='published')
-        available_categories = all_published.values_list('category', flat=True).distinct()
+        available_categories = Category.objects.filter(is_deleted=False, is_listed=True)
         available_brands = all_published.exclude(brand__iexact='').values_list('brand', flat=True).distinct()
 
-        # ---- wishlist heart support ----
         if request.user.is_authenticated:
             wishlist, _ = Wishlist.objects.get_or_create(user=request.user)
             user_wishlist_ids = list(wishlist.items.values_list('product_id', flat=True))
@@ -674,7 +659,7 @@ def product_detail_view(request, pk):
         
         product = get_object_or_404(Product, pk=pk)
         
-        if product.status != 'published':
+        if product.status not in ['published', 'out-of-stock', 'low-stock']:
             messages.error(request, 'This product is no longer available.')
             return redirect('product_list')
         
@@ -809,7 +794,6 @@ def user_profile_view(request):
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def edit_profile_view(request):
-    """Edit user profile"""
     try:
         user = CustomUser.objects.get(pk=request.user.pk)
         
@@ -842,7 +826,6 @@ def edit_profile_view(request):
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def change_email_view(request):
-    """Change user email with OTP verification and old email notification"""
     try:
         user = CustomUser.objects.get(pk=request.user.pk)
         
@@ -909,7 +892,6 @@ Sitwell Team
 @login_required
 @cache_control(no_store=True)
 def verify_email_otp_view(request):
-    """Verify OTP for email change"""
     user_id = request.session.get('email_change_user_id')
     if not user_id:
         messages.error(request, "Session expired. Please start over.")
@@ -926,7 +908,6 @@ def verify_email_otp_view(request):
         if otp and len(otp) == 6:
             if user.otp_created_at and (timezone.now() - user.otp_created_at) < timezone.timedelta(minutes=2):
                 if otp == user.otp:
-                    # Apply the email change
                     old_email = user.email
                     user.email = user.new_email
                     user.new_email = None
@@ -943,7 +924,6 @@ def verify_email_otp_view(request):
         else:
             messages.error(request, "Please enter a valid 6-digit OTP.")
     
-    # Calculate remaining time for display
     remaining_time = 0
     if user.otp_created_at:
         elapsed = (timezone.now() - user.otp_created_at).total_seconds()
@@ -957,7 +937,6 @@ def verify_email_otp_view(request):
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def change_password_view(request):
-    """Change user password"""
     try:
         user = CustomUser.objects.get(pk=request.user.pk)  
         
@@ -968,7 +947,6 @@ def change_password_view(request):
                 user.set_password(new_password)
                 user.save()
                 
-                # Keep user logged in after password change
                 update_session_auth_hash(request, user)
                 
                 messages.success(request, 'Password changed successfully!')
@@ -994,7 +972,7 @@ def change_password_view(request):
 @cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def manage_addresses_view(request):
     user = request.user
-    addresses = user.addresses.all().order_by('-is_default', '-created_at')  # Assumes no is_active; add .filter(is_active=True) if using soft delete
+    addresses = user.addresses.all().order_by('-is_default', '-created_at') 
     context = {'addresses': addresses, 'user': user}
     return render(request, 'profile/manage_addresses.html', context)
 
@@ -1015,14 +993,12 @@ def add_address_view(request):
                 address = form.save(commit=False)
                 address.user = user
 
-                # first address → default
                 if not user.addresses.exists():
                     address.is_default = True
 
                 address.save()
                 messages.success(request, 'Address added successfully!')
 
-                # ── SMART REDIRECT LOGIC ──
                 next_url = request.GET.get('next')
                 if next_url:
                     if 'cart' in next_url:
@@ -1032,7 +1008,6 @@ def add_address_view(request):
                         messages.success(request, 'Address added – back to checkout!')
                         return redirect(next_url)
 
-                # fallback
                 return redirect('manage_addresses')
             else:
                 messages.error(request, 'Please correct the errors below.')
@@ -1055,7 +1030,6 @@ def add_address_view(request):
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def edit_address_view(request, address_id):
-    """Edit existing address"""
     try:
         from .models import UserAddress
         address = get_object_or_404(UserAddress, id=address_id, user=request.user)
@@ -1096,7 +1070,6 @@ def delete_address_view(request, address_id):
             address = get_object_or_404(UserAddress, id=address_id, user=request.user)
             address_info = f"{address.full_name} - {address.address_type.title()}"
             
-            # Reassign default if necessary
             if address.is_default:
                 other_addresses = UserAddress.objects.filter(user=request.user).exclude(id=address_id).order_by('id')
                 if other_addresses.exists():
@@ -1104,7 +1077,7 @@ def delete_address_view(request, address_id):
                     first_other.is_default = True
                     first_other.save()
             
-            address.delete()  # Hard delete
+            address.delete() 
             logger.info(f"Deleted address {address_id} for user {request.user.email}")
             messages.success(request, f"Address '{address_info}' deleted successfully!")
     except Exception as e:
@@ -1119,12 +1092,10 @@ def delete_address_view(request, address_id):
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def set_default_address_view(request, address_id):
-    """Set address as default"""
     try:
         from .models import UserAddress
         address = get_object_or_404(UserAddress, id=address_id, user=request.user)
         
-        # Remove default from all user addresses
         UserAddress.objects.filter(user=request.user).update(is_default=False)
         
         address.is_default = True
@@ -1142,7 +1113,7 @@ def set_default_address_view(request, address_id):
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def user_orders_view(request):
-    query = request.GET.get('q', '')  # Search query
+    query = request.GET.get('q', '') 
     orders = Order.objects.filter(user=request.user)
     if query:
         orders = orders.filter(Q(order_number__icontains=query) | Q(status__icontains=query))
@@ -1154,7 +1125,7 @@ def user_orders_view(request):
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def order_detail_view(request, order_id):
-    order = get_object_or_404(Order, order_number=order_id, user=request.user)  # Use order_number for URL
+    order = get_object_or_404(Order, order_number=order_id, user=request.user) 
     items = order.items.all()
     history = order.status_history.all()
     
@@ -1177,9 +1148,9 @@ def cancel_order_view(request, order_id, item_id=None):
             notes = form.cleaned_data['additional_notes']
             full_reason = dict(form.fields['reason'].choices).get(reason, '') + (f" - {notes}" if notes else "")
             
-            if item_id:  # Cancel specific item
+            if item_id: 
                 item = get_object_or_404(OrderItem, id=item_id, order=order)
-                if item.cancel_item():  # Uses the model method
+                if item.cancel_item():  
                     OrderStatusHistory.objects.create(
                         order=order, 
                         old_status=item.status, 
@@ -1219,7 +1190,6 @@ def add_to_cart_view(request, product_id):
         with transaction.atomic():
             product = get_object_or_404(Product, id=product_id)
 
-            # availability checks
             if product.status != 'published':
                 return JsonResponse({'success': False, 'message': 'This product is no longer available'})
 
@@ -1254,7 +1224,6 @@ def add_to_cart_view(request, product_id):
             cart_item.quantity = new_qty
             cart_item.save()
 
-            # remove from wishlist if exists
             wishlist = Wishlist.objects.filter(user=request.user).first()
             if wishlist:
                 WishlistItem.objects.filter(wishlist=wishlist, product=product).delete()
@@ -1276,12 +1245,10 @@ def add_to_cart_view(request, product_id):
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def cart_view(request):
-    """Display user's shopping cart"""
     try:
         cart = Cart.objects.get(user=request.user)
         cart_items = cart.items.select_related('product').prefetch_related('product__images')
         
-        # Check for any out-of-stock or unavailable items
         unavailable_items = []
         available_items = []
         
@@ -1290,6 +1257,7 @@ def cart_view(request):
                 unavailable_items.append(item)
             else:
                 available_items.append(item)
+        shipping_charge = Decimal('0.00') if cart.total_amount >= Decimal('10000.00') else Decimal('199.00')
         
         context = {
             'cart': cart,
@@ -1304,7 +1272,6 @@ def cart_view(request):
         return render(request, 'cart/cart.html', context)
         
     except Cart.DoesNotExist:
-        # Create empty cart
         cart = Cart.objects.create(user=request.user)
         context = {
             'cart': cart,
@@ -1318,7 +1285,10 @@ def cart_view(request):
         return render(request, 'cart/cart.html', context)
     
     except Exception as e:
-        messages.error(request, 'Error loading cart')
+        import traceback
+        print(f"Cart view error: {e}")
+        traceback.print_exc()
+        messages.error(request, f'Error loading cart: {str(e)}')
         return redirect('dummy_home')
 
 @login_required
@@ -1329,7 +1299,7 @@ def update_cart_quantity_view(request):
 
     try:
         cart_item_id = request.POST.get('cart_item_id')
-        action       = request.POST.get('action')          # 'increment' / 'decrement'
+        action       = request.POST.get('action')         
 
         cart_item = get_object_or_404(CartItem, id=cart_item_id, cart__user=request.user)
 
@@ -1355,8 +1325,8 @@ def update_cart_quantity_view(request):
             return JsonResponse({
                 'success'                     : True,
                 'new_quantity'                : cart_item.quantity,
-                'discounted_unit_price'       : raw_unit_price,   # 7200.00
-                'discounted_unit_price_display': pretty_price,      # "₹7,200.00"
+                'discounted_unit_price'       : raw_unit_price,   
+                'discounted_unit_price_display': pretty_price,      
                 'item_subtotal'               : float(cart_item.subtotal),
                 'cart_total'                  : float(cart_item.cart.total_amount),
                 'cart_total_items'            : cart_item.cart.total_items,
@@ -1370,7 +1340,6 @@ def update_cart_quantity_view(request):
 
 @login_required
 def remove_from_cart_view(request, cart_item_id):
-    """Remove item from cart"""
     if request.method != 'POST':
         messages.error(request, 'Invalid request method')
         return redirect('cart')
@@ -1382,7 +1351,6 @@ def remove_from_cart_view(request, cart_item_id):
         
         messages.success(request, f'Removed {product_name} from cart')
         
-        # Return JSON response for AJAX requests
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             cart = Cart.objects.get(user=request.user)
             return JsonResponse({
@@ -1403,7 +1371,6 @@ def remove_from_cart_view(request, cart_item_id):
 
 @login_required
 def clear_cart_view(request):
-    """Clear all items from cart"""
     if request.method != 'POST':
         messages.error(request, 'Invalid request method')
         return redirect('cart')
@@ -1422,7 +1389,6 @@ def clear_cart_view(request):
 
 @login_required
 def cart_item_count_view(request):
-    """Get cart item count for header display"""
     try:
         cart = Cart.objects.get(user=request.user)
         return JsonResponse({
@@ -1440,7 +1406,6 @@ def cart_item_count_view(request):
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def checkout_view(request):
-    """Checkout with coupon support - handles both HTML and AJAX requests"""
     try:
         cart = Cart.objects.get(user=request.user)
         cart_items = cart.items.filter(product__status='published', product__stock_quantity__gt=0)
@@ -1454,12 +1419,10 @@ def checkout_view(request):
         addresses = UserAddress.objects.filter(user=request.user)
         wallet, _ = Wallet.objects.get_or_create(user=request.user)
         
-        # Calculate totals
         subtotal = sum(item.subtotal for item in cart_items)
         taxes = subtotal * Decimal('0.18')
-        shipping = Decimal('50.00') if subtotal < 1000 else Decimal('0.00')
+        shipping = Decimal('0.00') if subtotal >= Decimal('10000.00') else Decimal('199.00')
         
-        # Handle coupon from session
         coupon_discount = Decimal('0.00')
         applied_coupon = None
         
@@ -1474,7 +1437,6 @@ def checkout_view(request):
 
         grand_total = subtotal + taxes + shipping - coupon_discount
 
-        # Handle AJAX requests for price updates
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({
                 'success': True,
@@ -1485,6 +1447,12 @@ def checkout_view(request):
                 'grand_total': float(grand_total),
                 'applied_coupon': applied_coupon.code if applied_coupon else None
             })
+        used_coupon_ids = CouponUsage.objects.filter(user=request.user).values_list('coupon_id', flat=True)
+        available_coupons = Coupon.objects.filter(
+            is_active=True,
+            valid_from__lte=timezone.now(),
+            valid_to__gte=timezone.now(),
+        ).exclude(id__in=used_coupon_ids)
 
         context = {
             'addresses': addresses,
@@ -1497,13 +1465,15 @@ def checkout_view(request):
             'grand_total': grand_total,
             'user': request.user,
             'wallet': wallet, 
+            'available_coupons': available_coupons,
         }
         return render(request, 'store/checkout.html', context)
         
+
     except Cart.DoesNotExist:
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'success': False, 'message': 'Cart not found'})
-        messages.error(request, "You do not have a cart.")
+        messages.error(request  , "You do not have a cart.")
         return redirect('product_list')
     except Exception as e:
         logger.error(f"Error in checkout_view: {str(e)}")
@@ -1518,7 +1488,6 @@ from authenticate.utils import consume_coupon
 @login_required
 @transaction.atomic
 def place_order_view(request):
-    """Handles placing the order with Cash on Delivery, including coupon support"""
     if request.method != 'POST':
         return redirect('checkout')
 
@@ -1537,9 +1506,14 @@ def place_order_view(request):
 
         shipping_address = UserAddress.objects.get(id=address_id, user=request.user)
 
-        # =====  UNIVERSAL TOTALS  =====
         subtotal = sum(item.subtotal for item in cart_items)
-        shipping = Decimal('50.00') if subtotal < 1000 else Decimal('0.00')
+        shipping = Decimal('0.00') if subtotal >= Decimal('10000.00') else Decimal('199.00')
+
+        product_discount = Decimal('0.00')
+        for item in cart_items:
+            original_price = item.product.price * item.quantity
+            discounted_price = item.product.get_discounted_price() * item.quantity
+            product_discount += (original_price - discounted_price)
 
         coupon_discount = Decimal('0.00')
         applied_coupon  = None
@@ -1553,9 +1527,11 @@ def place_order_view(request):
 
         tax         = (subtotal - coupon_discount) * Decimal('0.18')
         grand_total = subtotal - coupon_discount + tax + shipping
-        # ================================
 
-        # Create the Order
+        if grand_total > Decimal('1000.00'):
+            messages.error(request, "Cash on Delivery is not available for orders above ₹1,000. Please use online payment.")
+            return redirect('checkout')
+        
         order = Order.objects.create(
             user=request.user,
             shipping_address=shipping_address,
@@ -1567,10 +1543,9 @@ def place_order_view(request):
             subtotal=subtotal,
             tax_amount=tax,
             shipping_charge=shipping,
-            discount_amount=coupon_discount
+            discount_amount=product_discount
         )
 
-        # Create Order Items and update stock
         for item in cart_items:
             OrderItem.objects.create(
                 order=order,
@@ -1579,13 +1554,12 @@ def place_order_view(request):
                 product_price=item.product.price,
                 quantity=item.quantity
             )
-            product = item.product
+            product.stock_quantity = max(0, product.stock_quantity - item.quantity)
             product.stock_quantity -= item.quantity
             product.save()
         if order.coupon:
             consume_coupon(order.coupon, request.user, order)
 
-        # Clear the cart and coupon session
         cart.items.all().delete()
         if 'applied_coupon_id' in request.session:
             del request.session['applied_coupon_id']
@@ -1608,9 +1582,7 @@ def place_order_view(request):
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def order_success_view(request, order_id):
-    """
-    Displays the order confirmation page after a successful order.
-    """
+   
     try:
         order = get_object_or_404(Order, order_number=order_id, user=request.user)
         context = {
@@ -1634,7 +1606,6 @@ def download_invoice_view(request, order_id):
     from io import BytesIO
     import os
 
-    # -------- REGISTER UNICODE FONT (₹ SUPPORT) --------
     font_path = os.path.join(
         settings.BASE_DIR,
         'static',
@@ -1648,7 +1619,6 @@ def download_invoice_view(request, order_id):
     p = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
 
-    # -------- HEADER --------
     p.setFont("DejaVu", 16)
     p.drawString(50, height - 50, f"INVOICE  {order.order_number}")
 
@@ -1656,7 +1626,6 @@ def download_invoice_view(request, order_id):
     p.drawString(50, height - 70, f"Date: {order.created_at.strftime('%d-%b-%Y')}")
     p.drawString(50, height - 85, f"Payment: {order.get_payment_method_display()}")
 
-    # -------- CUSTOMER DETAILS --------
     p.drawString(50, height - 110, f"Bill To: {order.user.full_name}")
     addr = order.shipping_address
     p.drawString(
@@ -1665,7 +1634,6 @@ def download_invoice_view(request, order_id):
         f"{addr.address_line_1}, {addr.city}, {addr.state} - {addr.postal_code}"
     )
 
-    # -------- TABLE HEADER --------
     y = height - 160
     p.setFont("DejaVu", 10)
 
@@ -1676,7 +1644,6 @@ def download_invoice_view(request, order_id):
 
     p.line(50, y - 5, 520, y - 5)
 
-    # -------- TABLE ROWS --------
     y -= 20
     for item in order.items.all():
         p.drawString(50, y, item.product_name[:40])
@@ -1685,7 +1652,6 @@ def download_invoice_view(request, order_id):
         p.drawRightString(520, y, f"₹{item.total_price:.2f}")
         y -= 15
 
-    # -------- TOTALS SECTION --------
     y -= 20
     p.line(50, y, 520, y)
     y -= 15
@@ -1718,7 +1684,6 @@ def download_invoice_view(request, order_id):
     p.drawString(LABEL_X, y, "Grand Total:")
     p.drawRightString(VALUE_X, y, f"₹{order.total_amount:.2f}")
 
-    # -------- FINISH PDF --------
     p.showPage()
     p.save()
     buffer.seek(0)
@@ -1765,26 +1730,22 @@ def return_order_view(request, order_id):
 
 
 def contact(request):
-    """Display contact page"""
     return render(request, 'contact.html')
 
 @require_http_methods(["POST"])
 def contact_submit(request):
-    """Handle contact form submission"""
     try:
         name = request.POST.get('name')
         email = request.POST.get('email')
         subject = request.POST.get('subject', 'No Subject')
         message = request.POST.get('message')
         
-        # Validate required fields
         if not all([name, email, message]):
             return JsonResponse({
                 'success': False, 
                 'message': 'Please fill in all required fields'
             })
         
-        # Compose email
         email_subject = f'Sitwell Contact Form: {subject}'
         email_body = f"""
         New contact form submission from Sitwell website:
@@ -1800,7 +1761,6 @@ def contact_submit(request):
         Sent from Sitwell Contact Form
         """
         
-        # Send email
         send_mail(
             email_subject,
             email_body,
@@ -1823,8 +1783,13 @@ def contact_submit(request):
 
 
 def about(request):
-    """Display about page"""
     return render(request, 'about.html')
+
+def contact_landing(request):
+    return render(request, 'contact_landing.html')
+
+def about_landing(request):
+    return render(request, 'about_landing.html')
 
 @login_required
 @transaction.atomic
@@ -1838,11 +1803,17 @@ def razorpay_create_order(request):
         if not items.exists():
             return JsonResponse({'success': False, 'message': 'Cart empty'})
 
-        # =====  UNIVERSAL TOTALS  =====
         subtotal = sum(i.subtotal for i in items)
-        shipping = Decimal('50.00') if subtotal < 1000 else Decimal('0.00')
+        shipping = Decimal('0.00') if subtotal >= Decimal('10000.00') else Decimal('199.00')
+
+        product_discount = Decimal('0.00')
+        for item in items:
+            original_price = item.product.price * item.quantity
+            discounted_price = item.product.get_discounted_price() * item.quantity
+            product_discount += (original_price - discounted_price)
 
         coupon_discount = Decimal('0.00')
+        coupon = None
         if 'applied_coupon_id' in request.session:
             try:
                 coupon = Coupon.objects.get(id=request.session['applied_coupon_id'])
@@ -1853,7 +1824,7 @@ def razorpay_create_order(request):
 
         tax         = (subtotal - coupon_discount) * Decimal('0.18')
         grand_total = subtotal - coupon_discount + tax + shipping
-        # ================================
+      
 
         amount_paise = int(grand_total * 100)
 
@@ -1876,7 +1847,7 @@ def razorpay_create_order(request):
             subtotal=subtotal,
             tax_amount=tax,
             shipping_charge=shipping,
-            discount_amount=coupon_discount,
+            discount_amount=product_discount,
             coupon=coupon if coupon_discount > 0 else None,
             coupon_discount=coupon_discount
         )
@@ -1925,11 +1896,18 @@ class RazorpayCallbackView(View):
             order.status = "confirmed"
             order.razorpay_payment_id = rz_payment_id
             order.save()
+            for item in order.items.all():
+                product = item.product
+                product.stock_quantity = max(0, product.stock_quantity - item.quantity)
+                product.save()
 
             if order.coupon:
                 consume_coupon(order.coupon, order.user, order)
 
             Cart.objects.filter(user=order.user).delete()
+
+            if 'applied_coupon_id' in request.session:
+                del request.session['applied_coupon_id']
 
             if request.GET.get("retry") == "1":
                 return redirect('order_success', order_id=order.order_number)
@@ -1939,13 +1917,31 @@ class RazorpayCallbackView(View):
                 "order_number": order.order_number
             })
 
-        except Exception:
+        except Exception as e:
+            logger.error(f"Razorpay callback error: {e}")
+            
             try:
                 order = Order.objects.get(razorpay_order_id=rz_order_id)
-                order.payment_status = "failed"
+                order.payment_method = "Cash on Delivery"
+                order.payment_status = "pending"
+                order.status = "pending"
                 order.save()
-            except:
-                pass
+
+                for item in order.items.all():
+                    product = item.product
+                    product.stock_quantity = max(0, product.stock_quantity - item.quantity)
+                    product.save()
+
+                if order.coupon:
+                    consume_coupon(order.coupon, order.user, order)
+
+                Cart.objects.filter(user=order.user).delete()
+
+                if 'applied_coupon_id' in request.session:
+                    del request.session['applied_coupon_id']
+
+            except Exception as inner_e:
+                logger.error(f"Failed to convert order to COD: {inner_e}")
 
             if request.GET.get("retry") == "1":
                 return redirect(f"{reverse('order_failure')}?rzorderid={rz_order_id}")
@@ -2021,68 +2017,6 @@ def retry_razorpay_payment(request, orderid):
         return JsonResponse({"success": False, "message": "Error creating payment. Please try again."}, status=500)
 
 
-# @login_required
-# def apply_coupon_view(request):
-#     """Apply coupon to cart - returns JSON"""
-#     if request.method != 'POST':
-#         return JsonResponse({'success': False, 'message': 'Invalid request'})
-
-#     code = request.POST.get('code', '').upper().strip()
-#     print(f"Applying coupon: {code}")  
-    
-#     try:
-#         coupon = Coupon.objects.get(code=code, is_active=True)
-#         print(f"Found coupon: {coupon.code}")  
-#     except Coupon.DoesNotExist:
-#         return JsonResponse({'success': False, 'message': 'Invalid coupon code'})
-
-#     if not coupon.is_valid:
-#         print(f"Coupon not valid")  
-#         return JsonResponse({'success': False, 'message': 'Coupon expired or invalid'})
-
-#     if CouponUsage.objects.filter(coupon=coupon, user=request.user).exists():
-#         return JsonResponse({'success': False, 'message': 'You already used this coupon'})
-
-#     request.session['applied_coupon_id'] = coupon.id
-
-#     try:
-#         cart = Cart.objects.get(user=request.user)
-#         cart_items = cart.items.filter(product__status='published', product__stock_quantity__gt=0)
-        
-#         if not cart_items.exists():
-#             return JsonResponse({
-#                 'success': False, 
-#                 'message': 'Your cart is empty'
-#             })
-        
-#         subtotal = sum(item.subtotal for item in cart_items)
-#         print(f"Subtotal: {subtotal}")  
-        
-#         if not isinstance(subtotal, Decimal):
-#             subtotal = Decimal(str(subtotal))
-        
-#         discount = coupon.calculate_discount(subtotal)
-#         print(f"Final discount: {discount}")  
-
-#         return JsonResponse({
-#             'success': True,
-#             'message': f'Coupon "{coupon.code}" applied!',
-#             'coupon_code': coupon.code,
-#             'discount': float(discount),
-#             'new_total': float(subtotal - discount)
-#         })
-        
-#     except Cart.DoesNotExist:
-#         return JsonResponse({
-#             'success': False, 
-#             'message': 'Cart not found'
-#         })
-#     except Exception as e:
-#         print(f"Error in apply_coupon_view: {e}") 
-#         return JsonResponse({
-#             'success': False, 
-#             'message': 'Error applying coupon'
-#         })
 
 from decimal import Decimal
 from django.http import JsonResponse
@@ -2102,9 +2036,6 @@ def apply_coupon_view(request):
 
     code = request.POST.get('code', '').upper().strip()
 
-    # ───────────────────────────────
-    # 1️⃣ Fetch coupon
-    # ───────────────────────────────
     try:
         coupon = Coupon.objects.get(code=code, is_active=True)
     except Coupon.DoesNotExist:
@@ -2113,10 +2044,6 @@ def apply_coupon_view(request):
             'message': 'Invalid coupon code'
         })
 
-    # ───────────────────────────────
-    # 2️⃣ Global validity check
-    #    (active + date + max usage)
-    # ───────────────────────────────
     if not coupon.is_valid:
         if coupon.used_count >= coupon.max_usage:
             return JsonResponse({
@@ -2128,18 +2055,12 @@ def apply_coupon_view(request):
             'message': 'Coupon expired or inactive'
         })
 
-    # ───────────────────────────────
-    # 3️⃣ Per-user usage check
-    # ───────────────────────────────
     if CouponUsage.objects.filter(coupon=coupon, user=request.user).exists():
         return JsonResponse({
             'success': False,
             'message': 'You already used this coupon'
         })
 
-    # ───────────────────────────────
-    # 4️⃣ Fetch cart & calculate totals
-    # ───────────────────────────────
     try:
         cart = Cart.objects.get(user=request.user)
         cart_items = cart.items.filter(
@@ -2159,9 +2080,6 @@ def apply_coupon_view(request):
 
         discount = coupon.calculate_discount(subtotal)
 
-        # ───────────────────────────────
-        # 5️⃣ Store coupon in session
-        # ───────────────────────────────
         request.session['applied_coupon_id'] = coupon.id
 
         return JsonResponse({
@@ -2185,7 +2103,6 @@ def apply_coupon_view(request):
 
 @login_required
 def remove_coupon_view(request):
-    """Remove applied coupon"""
     if 'applied_coupon_id' in request.session:
         del request.session['applied_coupon_id']
     
@@ -2213,7 +2130,6 @@ def remove_coupon_view(request):
 
 @login_required
 def wishlist_view(request):
-    """Render wishlist page (already supplied template works)"""
     wishlist, _ = Wishlist.objects.get_or_create(user=request.user)
     items = wishlist.items.select_related('product').prefetch_related('product__images')
     available, unavailable = [], []
@@ -2228,7 +2144,6 @@ def wishlist_view(request):
 
 @login_required
 def add_to_wishlist_view(request, product_id):
-    """AJAX add -> returns JSON"""
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Invalid method'})
     product = get_object_or_404(Product, id=product_id, status='published')
@@ -2236,7 +2151,7 @@ def add_to_wishlist_view(request, product_id):
     obj, created = WishlistItem.objects.get_or_create(wishlist=wishlist, product=product)
     return JsonResponse({
         'success': True,
-        'created': created,          # False = already existed
+        'created': created,         
         'message': 'Added to wishlist' if created else 'Already in wishlist',
         'wishlist_count': wishlist.items.count()
     })
@@ -2257,7 +2172,6 @@ def remove_from_wishlist_view(request, product_id):
 
 @login_required
 def wishlist_item_count(request):
-    """Return JSON {count: n} for header badge"""
     wishlist = Wishlist.objects.filter(user=request.user).first()
     count = wishlist.items.count() if wishlist else 0
     return JsonResponse({'count': count})   
@@ -2268,7 +2182,6 @@ logger = logging.getLogger(__name__)
 
 @login_required
 def wallet_balance(request):
-    """AJAX: return current balance + max usable amount for checkout."""
     wallet, _ = Wallet.objects.get_or_create(user=request.user)
     return JsonResponse({'balance': float(wallet.balance)})
 
@@ -2276,10 +2189,9 @@ def wallet_balance(request):
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def wallet_view(request):
-    """Display user's wallet with transaction history"""
     try:
         wallet, created = Wallet.objects.get_or_create(user=request.user)
-        transactions = wallet.transactions.all()[:20]  # Last 20 transactions
+        transactions = wallet.transactions.all()[:20]  
         
         context = {
             'wallet': wallet,
@@ -2294,7 +2206,6 @@ def wallet_view(request):
 @login_required
 @require_POST
 def wallet_payment_view(request):
-    """Pay with wallet – redirects to order-success on success"""
     try:
         cart = Cart.objects.get(user=request.user)
         cart_items = cart.items.filter(product__status='published', product__stock_quantity__gt=0)
@@ -2302,9 +2213,14 @@ def wallet_payment_view(request):
             messages.error(request, 'Your cart is empty')
             return redirect('checkout')
 
-        # =====  UNIVERSAL TOTALS  =====
         subtotal = sum(item.subtotal for item in cart_items)
-        shipping = Decimal('50.00') if subtotal < 1000 else Decimal('0.00')
+        shipping = Decimal('0.00') if subtotal >= Decimal('10000.00') else Decimal('199.00')
+
+        product_discount = Decimal('0.00')
+        for item in cart_items:
+            original_price = item.product.price * item.quantity
+            discounted_price = item.product.get_discounted_price() * item.quantity
+            product_discount += (original_price - discounted_price)
 
         coupon_discount = Decimal('0.00')
         applied_coupon  = None
@@ -2318,7 +2234,7 @@ def wallet_payment_view(request):
 
         tax         = (subtotal - coupon_discount) * Decimal('0.18')
         grand_total = subtotal - coupon_discount + tax + shipping
-        # ================================
+       
 
         wallet, _ = Wallet.objects.get_or_create(user=request.user)
         if not wallet.can_pay(grand_total):
@@ -2342,7 +2258,7 @@ def wallet_payment_view(request):
                 subtotal=subtotal,
                 tax_amount=tax,
                 shipping_charge=shipping,
-                discount_amount=coupon_discount,
+                discount_amount=product_discount,
                 coupon=applied_coupon,
                 coupon_discount=coupon_discount,
                 wallet_payment_amount=grand_total
@@ -2357,7 +2273,7 @@ def wallet_payment_view(request):
                     quantity=item.quantity
                 )
                 product = item.product
-                product.stock_quantity -= item.quantity
+                product.stock_quantity = max(0, product.stock_quantity - item.quantity)
                 product.save()
 
             wallet.debit(grand_total, order, f"Payment for order {order.order_number}")
@@ -2380,7 +2296,6 @@ def wallet_payment_view(request):
 @login_required
 @require_POST
 def process_return_refund_view(request, order_id):
-    """Process return refund to wallet (requires admin confirmation)"""
     try:
         order = get_object_or_404(Order, order_number=order_id, user=request.user)
         
@@ -2428,7 +2343,6 @@ def process_return_refund_view(request, order_id):
 
 @login_required
 def confirm_return_refund_view(request, order_id):
-    """Admin confirmation for return refunds"""
     if not request.user.is_staff:
         messages.error(request, "You don't have permission to perform this action")
         return redirect('admin:index')
@@ -2459,7 +2373,6 @@ def confirm_return_refund_view(request, order_id):
 @login_required
 @require_POST
 def wallet_add(request):
-    """Manual wallet top-up for testing / admin use."""
     try:
         amount = float(request.POST.get('amount', 0))
         if amount <= 0:
@@ -2474,7 +2387,6 @@ def wallet_add(request):
 @login_required
 @require_POST
 def place_order_cod_view(request):
-    """Cash on Delivery – re-use existing COD logic."""
     return place_order_view(request)
 
 
@@ -2537,7 +2449,6 @@ class WalletTopupCallback(View):
 @require_POST
 @csrf_exempt
 def track_banner_impression(request, banner_id):
-    """Track banner impression (view)"""
     try:
         banner = Banner.objects.get(id=banner_id)
         banner.increment_impressions()
@@ -2548,7 +2459,6 @@ def track_banner_impression(request, banner_id):
 @require_POST
 @csrf_exempt
 def track_banner_click(request, banner_id):
-    """Track banner click"""
     try:
         banner = Banner.objects.get(id=banner_id)
         banner.increment_clicks()
@@ -2557,15 +2467,10 @@ def track_banner_click(request, banner_id):
         return JsonResponse({'status': 'error'}, status=404)
 
 
-from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-from customeradmin.models import Banner
 
 @require_POST
 @csrf_exempt
 def track_banner_impression(request, banner_id):
-    """Track banner impression (view)"""
     try:
         banner = Banner.objects.get(id=banner_id)
         banner.increment_impressions()
@@ -2576,7 +2481,6 @@ def track_banner_impression(request, banner_id):
 @require_POST
 @csrf_exempt
 def track_banner_click(request, banner_id):
-    """Track banner click"""
     try:
         banner = Banner.objects.get(id=banner_id)
         banner.increment_clicks()

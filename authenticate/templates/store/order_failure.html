@@ -8,44 +8,44 @@
         <i class="fas fa-times-circle"></i>
     </div>
     <h1>Payment Failed</h1>
-    
+
     {% if order %}
-        <p class="order-message">
-            Your payment for order <strong>#{{ order.order_number }}</strong> could not be processed.
+    <p class="order-message">
+        Your payment for order <strong>#{{ order.order_number }}</strong> could not be processed.
+    </p>
+
+    <div class="info-banner">
+        <p>
+            <i class="fas fa-info-circle"></i> Don't worry! Your order is saved. You can retry the payment anytime.
         </p>
-        
-        <div class="info-banner">
-            <p>
-                <i class="fas fa-info-circle"></i> Don't worry! Your order is saved. You can retry the payment anytime.
-            </p>
-        </div>
-        
-        <div class="button-group">
-            <button type="button" class="btn btn-primary" onclick="retryPayment('{{ order.order_number }}')">
-                <i class="fas fa-redo"></i> Retry Payment
-            </button>
-            <a href="{% url 'order_detail' order.order_number %}" class="btn btn-secondary">
-                <i class="fas fa-receipt"></i> View Order Details
-            </a>
-        </div>
+    </div>
+
+    <div class="button-group">
+        <button type="button" class="btn btn-primary" onclick="retryPayment('{{ order.order_number }}')">
+            <i class="fas fa-redo"></i> Retry Payment
+        </button>
+        <a href="{% url 'order_detail' order.order_number %}" class="btn btn-secondary">
+            <i class="fas fa-receipt"></i> View Order Details
+        </a>
+    </div>
     {% else %}
-        <p class="order-message">
-            Payment failed, but the order could not be found.
+    <p class="order-message">
+        Payment failed, but the order could not be found.
+    </p>
+
+    <div class="info-banner">
+        <p>
+            <i class="fas fa-info-circle"></i> Please check your order history or contact support for assistance.
         </p>
-        
-        <div class="info-banner">
-            <p>
-                <i class="fas fa-info-circle"></i> Please check your order history or contact support for assistance.
-            </p>
-        </div>
-        
-        <div class="button-group">
-            <a href="{% url 'user_orders' %}" class="btn btn-secondary">
-                <i class="fas fa-list"></i> Go to My Orders
-            </a>
-        </div>
+    </div>
+
+    <div class="button-group">
+        <a href="{% url 'user_orders' %}" class="btn btn-secondary">
+            <i class="fas fa-list"></i> Go to My Orders
+        </a>
+    </div>
     {% endif %}
-    
+
     <p class="support-link">
         <i class="fas fa-headset"></i> Need help? <a href="{% url 'contact' %}">Contact Support</a>
     </p>
@@ -53,219 +53,219 @@
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
-async function retryPayment(orderNumber) {
-    try {
-        const response = await fetch(`/orders/${orderNumber}/retry-payment/`, {
-            method: "POST",
-            headers: {
-                "X-Requested-With": "XMLHttpRequest",
-                "X-CSRFToken": getCookie("csrftoken"),
-                "Content-Type": "application/json"
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (!data.success) {
-            alert(data.message || "Unable to retry payment. Please try again later.");
-            return;
-        }
-
-        /* ✅ Check if backend wants us to redirect */
-        if (data.redirect) {
-            window.location.href = `/order-success/${data.order_number}/`;
-            return;
-        }
-
-        /* ✅ Otherwise open Razorpay popup */
-        const options = {
-            key: data.razorpay_key,
-            amount: data.amount,
-            currency: "INR",
-            name: "Sitwell",
-            description: `Payment for Order #${data.order_number}`,
-            order_id: data.rz_order_id,
-            callback_url: data.callback_url,
-            prefill: data.prefill || {},
-            theme: { color: "#667eea" },
-            modal: {
-                ondismiss: function () {
-                    window.location.href = `/order-failure/?rzorderid=${data.rz_order_id}`;
+    async function retryPayment(orderNumber) {
+        try {
+            const response = await fetch(`/orders/${orderNumber}/retry-payment/`, {
+                method: "POST",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRFToken": getCookie("csrftoken"),
+                    "Content-Type": "application/json"
                 }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-        };
 
-        const rzp = new Razorpay(options);
+            const data = await response.json();
 
-        rzp.on('payment.failed', function (response) {
-            console.error("Payment failed:", response.error);
-            window.location.href = `/order-failure/?rzorderid=${data.rz_order_id}`;
-        });
+            if (!data.success) {
+                showToast(data.message || "Unable to retry payment. Please try again later.", 'error');
+                return;
+            }
 
-        rzp.open();
+            /* ✅ Check if backend wants us to redirect */
+            if (data.redirect) {
+                window.location.href = `/order-success/${data.order_number}/`;
+                return;
+            }
 
-    } catch (error) {
-        console.error("Error retrying payment:", error);
-        alert("An error occurred while processing your request. Please try again.");
+            /* ✅ Otherwise open Razorpay popup */
+            const options = {
+                key: data.razorpay_key,
+                amount: data.amount,
+                currency: "INR",
+                name: "Sitwell",
+                description: `Payment for Order #${data.order_number}`,
+                order_id: data.rz_order_id,
+                callback_url: data.callback_url,
+                prefill: data.prefill || {},
+                theme: { color: "#667eea" },
+                modal: {
+                    ondismiss: function () {
+                        window.location.href = `/order-failure/?rzorderid=${data.rz_order_id}`;
+                    }
+                }
+            };
+
+            const rzp = new Razorpay(options);
+
+            rzp.on('payment.failed', function (response) {
+                console.error("Payment failed:", response.error);
+                window.location.href = `/order-failure/?rzorderid=${data.rz_order_id}`;
+            });
+
+            rzp.open();
+
+        } catch (error) {
+            console.error("Error retrying payment:", error);
+            showToast("An error occurred while processing your request. Please try again.", 'error');
+        }
     }
-}
 
-function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) {
-        return parts.pop().split(';').shift();
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+            return parts.pop().split(';').shift();
+        }
+        return null;
     }
-    return null;
-}
 </script>
 
 <style>
-.payment-failure-container {
-    max-width: 600px;
-    margin: 50px auto;
-    padding: 30px;
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    text-align: center;
-}
-
-.failure-icon {
-    margin-bottom: 20px;
-}
-
-.failure-icon i {
-    font-size: 64px;
-    color: #ef4444;
-}
-
-.payment-failure-container h1 {
-    color: #1f2937;
-    margin-bottom: 10px;
-    font-size: 28px;
-}
-
-.order-message {
-    color: #6b7280;
-    font-size: 16px;
-    margin-bottom: 30px;
-    line-height: 1.5;
-}
-
-.info-banner {
-    background: #fef3c7;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 30px;
-    border-left: 4px solid #f59e0b;
-}
-
-.info-banner p {
-    color: #92400e;
-    margin: 0;
-    line-height: 1.6;
-}
-
-.info-banner i {
-    margin-right: 8px;
-}
-
-.button-group {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-}
-
-.btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 24px;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.btn-secondary {
-    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-}
-
-.btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-}
-
-.btn:active {
-    transform: translateY(0);
-}
-
-.btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.support-link {
-    color: #6b7280;
-    font-size: 14px;
-    margin-top: 30px;
-}
-
-.support-link i {
-    margin-right: 5px;
-}
-
-.support-link a {
-    color: #667eea;
-    text-decoration: none;
-    font-weight: 600;
-    transition: color 0.3s ease;
-}
-
-.support-link a:hover {
-    color: #764ba2;
-    text-decoration: underline;
-}
-
-/* Responsive design */
-@media (max-width: 640px) {
     .payment-failure-container {
-        margin: 20px;
-        padding: 20px;
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 30px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .failure-icon {
+        margin-bottom: 20px;
     }
 
     .failure-icon i {
-        font-size: 48px;
+        font-size: 64px;
+        color: #ef4444;
     }
 
     .payment-failure-container h1 {
-        font-size: 24px;
+        color: #1f2937;
+        margin-bottom: 10px;
+        font-size: 28px;
+    }
+
+    .order-message {
+        color: #6b7280;
+        font-size: 16px;
+        margin-bottom: 30px;
+        line-height: 1.5;
+    }
+
+    .info-banner {
+        background: #fef3c7;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        border-left: 4px solid #f59e0b;
+    }
+
+    .info-banner p {
+        color: #92400e;
+        margin: 0;
+        line-height: 1.6;
+    }
+
+    .info-banner i {
+        margin-right: 8px;
     }
 
     .button-group {
-        flex-direction: column;
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
     }
 
     .btn {
-        width: 100%;
-        justify-content: center;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
-}
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn:active {
+        transform: translateY(0);
+    }
+
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .support-link {
+        color: #6b7280;
+        font-size: 14px;
+        margin-top: 30px;
+    }
+
+    .support-link i {
+        margin-right: 5px;
+    }
+
+    .support-link a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s ease;
+    }
+
+    .support-link a:hover {
+        color: #764ba2;
+        text-decoration: underline;
+    }
+
+    /* Responsive design */
+    @media (max-width: 640px) {
+        .payment-failure-container {
+            margin: 20px;
+            padding: 20px;
+        }
+
+        .failure-icon i {
+            font-size: 48px;
+        }
+
+        .payment-failure-container h1 {
+            font-size: 24px;
+        }
+
+        .button-group {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
 </style>
 {% endblock %}
