@@ -80,6 +80,14 @@
         .pulse {
             animation: pulse 2s ease-in-out infinite;
         }
+
+        .variant-item {
+            transition: all 0.3s ease;
+        }
+        .variant-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body class="dashboard-bg min-h-screen">
@@ -159,8 +167,8 @@
                     </div>
                     <div class="flex items-center space-x-3 bg-gradient-to-r from-blue-50 to-purple-50 px-4 py-2 rounded-xl">
                         <div class="w-2 h-2 bg-green-500 rounded-full pulse"></div>
-                        <span class="text-sm font-bold text-gray-700">Farhaan</span>
-                        <span class="text-xs text-gray-500 font-medium">Admin</span>
+                        <span class="text-sm font-bold text-gray-700">Admin</span>
+                        <span class="text-xs text-gray-500 font-medium">Panel</span>
                     </div>
                 </div>
             </header>
@@ -210,12 +218,11 @@
                                             <label class="block text-sm font-bold text-gray-700 mb-2">Category *</label>
                                             <select name="category" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all" required>
                                                 <option value="">Select category</option>
-                                                <option value="sofa">Sofa</option>
-                                                <option value="chair">Chair</option>
-                                                <option value="table">Table</option>
-                                                <option value="bed">Bed</option>
-                                                <option value="storage">Storage</option>
-                                                <option value="accessories">Accessories</option>
+                                                {% for cat in categories %}
+                                                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                                {% empty %}
+                                                    <option value="" disabled>No categories available</option>
+                                                {% endfor %}
                                             </select>
                                         </div>
                                         <div>
@@ -330,14 +337,17 @@
                                 </div>
                                 
                                 <div class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-bold text-gray-700 mb-2">Stock Quantity *</label>
-                                        <input type="number" name="stock_quantity" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all" placeholder="0" required>
+                                    <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
+                                        <div class="flex items-center text-blue-700">
+                                            <i class="fas fa-info-circle mr-2"></i>
+                                            <span class="text-sm font-medium">Stock is managed per material variant. Add variants below to set stock quantities.</span>
+                                        </div>
                                     </div>
 
                                     <div>
                                         <label class="block text-sm font-bold text-gray-700 mb-2">Low Stock Threshold</label>
                                         <input type="number" name="low_stock_threshold" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all" placeholder="5" value="5">
+                                        <p class="text-xs text-gray-500 mt-1">Alert when any variant stock falls below this number</p>
                                     </div>
                                 </div>
                             </div>
@@ -361,6 +371,33 @@
                                     </select>
                                 </div>
                             </div>
+
+                            <!-- Material Variants Section -->
+                            <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 fade-in" style="animation-delay: 0.35s;">
+                                <div class="flex items-center justify-between mb-5">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center mr-3">
+                                            <i class="fas fa-layer-group text-white text-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h2 class="text-xl font-black text-gray-900">Material Variants</h2>
+                                            <p class="text-xs text-gray-500">Optional</p>
+                                        </div>
+                                    </div>
+                                    <button type="button" onclick="addVariant()" class="px-3 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all font-bold text-xs">
+                                        <i class="fas fa-plus mr-1"></i> Add
+                                    </button>
+                                </div>
+                                
+                                <div id="variants-container" class="space-y-4">
+                                    <!-- Variants will be added here dynamically -->
+                                </div>
+                                
+                                <div id="no-variants-message" class="text-center py-4 text-gray-400">
+                                    <i class="fas fa-cubes text-2xl mb-2"></i>
+                                    <p class="text-xs">No variants added. Click "Add" to create material variations.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -379,8 +416,9 @@
         </div>
     </div>
 
-    <!-- JavaScript (Same as before, kept intact) -->
+    <!-- JavaScript -->
     <script>
+        // ========== IMAGE UPLOAD MANAGEMENT ==========
         const minFiles = 3;
         const maxFiles = 6;
         let selectedFiles = [];
@@ -550,20 +588,143 @@
             }
         }
 
+        // ========== VARIANT MANAGEMENT ==========
+        let variantCount = 0;
+
+        function addVariant() {
+            variantCount++;
+            const container = document.getElementById('variants-container');
+            const noMessage = document.getElementById('no-variants-message');
+            
+            // Hide "no variants" message
+            noMessage.style.display = 'none';
+            
+            const variantHtml = `
+                <div class="variant-item bg-gradient-to-r from-gray-50 to-cyan-50 rounded-xl p-4 border-2 border-gray-200 hover:border-cyan-300 transition-all" id="variant-${variantCount}">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs px-3 py-1 rounded-full font-bold">Variant #${variantCount}</span>
+                        <button type="button" onclick="removeVariant(${variantCount})" class="text-red-500 hover:text-red-700 hover:bg-red-100 p-1.5 rounded-lg transition-all">
+                            <i class="fas fa-times text-sm"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Material Name *</label>
+                            <input type="text" name="variant_material_${variantCount}" 
+                                   class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 font-medium text-sm transition-all" 
+                                   placeholder="e.g., Oak, Leather, Metal" required>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Price +/- (₹)</label>
+                                <input type="number" step="0.01" name="variant_price_adjustment_${variantCount}" 
+                                       class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 font-medium text-sm transition-all" 
+                                       placeholder="0" value="0">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Stock *</label>
+                                <input type="number" name="variant_stock_${variantCount}" 
+                                       class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 font-medium text-sm transition-all" 
+                                       placeholder="0" value="0" required min="0">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">SKU Suffix</label>
+                            <input type="text" name="variant_sku_suffix_${variantCount}" 
+                                   class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 font-medium text-sm transition-all" 
+                                   placeholder="e.g., -OAK">
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" name="variant_ids[]" value="${variantCount}">
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', variantHtml);
+            updateVariantCount();
+        }
+
+        function removeVariant(id) {
+            const variant = document.getElementById(`variant-${id}`);
+            if (variant) {
+                variant.remove();
+                updateVariantCount();
+            }
+        }
+
+        function updateVariantCount() {
+            const container = document.getElementById('variants-container');
+            const noMessage = document.getElementById('no-variants-message');
+            const variants = container.querySelectorAll('.variant-item');
+            
+            if (variants.length === 0) {
+                noMessage.style.display = 'block';
+            } else {
+                noMessage.style.display = 'none';
+            }
+        }
+
+        function getVariants() {
+            const container = document.getElementById('variants-container');
+            const variantItems = container.querySelectorAll('.variant-item');
+            const variants = [];
+            
+            variantItems.forEach((item, index) => {
+                const id = item.id.split('-')[1];
+                const material = item.querySelector(`[name="variant_material_${id}"]`).value.trim();
+                const priceAdjustment = item.querySelector(`[name="variant_price_adjustment_${id}"]`).value || '0';
+                const stock = item.querySelector(`[name="variant_stock_${id}"]`).value || '0';
+                const skuSuffix = item.querySelector(`[name="variant_sku_suffix_${id}"]`).value.trim();
+                
+                if (material) {
+                    variants.push({
+                        material: material,
+                        price_adjustment: parseFloat(priceAdjustment),
+                        stock_quantity: parseInt(stock),
+                        sku_suffix: skuSuffix
+                    });
+                }
+            });
+            
+            return variants;
+        }
+
+        // ========== FORM SUBMISSION ==========
         document.getElementById('product-form').addEventListener('submit', function(e) {
             console.log('=== FORM SUBMISSION ===');
             console.log('Selected files:', selectedFiles.length);
             console.log('Input files:', imagesInput.files.length);
             
+            // Image validation
             if (selectedFiles.length < minFiles || imagesInput.files.length < minFiles) {
                 e.preventDefault();
                 showValidationMessage(`⚠️ Please upload at least ${minFiles} images before submitting.`, 'error');
                 return false;
             }
             
-            console.log('Form submission allowed');
+            // Get variants data
+            const variants = getVariants();
+            console.log('Variants to submit:', variants);
+            
+            // Remove any existing variants input
+            const existingInput = this.querySelector('input[name="variants_json"]');
+            if (existingInput) existingInput.remove();
+            
+            // Add new hidden input with variants JSON
+            const variantsInput = document.createElement('input');
+            variantsInput.type = 'hidden';
+            variantsInput.name = 'variants_json';
+            variantsInput.value = JSON.stringify(variants);
+            this.appendChild(variantsInput);
+            
+            console.log('Form submission allowed with variants:', variantsInput.value);
         });
 
+        // Initialize
         updateSubmitButton(false);
     </script>
 </body>

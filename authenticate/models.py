@@ -301,7 +301,7 @@ class Order(models.Model):
             return False
     
     def cancel_order(self, reason=None, cancelled_by='user'):
-        """Cancel order + instant wallet refund for paid orders."""
+        """Cancel order + restore stock to variants + wallet refund for paid orders."""
         if self.can_be_cancelled:
             self.status = 'cancelled'
             self.can_cancel = False
@@ -310,11 +310,36 @@ class Order(models.Model):
             self.cancelled_by = cancelled_by
             self.save()
             
+            # Restore stock to variants
+            from customeradmin.models import ProductVariant
+            
             for item in self.items.all():
-                if item.product:
+                if item.is_cancelled:
+                    continue
+                
+                # Check if item has variant
+                if hasattr(item, 'variant_id') and item.variant_id:
+                    try:
+                        variant = ProductVariant.objects.get(id=item.variant_id)
+                        variant.stock_quantity += item.quantity
+                        variant.save()
+                        
+                        # Update product status
+                        if item.product:
+                            total_stock = item.product.get_total_variant_stock
+                            if total_stock > item.product.low_stock_threshold:
+                                item.product.status = 'published'
+                            elif total_stock > 0:
+                                item.product.status = 'low-stock'
+                            item.product.save()
+                    except ProductVariant.DoesNotExist:
+                        pass
+                elif item.product:
+                    # Fallback for products without variants
                     item.product.stock_quantity += item.quantity
                     item.product.save()
-           
+            
+            # Refund to wallet if paid
             if self.payment_status == 'paid':
                 self.process_wallet_refund(processed_by=cancelled_by)
             return True
@@ -330,8 +355,18 @@ class Order(models.Model):
             self.refund_requested_at = timezone.now()
             self.save()
             
+            from customeradmin.models import ProductVariant
             for item in self.items.all():
-                if item.product:
+                if hasattr(item, 'variant_id') and item.variant_id:
+                    try:
+                        variant = ProductVariant.objects.get(id=item.variant_id)
+                        variant.stock_quantity += item.quantity
+                        variant.save()
+                        if item.product:
+                            item.product.update_status_from_variants()
+                    except ProductVariant.DoesNotExist:
+                        pass
+                elif item.product:
                     item.product.stock_quantity += item.quantity
                     item.product.save()
             return True
@@ -349,29 +384,72 @@ class OrderItem(models.Model):
     product_name = models.CharField(max_length=200)
     product_price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.PositiveIntegerField()
-    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     product = models.ForeignKey('customeradmin.Product', on_delete=models.SET_NULL, null=True, blank=True)
+    
+    # Variant fields for stock management
+    variant_id = models.IntegerField(null=True, blank=True, help_text="ID of the product variant")
+    variant_material = models.CharField(max_length=100, blank=True, null=True, help_text="Material name of the variant")
+    
     status = models.CharField(max_length=20, choices=ITEM_STATUS_CHOICES, default='pending')
     is_cancelled = models.BooleanField(default=False)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    cancellation_reason = models.TextField(blank=True, null=True)
+    
+    is_returned = models.BooleanField(default=False)
+    returned_at = models.DateTimeField(null=True, blank=True)
+    return_reason = models.TextField(blank=True, null=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     
+    class Meta:
+        ordering = ['-created_at']
+    
     def __str__(self):
-        return f"{self.quantity} x {self.product_name}"
+        variant_str = f" ({self.variant_material})" if self.variant_material else ""
+        return f"{self.quantity} x {self.product_name}{variant_str}"
     
     def save(self, *args, **kwargs):
-        self.total_price = self.product_price * self.quantity
+        if not self.total_price:
+            self.total_price = self.product_price * self.quantity
         super().save(*args, **kwargs)
     
-    def cancel_item(self):
-        if not self.is_cancelled and self.order.can_be_cancelled:
-            self.is_cancelled = True
-            self.status = 'cancelled'
-            self.save()
-            if self.product:
-                self.product.stock_quantity += self.quantity
-                self.product.save()
-            return True
-        return False
+    def cancel_item(self, reason=None):
+        """Cancel this item and restore stock to variant"""
+        if self.is_cancelled:
+            return False
+        
+        from customeradmin.models import ProductVariant
+        
+        self.is_cancelled = True
+        self.status = 'cancelled'
+        self.cancelled_at = timezone.now()
+        self.cancellation_reason = reason
+        self.save()
+        
+        # Restore stock to variant
+        if self.variant_id:
+            try:
+                variant = ProductVariant.objects.get(id=self.variant_id)
+                variant.stock_quantity += self.quantity
+                variant.save()
+                
+                # Update product status
+                if self.product:
+                    total_stock = self.product.get_total_variant_stock
+                    if total_stock > self.product.low_stock_threshold:
+                        self.product.status = 'published'
+                    elif total_stock > 0:
+                        self.product.status = 'low-stock'
+                    self.product.save(update_fields=['status'])
+            except ProductVariant.DoesNotExist:
+                pass
+        elif self.product:
+            # Fallback for products without variants
+            self.product.stock_quantity += self.quantity
+            self.product.save()
+        
+        return True
 
 
 class OrderStatusHistory(models.Model):
@@ -416,33 +494,65 @@ class Cart(models.Model):
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey('customeradmin.Product', on_delete=models.CASCADE)
+    # NEW: Variant field for material variants
+    variant = models.ForeignKey(
+        'customeradmin.ProductVariant', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        help_text="Selected material variant"
+    )
     quantity = models.PositiveIntegerField(default=1)
     added_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        unique_together = ('cart', 'product')
+        # Updated to include variant for uniqueness
+        unique_together = ('cart', 'product', 'variant')
         ordering = ['-updated_at']
     
     def __str__(self):
-        return f"{self.quantity} x {self.product.name} in {self.cart.user.email}'s cart"
+        variant_str = f" ({self.variant.material})" if self.variant else ""
+        return f"{self.quantity} x {self.product.name}{variant_str} in {self.cart.user.email}'s cart"
+    
+    @property
+    def unit_price(self):
+        """Get unit price considering variant price adjustment"""
+        base_price = self.product.get_discounted_price()
+        if self.variant:
+            return self.variant.price_adjustment
+        return base_price
     
     @property
     def subtotal(self):
-        return self.quantity * self.product.get_discounted_price()
+        return self.quantity * self.unit_price
+    
+    @property
+    def stock_quantity(self):
+        """Get stock from variant if exists, else from product"""
+        if self.variant:
+            return self.variant.stock_quantity
+        return self.product.get_total_variant_stock or self.product.stock_quantity
     
     @property
     def is_available(self):
+        if self.variant:
+            return (
+                self.product.status == 'published' and
+                self.variant.is_active and
+                self.variant.stock_quantity >= self.quantity and
+                not getattr(self.product.category, 'is_blocked', False)
+            )
         return (
             self.product.status == 'published' and
-            self.product.stock_quantity >= self.quantity and
+            self.stock_quantity >= self.quantity and
             not getattr(self.product.category, 'is_blocked', False)
         )
     
     @property
     def max_quantity_allowed(self):
         MAX_CART_QUANTITY = 10
-        return min(self.product.stock_quantity, MAX_CART_QUANTITY)
+        return min(self.stock_quantity, MAX_CART_QUANTITY)
 
 
 class Wishlist(models.Model):

@@ -1,10 +1,16 @@
 from django.contrib import admin
-from .models import Product, ProductImage
+from .models import Product, ProductImage, ProductVariant
 
 
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
     extra = 1
+
+
+class ProductVariantInline(admin.TabularInline):
+    model = ProductVariant
+    extra = 1
+    fields = ['material', 'sku_suffix', 'price_adjustment', 'stock_quantity', 'is_active']
 
 
 @admin.register(Product)
@@ -22,7 +28,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = ('category', 'status', 'is_blocked', 'created_at')
     search_fields = ('name', 'sku', 'brand')
     actions = ['block_selected_products', 'unblock_selected_products']
-    inlines = [ProductImageInline]
+    inlines = [ProductImageInline, ProductVariantInline]
 
     fieldsets = (
         (None, {
@@ -38,13 +44,10 @@ class ProductAdmin(admin.ModelAdmin):
             'fields': ('status', 'is_blocked')
         }),
         ('Descriptions', {
-            'fields': ('short_description', 'long_description', 'features')
+            'fields': ('short_description', 'detailed_description')
         }),
-        ('Specifications', {
-            'fields': ('dimensions', 'weight', 'material', 'color_options')
-        }),
-        ('SEO', {
-            'fields': ('meta_title', 'meta_description')
+        ('Tax', {
+            'fields': ('tax_type', 'vat_percentage')
         }),
     )
 
@@ -59,6 +62,37 @@ class ProductAdmin(admin.ModelAdmin):
         self.message_user(request, f'{updated} product(s) successfully unblocked.')
 
     unblock_selected_products.short_description = 'Unblock selected products'
+
+
+@admin.register(ProductVariant)
+class ProductVariantAdmin(admin.ModelAdmin):
+    list_display = ['product', 'full_sku', 'material', 'stock_quantity', 'price_adjustment', 'is_active']
+    list_filter = ['is_active', 'product__category', 'material']
+    search_fields = ['product__name', 'product__sku', 'material']
+    list_editable = ['stock_quantity', 'is_active']
+    autocomplete_fields = ['product']
+    
+    fieldsets = (
+        ('Product', {
+            'fields': ('product',)
+        }),
+        ('Variant Attributes', {
+            'fields': ('material', 'sku_suffix')
+        }),
+        ('Pricing & Stock', {
+            'fields': ('price_adjustment', 'stock_quantity')
+        }),
+        ('Media', {
+            'fields': ('image',)
+        }),
+        ('Status', {
+            'fields': ('is_active',)
+        }),
+    )
+    
+    def full_sku(self, obj):
+        return obj.full_sku
+    full_sku.short_description = 'SKU'
 
 
 from .models import (
@@ -99,7 +133,6 @@ class ReferralUsageAdmin(admin.ModelAdmin):
     list_display = ('referral', 'referee', 'used_at')
 
 
-from django.contrib import admin
 from .models import Banner
 
 @admin.register(Banner)
@@ -138,5 +171,3 @@ class BannerAdmin(admin.ModelAdmin):
         return obj.is_active
     is_active.boolean = True
     is_active.short_description = 'Active'
-
-

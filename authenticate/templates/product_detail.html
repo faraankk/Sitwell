@@ -10,7 +10,7 @@
 
 {% block extra_css %}
 <style>
-  /* --- SAME STYLES AS BEFORE (kept for brevity) --- */
+  /* --- MESSAGES & ALERTS --- */
   .messages {
     max-width: 1200px;
     margin: 20px auto;
@@ -26,6 +26,7 @@
     align-items: center;
     gap: 10px;
     animation: slideIn .3s ease-out;
+    position: relative;
   }
 
   @keyframes slideIn {
@@ -138,7 +139,7 @@
     transform: scale(1.1);
   }
 
-  .product-image {
+  .product-image-container {
     background: white;
     border-radius: 15px;
     padding: 40px;
@@ -152,11 +153,11 @@
     border: 2px solid #f0f0f0;
   }
 
-  .product-image:hover {
+  .product-image-container:hover {
     box-shadow: 0 8px 30px rgba(0, 0, 0, .12);
   }
 
-  .product-image img {
+  .product-image-container img {
     max-width: 100%;
     max-height: 450px;
     object-fit: contain;
@@ -164,12 +165,12 @@
     cursor: zoom-in;
   }
 
-  .product-image img.zoomed {
+  .product-image-container img.zoomed {
     cursor: zoom-out;
     transform: scale(1.5);
   }
 
-  .product-image:hover img:not(.zoomed) {
+  .product-image-container:hover img:not(.zoomed) {
     transform: scale(1.05);
   }
 
@@ -322,6 +323,73 @@
     color: #666;
   }
 
+  /* Material Variant Selector */
+  .variant-section {
+    margin-bottom: 25px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+  }
+
+  .variant-section label {
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: block;
+    color: #333;
+  }
+
+  .variant-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .variant-option {
+    padding: 12px 20px;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .variant-option:hover {
+    border-color: #667eea;
+    color: #667eea;
+  }
+
+  .variant-option.selected {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+  }
+
+  .variant-option.selected .variant-stock-info,
+  .variant-option.selected .variant-price-adjustment {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .variant-option.out-of-stock {
+    opacity: 0.5;
+    cursor: not-allowed;
+    text-decoration: line-through;
+  }
+
+  .variant-stock-info {
+    font-size: 11px;
+    color: #666;
+    margin-top: 4px;
+  }
+
+  .variant-price-adjustment {
+    font-size: 11px;
+    color: #10b981;
+    margin-top: 2px;
+  }
+
   .quantity-section {
     margin-bottom: 25px;
     padding: 20px;
@@ -456,45 +524,13 @@
     box-shadow: none;
   }
 
-  /* wishlist heart */
-  .wishlist-heart {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    background: rgba(255, 255, 255, .9);
-    border: 2px solid #f0f0f0;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 7;
-    transition: all .3s ease;
-  }
-
-  .wishlist-heart:hover {
-    transform: scale(1.15);
-  }
-
-  .wishlist-heart.added {
+  .btn-outline.added {
     background: #667eea;
     border-color: #667eea;
     color: white;
   }
 
-  .wishlist-heart i {
-    font-size: 16px;
-    color: #ccc;
-    transition: color .2s;
-  }
-
-  .wishlist-heart.added i {
-    color: white;
-  }
-
-  /* related products - kept short */
+  /* Related products */
   .related-section {
     max-width: 1200px;
     margin: 60px auto;
@@ -532,27 +568,6 @@
     border-color: #667eea;
   }
 
-  .product-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(102, 126, 234, .95) 0%, rgba(118, 75, 162, .95) 100%);
-    opacity: 0;
-    transition: all .3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 15px;
-    z-index: 5;
-  }
-
-  .product-card:hover .product-overlay {
-    opacity: 1;
-  }
-
   .product-image {
     height: 220px;
     object-fit: cover;
@@ -564,36 +579,50 @@
     transform: scale(1.1);
   }
 
-  .discount-badge {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
-    color: white;
-    padding: 8px 16px;
-    border-radius: 25px;
-    font-size: 13px;
-    font-weight: 700;
-    box-shadow: 0 4px 15px rgba(255, 107, 107, .4);
-    z-index: 6;
+  .product-info {
+    padding: 20px;
   }
 
-  .sold-out-badge {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    color: white;
+  .product-info h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: #333;
+  }
+
+  .product-price .price-current {
+    font-size: 18px;
+  }
+
+  .product-price .price-original {
+    font-size: 14px;
+    margin-left: 8px;
+  }
+
+  .view-btn {
+    background: white;
+    color: #667eea;
     padding: 10px 20px;
     border-radius: 25px;
-    font-size: 13px;
-    font-weight: 700;
-    box-shadow: 0 4px 15px rgba(220, 53, 69, .4);
-    z-index: 6;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
   }
 
-  .sold-out-overlay {
-    background: rgba(220, 53, 69, .15);
+  .view-btn:hover {
+    background: #667eea;
+    color: white;
+  }
+
+  /* Responsive */
+  @media (max-width: 992px) {
+    .main-container {
+      grid-template-columns: 1fr;
+    }
+    
+    .product-thumbnails {
+      flex-direction: row;
+      overflow-x: auto;
+    }
   }
 </style>
 {% endblock %}
@@ -604,8 +633,7 @@
 <div class="messages">
   {% for message in messages %}
   <div class="alert alert-{{ message.tags }}">
-    <i
-      class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'danger' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'danger' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
     {{ message }}
     <button class="close-btn" onclick="this.parentElement.remove();">&times;</button>
   </div>
@@ -647,7 +675,7 @@
     {% endif %}
   </div>
 
-  <div class="product-image">
+  <div class="product-image-container">
     {% if main_image %}
     <img id="mainImage" src="{{ main_image.image.url }}" alt="{{ product.name }}">
     {% else %}
@@ -658,7 +686,7 @@
   <div class="product-details">
     <h1>{{ product.name }}</h1>
     <div class="product-badges">
-      <span class="badge badge-category">{{ product.get_category_display }}</span>
+      <span class="badge badge-category">{{ product.category }}</span>
       {% if product.brand %}<span class="badge badge-brand">{{ product.brand }}</span>{% endif %}
     </div>
 
@@ -666,24 +694,26 @@
       <span class="stars">★★★★☆</span>
       <span style="color: #666;">(Reviews)</span>
       <span style="color: #ddd;">|</span>
-      {% if stock_status == 'in_stock' %}
-      <span class="badge badge-stock badge-success"><i class="fas fa-check-circle"></i> In Stock
-        ({{product.stock_quantity }})</span>
-      {% elif stock_status == 'low_stock' %}
-      <span class="badge badge-stock badge-warning"><i class="fas fa-exclamation-triangle"></i> Low Stock ({{ product.stock_quantity }} left)</span>
-      {% elif stock_status == 'sold_out' %}
-      <span class="badge badge-stock badge-danger"><i class="fas fa-times-circle"></i> Sold Out</span>
-      {% endif %}
+      
+      <!-- FIXED: Stock badge now uses total variant stock -->
+      {% with total_stock=product.get_total_variant_stock %}
+        {% if total_stock == 0 %}
+          <span class="badge badge-stock badge-danger"><i class="fas fa-times-circle"></i> Sold Out</span>
+        {% elif total_stock <= product.low_stock_threshold %}
+          <span class="badge badge-stock badge-warning"><i class="fas fa-exclamation-triangle"></i> Low Stock ({{ total_stock }} left)</span>
+        {% else %}
+          <span class="badge badge-stock badge-success"><i class="fas fa-check-circle"></i> In Stock ({{ total_stock }})</span>
+        {% endif %}
+      {% endwith %}
     </div>
 
-    <!-- PRICE / OFFER BLOCK -->
+    <!-- PRICE SECTION -->
     <div class="price-section">
       {% best_offer_for_product product as best %}
       {% if best.offer %}
       <div class="price-original">₹{{ product.price|floatformat:2 }}</div>
       <div class="price-current">₹{{ best.final|floatformat:2 }}</div>
-      <div class="price-savings"><i class="fas fa-tag"></i> Offer “{{ best.offer.name }}” – Save ₹{{
-        best.discount|floatformat:2 }}!</div>
+      <div class="price-savings"><i class="fas fa-tag"></i> Offer "{{ best.offer.name }}" – Save ₹{{ best.discount|floatformat:2 }}!</div>
       {% elif discount_amount > 0 %}
       <div class="price-original">₹{{ original_price|floatformat:2 }}</div>
       <div class="price-current">₹{{ discounted_price|floatformat:2 }}</div>
@@ -692,8 +722,7 @@
       <div class="price-current">₹{{ original_price|floatformat:2 }}</div>
       {% endif %}
       {% if product.tax_type == 'taxable' %}
-      <small style="color: #666;">Final price (incl. tax): ₹{% if best.offer %}{{ best.final|floatformat:2 }}{% else
-        %}{{ final_price|floatformat:2 }}{% endif %}</small>
+      <small style="color: #666;">Final price (incl. tax): ₹{% if best.offer %}{{ best.final|floatformat:2 }}{% else %}{{ final_price|floatformat:2 }}{% endif %}</small>
       {% endif %}
     </div>
 
@@ -713,9 +742,46 @@
     </div>
     {% endif %}
 
-    {% if stock_status != 'sold_out' %}
+    <!-- FIXED: Check total variant stock instead of product.stock_quantity -->
+    {% with total_stock=product.get_total_variant_stock %}
+    {% if total_stock > 0 %}
     <form class="add-to-cart-form" data-product-id="{{ product.id }}">
       {% csrf_token %}
+      
+      <!-- MATERIAL VARIANT SELECTOR -->
+      {% if product_variants %}
+      <div class="variant-section">
+        <label><i class="fas fa-layer-group"></i> Select Material:</label>
+        <div class="variant-options">
+          {% for variant in product_variants %}
+          <div class="variant-option {% if forloop.first %}selected{% endif %} {% if variant.stock_quantity <= 0 %}out-of-stock{% endif %}"
+               data-variant-id="{{ variant.id }}"
+               data-material="{{ variant.material }}"
+               data-price="{{ variant.price }}"
+               data-discounted-price="{{ variant.discounted_price }}"
+               data-stock="{{ variant.stock_quantity }}"
+               data-price-adjustment="{{ variant.price_adjustment }}"
+               onclick="selectVariant(this)">
+            <div>{{ variant.material }}</div>
+            {% if variant.price_adjustment > 0 %}
+            <div class="variant-price-adjustment">+₹{{ variant.price_adjustment }}</div>
+            {% elif variant.price_adjustment < 0 %}
+            <div class="variant-price-adjustment">₹{{ variant.price_adjustment }}</div>
+            {% endif %}
+            <div class="variant-stock-info">
+              {% if variant.stock_quantity > 0 %}
+                {{ variant.stock_quantity }} in stock
+              {% else %}
+                Out of stock
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <input type="hidden" id="selected-variant" name="variant_id" value="{{ product_variants.0.id }}">
+      </div>
+      {% endif %}
+      
       <div class="quantity-section">
         <label><i class="fas fa-cubes"></i> Quantity:</label>
         <div class="quantity-controls">
@@ -724,25 +790,24 @@
           </button>
 
           <input type="number" id="quantity-{{ product.id }}" name="quantity" value="1" min="1"
-            max="{{ product.stock_quantity }}" class="quantity-input" readonly>
+            max="{% if product_variants %}{{ product_variants.0.stock_quantity }}{% else %}{{ total_stock }}{% endif %}" class="quantity-input" readonly>
 
           <button type="button" class="quantity-btn" onclick="incrementQuantity({{ product.id }})">
             <i class="fas fa-plus"></i>
           </button>
         </div>
 
-        <small style="color: #666;">Max {{ product.stock_quantity }} available</small>
+        <small id="stock-info" style="color: #666;">Max {% if product_variants %}{{ product_variants.0.stock_quantity }}{% else %}{{ total_stock }}{% endif %} available</small>
       </div>
+      
       <div class="action-buttons">
         <button type="submit" class="btn btn-primary"><i class="fas fa-cart-plus"></i> Add to Cart</button>
-        {% comment %} <button type="button" class="btn btn-success"><i class="fas fa-bolt"></i> Buy Now</button> {% endcomment %}
 
-        <!-- WISHLIST HEART -->
+        <!-- WISHLIST BUTTON -->
         <button type="button" class="btn btn-outline {% if product.id in user_wishlist_ids %}added{% endif %}"
           onclick="toggleWishlist(this,{{ product.id }})" title="Add to wishlist">
           <i class="fas fa-heart"></i>
-          <span class="wl-text">{% if product.id in user_wishlist_ids %}Remove from Wishlist{% else %}Add to
-            Wishlist{%endif %}</span>
+          <span class="wl-text">{% if product.id in user_wishlist_ids %}Remove from Wishlist{% else %}Add to Wishlist{% endif %}</span>
         </button>
       </div>
     </form>
@@ -751,6 +816,7 @@
       <button class="btn btn-secondary" disabled><i class="fas fa-times-circle"></i> Sold Out</button>
     </div>
     {% endif %}
+    {% endwith %}
 
     {% if product.detailed_description %}
     <div class="description">
@@ -771,13 +837,13 @@
         {% if related_product.get_main_image_url %}
         <img src="{{ related_product.get_main_image_url }}" alt="{{ related_product.name }}" class="product-image">
         {% else %}
-        <div class="product-image"
-          style="background: #f5f5f5; display: flex; align-items: center; justify-content: center;"><i
-            class="fas fa-image" style="font-size: 3rem; color: #ddd;"></i></div>
+        <div class="product-image" style="background: #f5f5f5; display: flex; align-items: center; justify-content: center;">
+          <i class="fas fa-image" style="font-size: 3rem; color: #ddd;"></i>
+        </div>
         {% endif %}
-        <a href="{% url 'product_detail' related_product.pk %}" class="view-btn"
-          style="position:absolute;bottom:15px;left:50%;transform:translateX(-50%);z-index:6;"><i
-            class="fas fa-eye"></i> View Details</a>
+        <a href="{% url 'product_detail' related_product.pk %}" class="view-btn" style="position:absolute;bottom:15px;left:50%;transform:translateX(-50%);z-index:6;">
+          <i class="fas fa-eye"></i> View Details
+        </a>
       </div>
       <div class="product-info">
         <h3>{{ related_product.name|truncatechars:40 }}</h3>
@@ -803,16 +869,21 @@
 
 {% block extra_js %}
 <script>
+  // Image gallery functions
   function changeMainImage(src, thumbEl) {
     document.getElementById('mainImage').src = src;
     document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
     thumbEl.classList.add('active');
   }
-  document.getElementById('mainImage')?.addEventListener('click', function () { this.classList.toggle('zoomed'); });
+  
+  document.getElementById('mainImage')?.addEventListener('click', function () { 
+    this.classList.toggle('zoomed'); 
+  });
+
+  // Quantity controls
   function incrementQuantity(pid) {
     const input = document.getElementById(`quantity-${pid}`);
     const max = Math.min(parseInt(input.max), 10);
-
     if (parseInt(input.value) < max) {
       input.value = parseInt(input.value) + 1;
     }
@@ -822,9 +893,96 @@
     const i = document.getElementById(`quantity-${pid}`);
     if (parseInt(i.value) > 1) i.value = parseInt(i.value) - 1;
   }
+
+  // VARIANT SELECTOR FUNCTION
+  function selectVariant(element) {
+    // Don't select out-of-stock variants
+    if (element.classList.contains('out-of-stock')) {
+      return;
+    }
+
+    // Remove selected class from all options
+    document.querySelectorAll('.variant-option').forEach(opt => {
+      opt.classList.remove('selected');
+    });
+
+    // Add selected class to clicked option
+    element.classList.add('selected');
+
+    // Update hidden input
+    const variantId = element.dataset.variantId;
+    document.getElementById('selected-variant').value = variantId;
+
+    // Get variant data
+    const price = parseFloat(element.dataset.price);
+    const discountedPrice = parseFloat(element.dataset.discountedPrice);
+    const stock = parseInt(element.dataset.stock);
+
+    // Update price section
+    const priceCurrentEl = document.querySelector('.price-section .price-current');
+    const priceOriginalEl = document.querySelector('.price-section .price-original');
+    
+    if (priceCurrentEl) {
+      priceCurrentEl.textContent = '₹' + discountedPrice.toFixed(2);
+    }
+    
+    if (price !== discountedPrice && priceOriginalEl) {
+      priceOriginalEl.textContent = '₹' + price.toFixed(2);
+      priceOriginalEl.style.display = 'block';
+    } else if (priceOriginalEl) {
+      priceOriginalEl.style.display = 'none';
+    }
+
+    // Update quantity max and stock display
+    const quantityInput = document.querySelector('.quantity-input');
+    if (quantityInput) {
+      quantityInput.max = stock;
+      quantityInput.value = Math.min(parseInt(quantityInput.value), stock);
+      if (stock === 0) {
+        quantityInput.value = 0;
+      }
+    }
+
+    const stockInfo = document.getElementById('stock-info');
+    if (stockInfo) {
+      stockInfo.textContent = 'Max ' + stock + ' available';
+    }
+
+    // Update stock badge
+    const stockBadge = document.querySelector('.badge-stock');
+    if (stockBadge) {
+      if (stock <= 0) {
+        stockBadge.className = 'badge badge-stock badge-danger';
+        stockBadge.innerHTML = '<i class="fas fa-times-circle"></i> Sold Out';
+      } else if (stock <= 5) {
+        stockBadge.className = 'badge badge-stock badge-warning';
+        stockBadge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Low Stock (' + stock + ' left)';
+      } else {
+        stockBadge.className = 'badge badge-stock badge-success';
+        stockBadge.innerHTML = '<i class="fas fa-check-circle"></i> In Stock (' + stock + ')';
+      }
+    }
+
+    // Disable/enable add to cart button
+    const addToCartBtn = document.querySelector('.add-to-cart-form button[type="submit"]');
+    if (addToCartBtn) {
+      if (stock <= 0) {
+        addToCartBtn.disabled = true;
+        addToCartBtn.innerHTML = '<i class="fas fa-times-circle"></i> Out of Stock';
+      } else {
+        addToCartBtn.disabled = false;
+        addToCartBtn.innerHTML = '<i class="fas fa-cart-plus"></i> Add to Cart';
+      }
+    }
+  }
+
+  // Wishlist toggle
   function toggleWishlist(btn, pid) {
     const added = btn.classList.contains('added');
-    fetch((added ? `/wishlist/remove/` : `/wishlist/add/`) + pid + '/', { method: 'POST', headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value } })
+    fetch((added ? `/wishlist/remove/` : `/wishlist/add/`) + pid + '/', { 
+      method: 'POST', 
+      headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value } 
+    })
       .then(r => r.json()).then(d => {
         if (!d.success) return Swal.fire({ icon: 'error', title: 'Error', text: d.message, confirmButtonColor: '#667eea' });
         btn.classList.toggle('added');
@@ -832,26 +990,55 @@
         if (typeof updateWishlistCount === 'function') updateWishlistCount(d.wishlist_count);
       });
   }
+
+  // Add to cart form submission
   document.querySelector('.add-to-cart-form')?.addEventListener('submit', function (e) {
-    e.preventDefault(); const btn = this.querySelector('button[type="submit"]');
-    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+    e.preventDefault(); 
+    const btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true; 
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+    
+    // Build form data including variant_id if present
+    const formData = new URLSearchParams({
+      quantity: this.querySelector('input[name="quantity"]').value
+    });
+    
+    const variantInput = this.querySelector('input[name="variant_id"]');
+    if (variantInput) {
+      formData.append('variant_id', variantInput.value);
+    }
+    
     fetch(`/cart/add/${this.dataset.productId}/`, {
       method: 'POST',
       headers: {
         'X-CSRFToken': this.querySelector('[name=csrfmiddlewaretoken]').value,
         'Content-Type': 'application/x-www-form-urlencoded'
       },
-      body: new URLSearchParams({
-        quantity: this.querySelector('input[name="quantity"]').value
-      })
+      body: formData
     })
-
       .then(r => r.json()).then(d => {
-        const m = document.querySelector('.messages') || Object.assign(document.body.insertAdjacentHTML('afterbegin', '<div class="messages"></div>'), document.body.firstElementChild);
-        m.innerHTML = `<div class="alert alert-success"><i class="fas fa-check-circle"></i>${d.message}<button class="close-btn" onclick="this.parentElement.remove();">&times;</button></div>`;
-        const c = document.querySelector('.cart-count'); if (c) { fetch('/cart/count/').then(r => r.json()).then(d => { if (d.success) c.textContent = d.count; }); }
-      }).finally(() => { btn.disabled = false; btn.innerHTML = '<i class="fas fa-cart-plus"></i> Add to Cart'; });
+        let messagesContainer = document.querySelector('.messages');
+        if (!messagesContainer) {
+          document.querySelector('.breadcrumb').insertAdjacentHTML('afterend', '<div class="messages"></div>');
+          messagesContainer = document.querySelector('.messages');
+        }
+        messagesContainer.innerHTML = `<div class="alert alert-success"><i class="fas fa-check-circle"></i>${d.message}<button class="close-btn" onclick="this.parentElement.remove();">&times;</button></div>`;
+        const c = document.querySelector('.cart-count'); 
+        if (c) { 
+          fetch('/cart/count/').then(r => r.json()).then(d => { 
+            if (d.success) c.textContent = d.count; 
+          }); 
+        }
+      }).finally(() => { 
+        btn.disabled = false; 
+        btn.innerHTML = '<i class="fas fa-cart-plus"></i> Add to Cart'; 
+      });
   });
-  setTimeout(() => document.querySelectorAll('.alert').forEach(a => { a.style.opacity = '0'; setTimeout(() => a.remove(), 300); }), 5000);
+
+  // Auto-dismiss alerts
+  setTimeout(() => document.querySelectorAll('.alert').forEach(a => { 
+    a.style.opacity = '0'; 
+    setTimeout(() => a.remove(), 300); 
+  }), 5000);
 </script>
 {% endblock %}

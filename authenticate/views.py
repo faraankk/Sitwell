@@ -41,6 +41,7 @@ from django.views.decorators.http import require_POST
 from authenticate.utils import consume_coupon
 from django.http import JsonResponse
 from customeradmin.models import Banner
+from .models import Wallet
 
 
 
@@ -168,6 +169,9 @@ def verify_otp_signup_view(request):
 @ensure_csrf_cookie
 @cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def login_view(request):
+    if request.user.is_authenticated:   
+        return redirect('dummy_home') 
+    
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -540,7 +544,6 @@ def dummy_home_view(request):
 
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def product_list_view(request):
-    """Enhanced product list with advanced search and filtering"""
     try:
         products = Product.objects.filter( status__in=['published', 'out-of-stock', 'low-stock'] ).prefetch_related('images')
 
@@ -582,10 +585,19 @@ def product_list_view(request):
                 pass
 
         if availability == 'in_stock':
-            products = products.filter(stock_quantity__gt=0)
+            from django.db.models import Sum, Q
+            products = products.annotate(
+                total_variant_stock=Sum('variants__stock_quantity', filter=Q(variants__is_active=True))
+            ).filter(
+                Q(total_variant_stock__gt=0) | Q(total_variant_stock__isnull=True, stock_quantity__gt=0)
+            )
         elif availability == 'out_of_stock':
-            products = products.filter(stock_quantity__lte=0)
-
+            from django.db.models import Sum, Q
+            products = products.annotate(
+                total_variant_stock=Sum('variants__stock_quantity', filter=Q(variants__is_active=True))
+            ).filter(
+                Q(total_variant_stock__lte=0) | Q(total_variant_stock__isnull=True, stock_quantity__lte=0)
+            )
         sort_options = {
             'price_low': 'price',
             'price_high': '-price',
@@ -741,6 +753,21 @@ def product_detail_view(request, pk):
         except Exception as e:
             logger.warning(f"Error building specifications: {e}")
         
+        product_variants = []
+        try:
+            if hasattr(product, 'variants'):
+                product_variants = product.variants.filter(is_active=True).order_by('material')
+        except Exception as e:
+            logger.warning(f"Error getting product variants: {e}")
+        
+        user_wishlist_ids = []
+        if request.user.is_authenticated:
+            try:
+                wishlist, _ = Wishlist.objects.get_or_create(user=request.user)
+                user_wishlist_ids = list(wishlist.items.values_list('product_id', flat=True))
+            except Exception as e:
+                logger.warning(f"Error getting wishlist: {e}")
+        
         context = {
             'product': product,
             'product_images': product_images,
@@ -753,6 +780,8 @@ def product_detail_view(request, pk):
             'stock_status': stock_status,
             'related_products': related_products,
             'specs': specs,
+            'product_variants': product_variants,
+            'user_wishlist_ids': user_wishlist_ids,
         }
         
         logger.info(f"Successfully loaded product: {product.name}")
@@ -1141,6 +1170,10 @@ def cancel_order_view(request, order_id, item_id=None):
         messages.error(request, "This order cannot be cancelled.")
         return redirect('order_detail', order_id=order.order_number)
     
+    item = None
+    if item_id:
+        item = get_object_or_404(OrderItem, id=item_id, order=order)
+    
     if request.method == 'POST':
         form = OrderCancellationForm(request.POST)
         if form.is_valid():
@@ -1150,18 +1183,26 @@ def cancel_order_view(request, order_id, item_id=None):
             
             if item_id: 
                 item = get_object_or_404(OrderItem, id=item_id, order=order)
+                
+                item_refund_amount = item.total_price
+                item_name = item.product_name
+                
                 if item.cancel_item():  
                     OrderStatusHistory.objects.create(
                         order=order, 
-                        old_status=item.status, 
+                        old_status='pending',
                         new_status='cancelled', 
                         changed_by=request.user.email,
-                        notes=full_reason
+                        notes=f"Item cancelled: {item_name}. {full_reason}"
                     )
-                    messages.success(request, f"Item cancelled successfully. Stock updated.")
+                    
+                    if order.payment_status == 'paid':
+                        messages.success(request, f"Item '{item_name}' cancelled successfully. Refund of ₹{item_refund_amount:.2f} + tax credited to your wallet. Stock updated.")
+                    else:
+                        messages.success(request, f"Item '{item_name}' cancelled successfully. Stock updated.")
                 else:
                     messages.error(request, "Unable to cancel this item.")
-            else:  # Cancel entire order
+            else:  
                 if order.cancel_order(reason=full_reason, cancelled_by=request.user.email):
                     OrderStatusHistory.objects.create(
                         order=order, 
@@ -1178,9 +1219,8 @@ def cancel_order_view(request, order_id, item_id=None):
     else:
         form = OrderCancellationForm()
     
-    context = {'form': form, 'order': order, 'item_id': item_id}
+    context = {'form': form, 'order': order, 'item_id': item_id, 'item': item}
     return render(request, 'profile/cancel_order.html', context)
-
 @login_required
 def add_to_cart_view(request, product_id):
     if request.method != 'POST':
@@ -1196,29 +1236,59 @@ def add_to_cart_view(request, product_id):
             if hasattr(product, 'category') and getattr(product.category, 'is_blocked', False):
                 return JsonResponse({'success': False, 'message': 'This product category is unavailable'})
 
-            if product.stock_quantity <= 0:
-                return JsonResponse({'success': False, 'message': 'This product is out of stock'})
+            variant = None
+            variant_id = request.POST.get('variant_id')
+            
+            if variant_id:
+                from customeradmin.models import ProductVariant
+                try:
+                    variant = ProductVariant.objects.select_for_update().get(
+                        id=variant_id, product=product, is_active=True
+                    )
+                except ProductVariant.DoesNotExist:
+                    return JsonResponse({'success': False, 'message': 'Selected variant is not available'})
+                
+                if variant.stock_quantity <= 0:
+                    return JsonResponse({'success': False, 'message': f'{variant.material} variant is out of stock'})
+                
+                available_stock = variant.stock_quantity
+            else:
+                if product.variants.filter(is_active=True).exists():
+                    return JsonResponse({'success': False, 'message': 'Please select a material variant'})
+                
+                if product.stock_quantity <= 0:
+                    return JsonResponse({'success': False, 'message': 'This product is out of stock'})
+                
+                available_stock = product.stock_quantity
 
             cart, _ = Cart.objects.get_or_create(user=request.user)
 
             try:
                 quantity = int(request.POST.get('quantity', 1))
+                if quantity < 1:
+                    quantity = 1
             except ValueError:
                 return JsonResponse({'success': False, 'message': 'Invalid quantity'})
 
             cart_item, created = CartItem.objects.get_or_create(
                 cart=cart,
                 product=product,
+                variant=variant,
                 defaults={'quantity': 0}
             )
 
             new_qty = cart_item.quantity + quantity
-            max_allowed = min(product.stock_quantity, 10)
+            max_allowed = min(available_stock, 10)
 
             if new_qty > max_allowed:
+                if cart_item.quantity >= max_allowed:
+                    return JsonResponse({
+                        'success': False,
+                        'message': f'Maximum quantity already in cart'
+                    })
                 return JsonResponse({
                     'success': False,
-                    'message': f'Cannot add more than {max_allowed} items of this product'
+                    'message': f'Cannot add more than {max_allowed} items'
                 })
 
             cart_item.quantity = new_qty
@@ -1228,18 +1298,18 @@ def add_to_cart_view(request, product_id):
             if wishlist:
                 WishlistItem.objects.filter(wishlist=wishlist, product=product).delete()
 
+            variant_text = f" ({variant.material})" if variant else ""
+            
             return JsonResponse({
                 'success': True,
-                'message': f'{product.name} added to cart',
+                'message': f'{product.name}{variant_text} added to cart',
                 'cart_total_items': cart.total_items,
                 'cart_total_amount': float(cart.total_amount),
                 'item_quantity': cart_item.quantity,
                 'item_subtotal': float(cart_item.subtotal)
             })
 
-    except Product.DoesNotExist:
-        return JsonResponse({'success': False, 'message': 'Product not found'})
-    except Exception:
+    except Exception as e:
         return JsonResponse({'success': False, 'message': 'Something went wrong'})
 
 @login_required
@@ -1247,7 +1317,7 @@ def add_to_cart_view(request, product_id):
 def cart_view(request):
     try:
         cart = Cart.objects.get(user=request.user)
-        cart_items = cart.items.select_related('product').prefetch_related('product__images')
+        cart_items = cart.items.select_related('product', 'variant').prefetch_related('product__images')
         
         unavailable_items = []
         available_items = []
@@ -1404,13 +1474,24 @@ def cart_item_count_view(request):
 
 
 @login_required
-@cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def checkout_view(request):
     try:
         cart = Cart.objects.get(user=request.user)
-        cart_items = cart.items.filter(product__status='published', product__stock_quantity__gt=0)
+        
+        cart_items = cart.items.select_related('product', 'variant').filter(
+            product__status='published'
+        )
+        
+        valid_items = []
+        for item in cart_items:
+            if item.variant:
+                if item.variant.is_active and item.variant.stock_quantity > 0:
+                    valid_items.append(item)
+            else:
+                if item.product.stock_quantity > 0:
+                    valid_items.append(item)
 
-        if not cart_items.exists():
+        if not valid_items:
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({'success': False, 'message': 'Your cart is empty'})
             messages.error(request, "Your cart is empty or contains only unavailable items.")
@@ -1419,7 +1500,7 @@ def checkout_view(request):
         addresses = UserAddress.objects.filter(user=request.user)
         wallet, _ = Wallet.objects.get_or_create(user=request.user)
         
-        subtotal = sum(item.subtotal for item in cart_items)
+        subtotal = sum(item.subtotal for item in valid_items)
         taxes = subtotal * Decimal('0.18')
         shipping = Decimal('0.00') if subtotal >= Decimal('10000.00') else Decimal('199.00')
         
@@ -1447,6 +1528,7 @@ def checkout_view(request):
                 'grand_total': float(grand_total),
                 'applied_coupon': applied_coupon.code if applied_coupon else None
             })
+        
         used_coupon_ids = CouponUsage.objects.filter(user=request.user).values_list('coupon_id', flat=True)
         available_coupons = Coupon.objects.filter(
             is_active=True,
@@ -1456,7 +1538,7 @@ def checkout_view(request):
 
         context = {
             'addresses': addresses,
-            'cart_items': cart_items,
+            'cart_items': valid_items,  
             'subtotal': subtotal,
             'taxes': taxes,
             'shipping': shipping,
@@ -1473,7 +1555,7 @@ def checkout_view(request):
     except Cart.DoesNotExist:
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'success': False, 'message': 'Cart not found'})
-        messages.error(request  , "You do not have a cart.")
+        messages.error(request, "You do not have a cart.")
         return redirect('product_list')
     except Exception as e:
         logger.error(f"Error in checkout_view: {str(e)}")
@@ -1493,9 +1575,21 @@ def place_order_view(request):
 
     try:
         cart = Cart.objects.get(user=request.user)
-        cart_items = cart.items.filter(product__status='published', product__stock_quantity__gt=0)
-
-        if not cart_items.exists():
+        
+        cart_items = cart.items.select_related('product', 'variant').filter(
+            product__status='published'
+        )
+        
+        valid_items = []
+        for item in cart_items:
+            if item.variant:
+                if item.variant.is_active and item.variant.stock_quantity > 0:
+                    valid_items.append(item)
+            else:
+                if item.product.stock_quantity > 0:
+                    valid_items.append(item)
+        
+        if not valid_items:
             messages.error(request, "Your cart is empty or items are out of stock.")
             return redirect('cart')
 
@@ -1506,17 +1600,21 @@ def place_order_view(request):
 
         shipping_address = UserAddress.objects.get(id=address_id, user=request.user)
 
-        subtotal = sum(item.subtotal for item in cart_items)
+        subtotal = sum(item.subtotal for item in valid_items)
         shipping = Decimal('0.00') if subtotal >= Decimal('10000.00') else Decimal('199.00')
 
         product_discount = Decimal('0.00')
-        for item in cart_items:
-            original_price = item.product.price * item.quantity
-            discounted_price = item.product.get_discounted_price() * item.quantity
+        for item in valid_items:
+            if item.variant:
+                original_price = item.variant.price * item.quantity
+                discounted_price = item.variant.discounted_price * item.quantity
+            else:
+                original_price = item.product.price * item.quantity
+                discounted_price = item.product.get_discounted_price() * item.quantity
             product_discount += (original_price - discounted_price)
 
         coupon_discount = Decimal('0.00')
-        applied_coupon  = None
+        applied_coupon = None
         if 'applied_coupon_id' in request.session:
             try:
                 applied_coupon = Coupon.objects.get(id=request.session['applied_coupon_id'])
@@ -1525,18 +1623,21 @@ def place_order_view(request):
             except Coupon.DoesNotExist:
                 del request.session['applied_coupon_id']
 
-        tax         = (subtotal - coupon_discount) * Decimal('0.18')
+        tax = (subtotal - coupon_discount) * Decimal('0.18')
         grand_total = subtotal - coupon_discount + tax + shipping
 
-        if grand_total > Decimal('1000.00'):
+        payment_method = request.POST.get('payment_method', 'cod')
+        if payment_method == 'cod' and grand_total > Decimal('1000.00'):
             messages.error(request, "Cash on Delivery is not available for orders above ₹1,000. Please use online payment.")
             return redirect('checkout')
+
+        from customeradmin.models import ProductVariant
         
         order = Order.objects.create(
             user=request.user,
             shipping_address=shipping_address,
             total_amount=grand_total,
-            payment_method='Cash on Delivery',
+            payment_method='Cash on Delivery' if payment_method == 'cod' else 'Online Payment',
             payment_status='Pending',
             coupon=applied_coupon,
             coupon_discount=coupon_discount,
@@ -1546,21 +1647,51 @@ def place_order_view(request):
             discount_amount=product_discount
         )
 
-        for item in cart_items:
+        for item in valid_items:
+            if item.variant:
+                unit_price = item.variant.discounted_price
+                variant_id = item.variant.id
+                variant_material = item.variant.material
+            else:
+                unit_price = item.product.get_discounted_price()
+                variant_id = None
+                variant_material = None
+            
             OrderItem.objects.create(
                 order=order,
                 product=item.product,
                 product_name=item.product.name,
-                product_price=item.product.price,
-                quantity=item.quantity
+                product_price=unit_price,
+                quantity=item.quantity,
+                total_price=unit_price * item.quantity,
+                variant_id=variant_id,
+                variant_material=variant_material
             )
-            product.stock_quantity = max(0, product.stock_quantity - item.quantity)
-            product.stock_quantity -= item.quantity
-            product.save()
+            
+            if item.variant:
+                variant = ProductVariant.objects.select_for_update().get(id=item.variant.id)
+                variant.stock_quantity = max(0, variant.stock_quantity - item.quantity)
+                variant.save()
+                
+                product = item.product
+                total_stock = product.get_total_variant_stock
+                if total_stock == 0:
+                    product.status = 'out-of-stock'
+                elif total_stock <= product.low_stock_threshold or product.has_low_stock_variant():
+                    product.status = 'low-stock'
+                else:
+                    product.status = 'published'
+                product.save(update_fields=['status'])
+            else:
+                product = item.product
+                product.stock_quantity = max(0, product.stock_quantity - item.quantity)
+                product.save()
+        
         if order.coupon:
             consume_coupon(order.coupon, request.user, order)
 
         cart.items.all().delete()
+        
         if 'applied_coupon_id' in request.session:
             del request.session['applied_coupon_id']
 
@@ -1594,6 +1725,10 @@ def order_success_view(request, order_id):
         logger.error(f"Error loading order success page: {str(e)}")
         messages.error(request, "Could not load order confirmation.")
         return redirect('user_orders')
+    
+
+
+    
 @login_required
 def download_invoice_view(request, order_id):
     order = get_object_or_404(Order, order_number=order_id, user=request.user)
@@ -1645,12 +1780,36 @@ def download_invoice_view(request, order_id):
     p.line(50, y - 5, 520, y - 5)
 
     y -= 20
-    for item in order.items.all():
-        p.drawString(50, y, item.product_name[:40])
+    
+    active_items = order.items.filter(is_cancelled=False)
+    for item in active_items:
+        item_name = item.product_name
+        if item.variant_material:
+            item_name = f"{item.product_name} ({item.variant_material})"
+        p.drawString(50, y, item_name[:45])
         p.drawString(300, y, str(item.quantity))
         p.drawRightString(410, y, f"₹{item.product_price:.2f}")
         p.drawRightString(520, y, f"₹{item.total_price:.2f}")
         y -= 15
+
+    cancelled_items = order.items.filter(is_cancelled=True)
+    if cancelled_items.exists():
+        y -= 10
+        p.setFont("DejaVu", 9)
+        p.setFillColorRGB(0.5, 0.5, 0.5)  
+        p.drawString(50, y, "--- Cancelled Items (Not Included in Total) ---")
+        y -= 15
+        for item in cancelled_items:
+            cancelled_name = item.product_name
+            if item.variant_material:
+                cancelled_name = f"{item.product_name} ({item.variant_material})"
+            p.drawString(50, y, f"[CANCELLED] {cancelled_name[:35]}")
+            p.drawString(300, y, str(item.quantity))
+            p.drawRightString(410, y, f"₹{item.product_price:.2f}")
+            p.drawRightString(520, y, f"₹{item.total_price:.2f}")
+            y -= 15
+        p.setFillColorRGB(0, 0, 0) 
+        p.setFont("DejaVu", 10)
 
     y -= 20
     p.line(50, y, 520, y)
@@ -1678,6 +1837,15 @@ def download_invoice_view(request, order_id):
         y,
         "Free" if not order.shipping_charge else f"₹{order.shipping_charge:.2f}"
     )
+
+    if cancelled_items.exists():
+        y -= 15
+        p.setFillColorRGB(0.8, 0.2, 0.2) 
+        cancelled_total = sum(item.total_price for item in cancelled_items)
+        cancelled_tax = cancelled_total * Decimal('0.18')
+        p.drawString(LABEL_X, y, "Items Refunded:")
+        p.drawRightString(VALUE_X, y, f"₹{(cancelled_total + cancelled_tax):.2f}")
+        p.setFillColorRGB(0, 0, 0)  
 
     y -= 20
     p.setFont("DejaVu", 11)
@@ -1799,7 +1967,7 @@ def razorpay_create_order(request):
 
     try:
         cart = Cart.objects.get(user=request.user)
-        items  = cart.items.filter(product__status='published', product__stock_quantity__gt=0)
+        items = cart.items.filter(product__status='published')
         if not items.exists():
             return JsonResponse({'success': False, 'message': 'Cart empty'})
 
@@ -1853,12 +2021,24 @@ def razorpay_create_order(request):
         )
 
         for item in items:
+            if item.variant:
+                unit_price = item.variant.discounted_price
+                variant_id = item.variant.id
+                variant_material = item.variant.material
+            else:
+                unit_price = item.product.get_discounted_price()
+                variant_id = None
+                variant_material = None
+            
             OrderItem.objects.create(
                 order=order,
                 product=item.product,
                 product_name=item.product.name,
-                product_price=item.product.get_discounted_price(),
-                quantity=item.quantity
+                product_price=unit_price,
+                quantity=item.quantity,
+                total_price=unit_price * item.quantity,
+                variant_id=variant_id,
+                variant_material=variant_material
             )
 
         return JsonResponse({
@@ -1896,10 +2076,29 @@ class RazorpayCallbackView(View):
             order.status = "confirmed"
             order.razorpay_payment_id = rz_payment_id
             order.save()
+            
+            from customeradmin.models import ProductVariant
             for item in order.items.all():
-                product = item.product
-                product.stock_quantity = max(0, product.stock_quantity - item.quantity)
-                product.save()
+                if hasattr(item, 'variant_id') and item.variant_id:
+                    try:
+                        variant = ProductVariant.objects.get(id=item.variant_id)
+                        variant.stock_quantity = max(0, variant.stock_quantity - item.quantity)
+                        variant.save()
+                        
+                        product = item.product
+                        if product:
+                            total_stock = product.get_total_variant_stock
+                            if total_stock == 0:
+                                product.status = 'out-of-stock'
+                            elif total_stock <= product.low_stock_threshold:
+                                product.status = 'low-stock'
+                            product.save()
+                    except ProductVariant.DoesNotExist:
+                        pass
+                elif item.product:
+                    product = item.product
+                    product.stock_quantity = max(0, product.stock_quantity - item.quantity)
+                    product.save()
 
             if order.coupon:
                 consume_coupon(order.coupon, order.user, order)
@@ -1927,10 +2126,28 @@ class RazorpayCallbackView(View):
                 order.status = "pending"
                 order.save()
 
+                from customeradmin.models import ProductVariant
                 for item in order.items.all():
-                    product = item.product
-                    product.stock_quantity = max(0, product.stock_quantity - item.quantity)
-                    product.save()
+                    if hasattr(item, 'variant_id') and item.variant_id:
+                        try:
+                            variant = ProductVariant.objects.get(id=item.variant_id)
+                            variant.stock_quantity = max(0, variant.stock_quantity - item.quantity)
+                            variant.save()
+                            
+                            product = item.product
+                            if product:
+                                total_stock = product.get_total_variant_stock
+                                if total_stock == 0:
+                                    product.status = 'out-of-stock'
+                                elif total_stock <= product.low_stock_threshold:
+                                    product.status = 'low-stock'
+                                product.save()
+                        except ProductVariant.DoesNotExist:
+                            pass
+                    elif item.product:
+                        product = item.product
+                        product.stock_quantity = max(0, product.stock_quantity - item.quantity)
+                        product.save()
 
                 if order.coupon:
                     consume_coupon(order.coupon, order.user, order)
@@ -1946,7 +2163,10 @@ class RazorpayCallbackView(View):
             if request.GET.get("retry") == "1":
                 return redirect(f"{reverse('order_failure')}?rzorderid={rz_order_id}")
 
-            return JsonResponse({"success": False}, status=400)
+            return JsonResponse({
+                "success": False,
+                "message": "Payment failed, order converted to COD"
+            })
 
         
 
@@ -2063,10 +2283,7 @@ def apply_coupon_view(request):
 
     try:
         cart = Cart.objects.get(user=request.user)
-        cart_items = cart.items.filter(
-            product__status='published',
-            product__stock_quantity__gt=0
-        )
+        cart_items = cart.items.filter(product__status='published')
 
         if not cart_items.exists():
             return JsonResponse({
@@ -2108,7 +2325,7 @@ def remove_coupon_view(request):
     
     try:
         cart = Cart.objects.get(user=request.user)
-        cart_items = cart.items.filter(product__status='published', product__stock_quantity__gt=0)
+        cart_items = cart.items.filter(product__status='published')
         subtotal = sum(item.subtotal for item in cart_items)
 
         return JsonResponse({
@@ -2131,10 +2348,18 @@ def remove_coupon_view(request):
 @login_required
 def wishlist_view(request):
     wishlist, _ = Wishlist.objects.get_or_create(user=request.user)
-    items = wishlist.items.select_related('product').prefetch_related('product__images')
+    items = wishlist.items.select_related('product').prefetch_related('product__images', 'product__variants')
     available, unavailable = [], []
     for item in items:
-        (available if item.product.status == 'published' and item.product.stock_quantity > 0 else unavailable).append(item)
+        if item.product.has_variants:
+            total_stock = item.product.get_total_variant_stock
+        else:
+            total_stock = item.product.stock_quantity
+        
+        if item.product.status == 'published' and total_stock > 0:
+            available.append(item)
+        else:
+            unavailable.append(item)
     return render(request, 'wishlist/wishlist.html', {
         'available_items': available,
         'unavailable_items': unavailable,
@@ -2176,9 +2401,6 @@ def wishlist_item_count(request):
     count = wishlist.items.count() if wishlist else 0
     return JsonResponse({'count': count})   
 
-from .models import Wallet
-from django.views.decorators.http import require_POST
-logger = logging.getLogger(__name__)
 
 @login_required
 def wallet_balance(request):
@@ -2208,7 +2430,7 @@ def wallet_view(request):
 def wallet_payment_view(request):
     try:
         cart = Cart.objects.get(user=request.user)
-        cart_items = cart.items.filter(product__status='published', product__stock_quantity__gt=0)
+        cart_items = cart.items.filter(product__status='published')
         if not cart_items.exists():
             messages.error(request, 'Your cart is empty')
             return redirect('checkout')
@@ -2264,17 +2486,47 @@ def wallet_payment_view(request):
                 wallet_payment_amount=grand_total
             )
 
+            from customeradmin.models import ProductVariant
+            
             for item in cart_items:
+                if item.variant:
+                    unit_price = item.variant.discounted_price
+                    variant_id = item.variant.id
+                    variant_material = item.variant.material
+                else:
+                    unit_price = item.product.get_discounted_price()
+                    variant_id = None
+                    variant_material = None
+                
                 OrderItem.objects.create(
                     order=order,
                     product=item.product,
                     product_name=item.product.name,
-                    product_price=item.product.get_discounted_price(),
-                    quantity=item.quantity
+                    product_price=unit_price,
+                    quantity=item.quantity,
+                    total_price=unit_price * item.quantity,
+                    variant_id=variant_id,
+                    variant_material=variant_material
                 )
-                product = item.product
-                product.stock_quantity = max(0, product.stock_quantity - item.quantity)
-                product.save()
+                
+                if item.variant:
+                    variant = ProductVariant.objects.select_for_update().get(id=item.variant.id)
+                    variant.stock_quantity = max(0, variant.stock_quantity - item.quantity)
+                    variant.save()
+                    
+                    product = item.product
+                    total_stock = product.get_total_variant_stock
+                    if total_stock == 0:
+                        product.status = 'out-of-stock'
+                    elif total_stock <= product.low_stock_threshold:
+                        product.status = 'low-stock'
+                    else:
+                        product.status = 'published'
+                    product.save(update_fields=['status'])
+                else:
+                    product = item.product
+                    product.stock_quantity = max(0, product.stock_quantity - item.quantity)
+                    product.save()
 
             wallet.debit(grand_total, order, f"Payment for order {order.order_number}")
 

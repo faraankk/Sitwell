@@ -93,7 +93,90 @@
     .status-delivered { background: #d4edda; color: #155724; }
     .status-cancelled { background: #f8d7da; color: #721c24; }
     .status-returned { background: #f8d7da; color: #721c24; }
+    /* Item Status Badges */
+    .item-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-top: 8px;
+    }
 
+    .item-status-badge.active {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .item-status-badge.cancelled {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .item-status-badge.returned {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    /* Item Actions */
+    .item-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        min-width: 120px;
+    }
+
+    .btn-cancel-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        background: transparent;
+        border: 2px solid #dc3545;
+        color: #dc3545;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-cancel-item:hover {
+        background: #dc3545;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    }
+
+    .btn-cancel-item i {
+        font-size: 12px;
+    }
+
+    /* Update item layout to accommodate actions */
+    .item {
+        display: flex;
+        gap: 20px;
+        padding: 20px;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+        background: white;
+        align-items: center;  /* Add this */
+    }
+
+    /* Cancelled item styling */
+    .item.cancelled-item {
+        opacity: 0.6;
+        background: #f8f9fa;
+    }
+
+    .item.cancelled-item .item-name {
+        text-decoration: line-through;
+        color: #6c757d;
+    }
     .btn-primary {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: none;
@@ -282,9 +365,35 @@
                 </div>
             {% endif %}
             <div class="item-details">
-                <div class="item-name">{{ item.product_name }}</div>
+                <div class="item-name">{{ item.product_name }}{% if item.variant_material %} <span style="color: #667eea; font-weight: 500;">({{ item.variant_material }})</span>{% endif %}</div>
                 <div class="item-quantity"><i class="fas fa-cube"></i>Quantity: {{ item.quantity }}</div>
                 <div class="item-price">₹{{ item.total_price|floatformat:2 }}</div>
+                
+                <!-- Item Status Badge -->
+                {% if item.is_cancelled %}
+                    <span class="item-status-badge cancelled">
+                        <i class="fas fa-times-circle"></i> Cancelled
+                    </span>
+                {% elif item.status == 'returned' %}
+                    <span class="item-status-badge returned">
+                        <i class="fas fa-undo"></i> Returned
+                    </span>
+                {% else %}
+                    <span class="item-status-badge active">
+                        <i class="fas fa-check-circle"></i> Active
+                    </span>
+                {% endif %}
+            </div>
+            
+            <!-- Individual Item Cancel Button -->
+            <div class="item-actions">
+                {% if order.can_be_cancelled and not item.is_cancelled %}
+                    <a href="{% url 'cancel_order_item' order.order_number item.id %}" 
+                    class="btn-cancel-item" 
+                    title="Cancel this item">
+                        <i class="fas fa-times"></i> Cancel Item
+                    </a>
+                {% endif %}
             </div>
         </div>
         {% endfor %}

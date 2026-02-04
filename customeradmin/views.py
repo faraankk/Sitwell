@@ -353,7 +353,7 @@ def product_view(request):
     
     status_filter = request.GET.get('status', '')
     if status_filter == 'out-of-stock':
-        products = products.filter(Q(status='out-of-stock') | Q(stock_quantity=0))
+        products = products.filter(status='out-of-stock')
     elif status_filter and status_filter != 'all' and status_filter != '':
         products = products.filter(status=status_filter)
     
@@ -368,7 +368,7 @@ def product_view(request):
     all_products = Product.objects.all()
     published_count = all_products.filter(status='published').count()
     low_stock_count = all_products.filter(status='low-stock').count()
-    out_of_stock_count = all_products.filter(Q(status='out-of-stock') | Q(stock_quantity=0)).count()
+    out_of_stock_count = all_products.filter(status='out-of-stock').count()
     
     return render(request, 'products/product_list.html', {
         'products': page_obj.object_list,
@@ -383,8 +383,6 @@ def product_view(request):
     })
 
 
-
-
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def add_product(request):
@@ -392,139 +390,148 @@ def add_product(request):
         messages.error(request, "You do not have permission to view this page.")
         return redirect('/')
     
+    categories = Category.objects.filter(is_listed=True)
+    
     if request.method == 'POST':
-        print("=== ADD PRODUCT WITH MULTIPLE IMAGES DEBUG ===")
         form = ProductForm(request.POST)
         
-        
         images = request.FILES.getlist('images')
-        print(f"Number of images received: {len(images)}")
-
-        if request.method == 'POST':
-            print("=== DEBUGGING FORM SUBMISSION ===")
-            print(f"POST data keys: {list(request.POST.keys())}")
-            print(f"FILES data keys: {list(request.FILES.keys())}")
-            print(f"All FILES: {request.FILES}")
-            print(f"Images from getlist: {request.FILES.getlist('images')}")
-            print("=====================================")
-    
-
         
+        # Get variants JSON
+        import json
+        variants_json = request.POST.get('variants_json', '[]')
+        try:
+            variants_data = json.loads(variants_json)
+        except json.JSONDecodeError:
+            variants_data = []
         
+        # Validate: must have at least one variant
+        if len(variants_data) == 0:
+            messages.error(request, "Please add at least one material variant with stock quantity.")
+            return render(request, 'products/add_product.html', {'form': form, 'categories': categories})
+        
+        # Validate images
         if len(images) < 3:
             messages.error(request, "Please upload at least 3 images for the product.")
-            return render(request, 'products/add_product.html', {'form': form})
+            return render(request, 'products/add_product.html', {'form': form, 'categories': categories})
         
         if len(images) > 6:
             messages.error(request, "Maximum 6 images allowed per product.")
-            return render(request, 'products/add_product.html', {'form': form})
+            return render(request, 'products/add_product.html', {'form': form, 'categories': categories})
         
         if form.is_valid():
             try:
                 with transaction.atomic():
-                    product = form.save()
-                    print(f"Product saved: {product.id} - {product.name}")
+                    product = form.save(commit=False)
+                    product.stock_quantity = 0  # Stock is managed per variant
+                    product.save()
                     
-                   
+                    # Save images
                     for index, image in enumerate(images):
-                        
                         processed_image = process_image(image)
-                        
-                        
                         product_image = ProductImage(
                             product=product,
                             image=processed_image,
-                            is_primary=(index == 0),  
+                            is_primary=(index == 0),
                             order=index
                         )
                         product_image.save()
-                        print(f"Image {index + 1} saved for product {product.name}")
                     
-                    messages.success(request, f"Product '{product.name}' with {len(images)} images added successfully!")
+                    # Save variants
+                    from customeradmin.models import ProductVariant
+                    total_variant_stock = 0
+                    for variant_data in variants_data:
+                        material = variant_data.get('material', '').strip()
+                        if not material:
+                            continue
+                        
+                        stock_qty = variant_data.get('stock_quantity', 0)
+                        total_variant_stock += stock_qty
+                        
+                        variant = ProductVariant(
+                            product=product,
+                            material=material,
+                            price_adjustment=variant_data.get('price_adjustment', 0),
+                            stock_quantity=stock_qty,
+                            sku_suffix=variant_data.get('sku_suffix', ''),
+                            is_active=True
+                        )
+                        variant.save()
+                    
+                    # Update product status based on total variant stock
+                    if total_variant_stock == 0:
+                        product.status = 'out-of-stock'
+                    elif total_variant_stock <= product.low_stock_threshold:
+                        product.status = 'low-stock'
+                    product.save()
+                    
+                    messages.success(request, f"Product '{product.name}' added successfully with {len(variants_data)} variant(s)!")
                     return redirect("customeradmin:product-list")
                     
             except Exception as e:
-                error_msg = f"Error saving product: {str(e)}"
-                print(error_msg)
-                logger.error(error_msg)
-                messages.error(request, error_msg)
+                messages.error(request, f"Error saving product: {str(e)}")
         else:
-            
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field}: {error}")
-        
-        print("===========================================")
     else:
         form = ProductForm()
     
-    return render(request, 'products/add_product.html', {'form': form})
+    return render(request, 'products/add_product.html', {'form': form, 'categories': categories})
 
 
 @login_required
 
+@login_required
 def edit_product(request, product_id):
     if not request.user.is_superuser:
         messages.error(request, "You do not have permission to view this page.")
         return redirect('/')
     
     product = get_object_or_404(Product, id=product_id)
+    categories = Category.objects.filter(is_deleted=False, is_listed=True)
     
     if request.method == 'POST':
         form = ProductForm(request.POST, instance=product)
         
-       
+        # Get new images
         new_images = request.FILES.getlist('images')
         existing_images_count = product.images.count()
         total_images = existing_images_count + len(new_images)
         
-        print(f"=== EDIT PRODUCT DEBUG ===")
-        print(f"Existing images: {existing_images_count}")
-        print(f"New images: {len(new_images)}")
-        print(f"Total images: {total_images}")
-        
-        
+        # Validate images
         if total_images < 3:
             messages.error(request, f"Product must have at least 3 images. Currently has {existing_images_count}. Please upload {3 - existing_images_count} more images.")
             existing_images = product.images.all().order_by('order')
-            images_count = existing_images.count()
-            images_remaining = 6 - images_count
             return render(request, 'products/edit_product.html', {
                 'form': form, 
                 'product': product,
                 'existing_images': existing_images,
-                'images_count': images_count,
-                'images_remaining': images_remaining,
-                'min_images_required': max(0, 3 - images_count),
+                'categories': categories,
             })
         
         if total_images > 6:
             messages.error(request, "Maximum 6 images allowed per product.")
             existing_images = product.images.all().order_by('order')
-            images_count = existing_images.count()
-            images_remaining = 6 - images_count
             return render(request, 'products/edit_product.html', {
                 'form': form, 
                 'product': product,
                 'existing_images': existing_images,
-                'images_count': images_count,
-                'images_remaining': images_remaining,
-                'min_images_required': max(0, 3 - images_count),
+                'categories': categories,
             })
         
         if form.is_valid():
             try:
                 with transaction.atomic():
-                    
+                    # Save the product
                     updated_product = form.save()
                     
-                    
+                    # Handle new images
                     if new_images:
                         current_max_order = product.images.aggregate(max_order=Max('order'))['max_order'] or -1
                         
                         for index, image in enumerate(new_images):
-                           
-                            if image.size > 5 * 1024 * 1024:  
+                            if image.size > 5 * 1024 * 1024:
                                 messages.warning(request, f"Image '{image.name}' is too large (max 5MB). Skipped.")
                                 continue
                             
@@ -537,12 +544,71 @@ def edit_product(request, product_id):
                             product_image = ProductImage(
                                 product=product,
                                 image=processed_image,
-                                is_primary=False,  
+                                is_primary=False,
                                 order=current_max_order + index + 1
                             )
                             product_image.save()
-                            print(f"New image {index + 1} added to product {product.name}")
                     
+                    # ========== HANDLE VARIANTS ==========
+                    import json
+                    from customeradmin.models import ProductVariant
+                    
+                    # 1. Delete variants marked for deletion
+                    deleted_ids_str = request.POST.get('deleted_variant_ids', '')
+                    if deleted_ids_str:
+                        deleted_ids = [int(id) for id in deleted_ids_str.split(',') if id.strip()]
+                        ProductVariant.objects.filter(id__in=deleted_ids, product=product).delete()
+                        print(f"Deleted variants: {deleted_ids}")
+                    
+                    # 2. Update existing variants
+                    existing_variants_json = request.POST.get('existing_variants_json', '[]')
+                    try:
+                        existing_variants_data = json.loads(existing_variants_json)
+                    except json.JSONDecodeError:
+                        existing_variants_data = []
+                    
+                    for variant_data in existing_variants_data:
+                        variant_id = variant_data.get('id')
+                        if variant_id:
+                            try:
+                                variant = ProductVariant.objects.get(id=variant_id, product=product)
+                                variant.material = variant_data.get('material', variant.material)
+                                variant.price_adjustment = variant_data.get('price_adjustment', 0)
+                                variant.stock_quantity = variant_data.get('stock_quantity', 0)
+                                variant.sku_suffix = variant_data.get('sku_suffix', '')
+                                variant.save()
+                                print(f"Updated variant: {variant.material}")
+                            except ProductVariant.DoesNotExist:
+                                pass
+                    
+                    # 3. Create new variants
+                    new_variants_json = request.POST.get('new_variants_json', '[]')
+                    try:
+                        new_variants_data = json.loads(new_variants_json)
+                    except json.JSONDecodeError:
+                        new_variants_data = []
+                    
+                    for variant_data in new_variants_data:
+                        material = variant_data.get('material', '').strip()
+                        if not material:
+                            continue
+                        
+                        # Check for duplicate
+                        if ProductVariant.objects.filter(product=product, material__iexact=material).exists():
+                            messages.warning(request, f"Variant '{material}' already exists. Skipped.")
+                            continue
+                        
+                        variant = ProductVariant(
+                            product=product,
+                            material=material,
+                            price_adjustment=variant_data.get('price_adjustment', 0),
+                            stock_quantity=variant_data.get('stock_quantity', 0),
+                            sku_suffix=variant_data.get('sku_suffix', ''),
+                            is_active=True
+                        )
+                        variant.save()
+                        print(f"Created new variant: {material}")
+                    product.update_status_from_variants()
                     messages.success(request, f"Product '{updated_product.name}' updated successfully!")
                     return redirect("customeradmin:product-list")
                     
@@ -552,7 +618,6 @@ def edit_product(request, product_id):
                 logger.error(error_msg)
                 messages.error(request, error_msg)
         else:
-            
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field}: {error}")
@@ -560,17 +625,12 @@ def edit_product(request, product_id):
         form = ProductForm(instance=product)
     
     existing_images = product.images.all().order_by('order')
-    images_count = existing_images.count()
-    images_remaining = 6 - images_count
     
     return render(request, 'products/edit_product.html', {
         'form': form, 
         'product': product,
         'existing_images': existing_images,
-        'images_count': images_count,
-        'images_remaining': images_remaining,
-        'min_images_required': max(0, 3 - images_count),
-        'categories': Category.objects.filter(is_deleted=False, is_listed=True),
+        'categories': categories,
     })
 
 
@@ -739,17 +799,30 @@ def add_category(request):
         return JsonResponse({'success': False, 'error': 'Permission denied'})
     
     try:
-        name = request.POST.get('name')
+        name = request.POST.get('name', '').strip()
         is_listed = request.POST.get('is_listed') == 'true'
         
         if not name:
             return JsonResponse({'success': False, 'error': 'Name is required'})
         
-        if Category.objects.filter(name=name).exists():
-            return JsonResponse({'success': False, 'error': 'Category already exists'})
+        # Normalize: remove extra spaces and make lowercase for comparison
+        normalized_name = ' '.join(name.split()).lower()
+        
+        # Check for duplicates (case-insensitive and space-insensitive)
+        existing_categories = Category.objects.filter(is_deleted=False)
+        for cat in existing_categories:
+            existing_normalized = ' '.join(cat.name.split()).lower()
+            if existing_normalized == normalized_name:
+                return JsonResponse({
+                    'success': False, 
+                    'error': f'Category "{cat.name}" already exists with similar name'
+                })
+        
+        # Store with proper formatting (capitalize first letter of each word)
+        formatted_name = ' '.join(name.split()).title()
         
         category = Category.objects.create(
-            name=name,
+            name=formatted_name,
             is_listed=is_listed
         )
         
@@ -767,17 +840,31 @@ def edit_category(request, category_id):
     try:
         category = get_object_or_404(Category, id=category_id)
         
-        name = request.POST.get('name')
+        name = request.POST.get('name', '').strip()
         is_listed = request.POST.get('is_listed') == 'true'
         
         if not name:
             return JsonResponse({'success': False, 'error': 'Name is required'})
         
-        category.name = name
+        # Normalize: remove extra spaces and make lowercase for comparison
+        normalized_name = ' '.join(name.split()).lower()
+        
+        # Check for duplicates (excluding current category)
+        existing_categories = Category.objects.filter(is_deleted=False).exclude(id=category_id)
+        for cat in existing_categories:
+            existing_normalized = ' '.join(cat.name.split()).lower()
+            if existing_normalized == normalized_name:
+                return JsonResponse({
+                    'success': False, 
+                    'error': f'Category "{cat.name}" already exists with similar name'
+                })
+        
+        # Store with proper formatting (capitalize first letter of each word)
+        category.name = ' '.join(name.split()).title()
         category.is_listed = is_listed
         category.save()
         
-        return JsonResponse({'success': True})
+        return JsonResponse({'success': True, 'message': 'Category updated successfully'})
         
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
@@ -1099,26 +1186,52 @@ def order_update_status(request, order_id: int):
     old_status = order.status
 
     def deduct_for_paid():
+        from customeradmin.models import ProductVariant
         for item in order.items.select_related("product").all():
             product = item.product
             if not getattr(product, "manage_stock", True):
                 continue
             
-            if product.stock_quantity < item.quantity:
-                raise ValueError(f"Insufficient stock for {product.name} (SKU {product.sku}).")
-            product.stock_quantity -= item.quantity
-            product.save() 
+            # Check if item has variant
+            if hasattr(item, 'variant_id') and item.variant_id:
+                try:
+                    variant = ProductVariant.objects.get(id=item.variant_id)
+                    if variant.stock_quantity < item.quantity:
+                        raise ValueError(f"Insufficient stock for {product.name} - {variant.material}.")
+                    variant.stock_quantity -= item.quantity
+                    variant.save()
+                    # Update product status
+                    product.update_status_from_variants()
+                except ProductVariant.DoesNotExist:
+                    pass
+            else:
+                # Fallback for products without variants
+                if product.stock_quantity < item.quantity:
+                    raise ValueError(f"Insufficient stock for {product.name} (SKU {product.sku}).")
+                product.stock_quantity -= item.quantity
+            product.save()
 
     def restock_for_cancel():
+        from customeradmin.models import ProductVariant
         for item in order.items.select_related("product").all():
             product = item.product
             if not getattr(product, "manage_stock", True):
                 continue
             remaining = item.remaining_qty 
             if remaining > 0:
-                product.stock_quantity += remaining
+                # Check if item has variant
+                if hasattr(item, 'variant_id') and item.variant_id:
+                    try:
+                        variant = ProductVariant.objects.get(id=item.variant_id)
+                        variant.stock_quantity += remaining
+                        variant.save()
+                        product.update_status_from_variants()
+                    except ProductVariant.DoesNotExist:
+                        pass
+                else:
+                    product.stock_quantity += remaining
+                    product.save()
                 item.cancelled_qty += remaining
-                product.save()
                 item.save(update_fields=["cancelled_qty", "updated_at"])
 
     def mark_shipped_full():
@@ -1166,15 +1279,26 @@ def order_cancel(request, order_id: int):
         return redirect("order-detail", order_id=order.id)
 
     try:
+        from customeradmin.models import ProductVariant
         for item in order.items.select_related("product").all():
             product = item.product
             if not getattr(product, "manage_stock", True):
                 continue
             remaining = item.remaining_qty
             if remaining > 0:
-                product.stock_quantity += remaining
+                # Check if item has variant
+                if hasattr(item, 'variant_id') and item.variant_id:
+                    try:
+                        variant = ProductVariant.objects.get(id=item.variant_id)
+                        variant.stock_quantity += remaining
+                        variant.save()
+                        product.update_status_from_variants()
+                    except ProductVariant.DoesNotExist:
+                        pass
+                else:
+                    product.stock_quantity += remaining
+                    product.save()
                 item.cancelled_qty += remaining
-                product.save()
                 item.save(update_fields=["cancelled_qty", "updated_at"])
 
         order.set_status("cancelled")

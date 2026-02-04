@@ -40,8 +40,6 @@ class Product(models.Model):
         ('blocked', 'Blocked'),  
     ]
     
-    
-    
     DISCOUNT_TYPES = [
         ('none', 'No Discount'),
         ('percentage', 'Percentage'),
@@ -74,30 +72,26 @@ class Product(models.Model):
     tax_type = models.CharField(max_length=20, choices=TAX_TYPES, default='free')
     vat_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0, help_text="VAT percentage (e.g., 18 for 18%)")
     
-    stock_quantity = models.IntegerField()
+    # Stock quantity is now managed per variant, but kept for backward compatibility
+    stock_quantity = models.IntegerField(default=0)
     low_stock_threshold = models.IntegerField(default=5, help_text="Alert when stock falls below this number")
     manage_stock = models.BooleanField(default=True)
     
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     
-    
     image = models.ImageField(upload_to='products/', blank=True, null=True)
-    
     
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
     deleted_by = models.CharField(max_length=100, null=True, blank=True)
-    
 
     is_blocked = models.BooleanField(default=False, help_text="Block the product from customer view")
     blocked_at = models.DateTimeField(null=True, blank=True, help_text="When was product blocked")
     blocked_by = models.CharField(max_length=100, blank=True, null=True, help_text="Who blocked the product")
     
-    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-  
     objects = SoftDeleteManager() 
     all_objects = AllObjectsManager()  
     customer_visible = CustomerVisibleManager() 
@@ -117,6 +111,63 @@ class Product(models.Model):
     def __str__(self):
         return self.name
     
+    # ========== VARIANT STOCK MANAGEMENT PROPERTIES ==========
+    
+    @property
+    def get_total_variant_stock(self):
+        """Calculate total stock from all active variants"""
+        return self.variants.filter(is_active=True).aggregate(
+            total=models.Sum('stock_quantity')
+        )['total'] or 0
+    
+    @property
+    def has_variants(self):
+        """Check if product has any active variants"""
+        return self.variants.filter(is_active=True).exists()
+    
+    @property
+    def is_in_stock(self):
+        """Check if product is in stock (based on variants)"""
+        if self.has_variants:
+            return self.get_total_variant_stock > 0
+        return self.stock_quantity > 0
+    
+    def get_available_variants(self):
+        """Get all in-stock active variants"""
+        return self.variants.filter(is_active=True, stock_quantity__gt=0)
+    
+    def get_lowest_variant_stock(self):
+        """Get the lowest stock quantity among all active variants"""
+        result = self.variants.filter(is_active=True).aggregate(
+            min_stock=models.Min('stock_quantity')
+        )
+        return result['min_stock'] or 0
+    
+    def has_low_stock_variant(self):
+        """Check if any variant has stock below threshold"""
+        return self.variants.filter(
+            is_active=True, 
+            stock_quantity__lte=self.low_stock_threshold
+        ).exists()
+    
+    def update_status_from_variants(self):
+        """Update product status based on variant stock levels"""
+        if not self.is_blocked and not self.is_deleted:
+            if self.has_variants:
+                total_stock = self.get_total_variant_stock
+            else:
+                total_stock = self.stock_quantity or 0
+            
+            if total_stock == 0:
+                self.status = 'out-of-stock'
+            elif total_stock <= self.low_stock_threshold:
+                self.status = 'low-stock'
+            else:
+                self.status = 'published'
+            self.save(update_fields=['status'])
+    
+    # ========== ORIGINAL METHODS ==========
+    
     def soft_delete(self, deleted_by=None):
         """Soft delete the product"""
         from django.utils import timezone
@@ -130,7 +181,8 @@ class Product(models.Model):
         self.is_deleted = False
         self.deleted_at = None
         self.deleted_by = None
-        self.save()
+        self.save(update_fields=['is_deleted', 'deleted_at', 'deleted_by'])
+        self.update_status_from_variants()
     
     def hard_delete(self):
         """Permanently delete the product"""
@@ -142,7 +194,6 @@ class Product(models.Model):
         self.is_blocked = True
         self.blocked_at = timezone.now()
         self.blocked_by = blocked_by or 'Admin'
-        
         self.status = 'blocked'
         self.save(update_fields=['is_blocked', 'blocked_at', 'blocked_by', 'status'])
     
@@ -152,13 +203,24 @@ class Product(models.Model):
         self.blocked_at = None
         self.blocked_by = None
         
+        # Update status based on variant stock
         if self.status == 'blocked':
-            if self.stock_quantity <= 0:
-                self.status = 'out-of-stock'
-            elif self.is_low_stock():
-                self.status = 'low-stock'
+            if self.has_variants:
+                total_stock = self.get_total_variant_stock
+                if total_stock <= 0:
+                    self.status = 'out-of-stock'
+                elif total_stock <= self.low_stock_threshold:
+                    self.status = 'low-stock'
+                else:
+                    self.status = 'published'
             else:
-                self.status = 'published'
+                # Fallback for products without variants
+                if self.stock_quantity <= 0:
+                    self.status = 'out-of-stock'
+                elif self.is_low_stock():
+                    self.status = 'low-stock'
+                else:
+                    self.status = 'published'
         
         self.save(update_fields=['is_blocked', 'blocked_at', 'blocked_by', 'status'])
     
@@ -172,12 +234,14 @@ class Product(models.Model):
     
     def is_available_for_purchase(self):
         """Check if product is available for customer purchase"""
-        return (
-            not self.is_deleted and 
-            not self.is_blocked and 
-            self.status == 'published' and 
-            self.stock_quantity > 0
-        )
+        if self.is_deleted or self.is_blocked:
+            return False
+        if self.status != 'published':
+            return False
+        # Check variant stock
+        if self.has_variants:
+            return self.get_total_variant_stock > 0
+        return self.stock_quantity > 0
     
     def get_status_display_admin(self):
         """Get status display for admin with blocking indicator"""
@@ -224,26 +288,39 @@ class Product(models.Model):
         return self.price - self.get_discounted_price()
     
     def is_low_stock(self):
-        """Check if product is low on stock"""
+        """Check if product is low on stock (based on variants)"""
+        if self.has_variants:
+            return self.get_total_variant_stock <= self.low_stock_threshold or self.has_low_stock_variant()
         return self.stock_quantity <= self.low_stock_threshold
     
-    # NEW: Override save method for auto status updates
     def save(self, *args, **kwargs):
-        """Override save to auto-update status based on stock quantity and other conditions"""
+        """Override save to auto-update status based on variant stock"""
         
-        # First, handle stock-based status changes
-        if hasattr(self, 'stock_quantity') and self.stock_quantity is not None:
-            # Don't change status if product is blocked or soft-deleted
-            if not self.is_blocked and not self.is_deleted:
-                if self.stock_quantity == 0:
-                    
-                    self.status = 'out-of-stock'
-                elif self.stock_quantity <= self.low_stock_threshold:
-                    
-                    if self.status == 'out-of-stock':  
-                        self.status = 'low-stock'
-                elif self.status in ['out-of-stock', 'low-stock'] and self.stock_quantity > self.low_stock_threshold:
-                    self.status = 'published'
+        # Don't change status if product is blocked or soft-deleted
+        if not self.is_blocked and not self.is_deleted:
+            # Check if product has variants
+            if self.pk:  # Only for existing products (has been saved before)
+                try:
+                    if self.has_variants:
+                        total_stock = self.get_total_variant_stock
+                        if total_stock == 0:
+                            self.status = 'out-of-stock'
+                        elif total_stock <= self.low_stock_threshold:
+                            self.status = 'low-stock'
+                        elif self.status in ['out-of-stock', 'low-stock']:
+                            self.status = 'published'
+                    else:
+                        # Fallback for products without variants
+                        if hasattr(self, 'stock_quantity') and self.stock_quantity is not None:
+                            if self.stock_quantity == 0:
+                                self.status = 'out-of-stock'
+                            elif self.stock_quantity <= self.low_stock_threshold:
+                                if self.status == 'out-of-stock':
+                                    self.status = 'low-stock'
+                            elif self.status in ['out-of-stock', 'low-stock'] and self.stock_quantity > self.low_stock_threshold:
+                                self.status = 'published'
+                except:
+                    pass  # Skip on new product creation
         
         super().save(*args, **kwargs)
 
@@ -287,7 +364,82 @@ class ProductImage(models.Model):
     def __str__(self):
         return f"{self.product.name} - Image {self.order + 1}"
 
-
+class ProductVariant(models.Model):
+    """
+    Product variants for different materials.
+    Each variant can have its own stock, price adjustment, and SKU.
+    """
+    
+    product = models.ForeignKey(
+        Product, 
+        on_delete=models.CASCADE, 
+        related_name='variants'
+    )
+    
+    # Variant attribute
+    material = models.CharField(max_length=100, help_text="e.g., Teak Wood, Sheesham, MDF, Plywood, Metal")
+    
+    # Variant-specific fields
+    sku_suffix = models.CharField(max_length=20, blank=True, help_text="Added to product SKU, e.g., '-TEAK'")
+    price_adjustment = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0,
+        help_text="Additional price for this variant (can be negative)"
+    )
+    stock_quantity = models.PositiveIntegerField(default=0)
+    
+    # Variant image (optional - falls back to product image if not set)
+    image = models.ImageField(upload_to='products/variants/', blank=True, null=True)
+    
+    # Status
+    is_active = models.BooleanField(default=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['product', 'material']
+        unique_together = ['product', 'material']
+        indexes = [
+            models.Index(fields=['product', 'is_active']),
+            models.Index(fields=['stock_quantity']),
+        ]
+    
+    def __str__(self):
+        return f"{self.product.name} - {self.material}"
+    
+    @property
+    def full_sku(self):
+        """Get the complete SKU for this variant"""
+        return f"{self.product.sku}{self.sku_suffix}"
+    
+    @property
+    def price(self):
+        """Get the final price for this variant (base price + adjustment)"""
+        return self.product.price + self.price_adjustment
+    
+    @property
+    def discounted_price(self):
+        """Get the discounted price for this variant"""
+        if self.product.discount_type == 'percentage' and self.product.discount_value > 0:
+            discount_amount = self.price * (self.product.discount_value / 100)
+            return self.price - discount_amount
+        elif self.product.discount_type == 'fixed' and self.product.discount_value > 0:
+            return max(0, self.price - self.product.discount_value)
+        return self.price
+    
+    def is_in_stock(self):
+        """Check if variant is in stock"""
+        return self.stock_quantity > 0 and self.is_active
+    
+    def get_image_url(self):
+        """Get variant image or fall back to product image"""
+        if self.image:
+            return self.image.url
+        return self.product.get_main_image_url()
+    
 class Category(models.Model):
     name = models.CharField(max_length=200, unique=True)
     description = models.TextField(blank=True)

@@ -103,6 +103,22 @@
             background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
             transform: scale(1.02);
         }
+
+        .variant-item {
+            transition: all 0.3s ease;
+        }
+        .variant-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .variant-item.existing {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-color: #86efac;
+        }
+        .variant-item.new {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-color: #93c5fd;
+        }
     </style>
 </head>
 
@@ -195,8 +211,8 @@
                     <div
                         class="flex items-center space-x-3 bg-gradient-to-r from-blue-50 to-purple-50 px-4 py-2 rounded-xl">
                         <div class="w-2 h-2 bg-green-500 rounded-full pulse"></div>
-                        <span class="text-sm font-bold text-gray-700">Farhaan</span>
-                        <span class="text-xs text-gray-500 font-medium">Admin</span>
+                        <span class="text-sm font-bold text-gray-700">Admin</span>
+                        <span class="text-xs text-gray-500 font-medium">Panel</span>
                     </div>
                 </div>
             </header>
@@ -255,7 +271,7 @@
                                                 class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all"
                                                 required>
                                                 <option value="">Select category</option>
-                                                {% for cat in form.category.field.queryset %}
+                                                {% for cat in categories %}
                                                 <option value="{{ cat.id }}" {% if product.category.id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
                                                 {% endfor %}
                                             </select>
@@ -311,7 +327,7 @@
                                 <div class="image-preview-grid">
                                     {% for image in product.images.all %}
                                     <div
-                                        class="relative group bg-gray-100 rounded-xl overflow-hidden border-2 border-gray-200">
+                                        class="relative group bg-gray-100 rounded-xl overflow-hidden border-2 border-gray-200" id="image-card-{{ image.id }}">
                                         <img src="{{ image.image.url }}" alt="Product Image"
                                             class="w-full h-40 object-cover">
                                         <div
@@ -321,6 +337,9 @@
                                                 <i class="fas fa-trash mr-2"></i>Delete
                                             </button>
                                         </div>
+                                        {% if image.is_primary %}
+                                        <div class="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">Primary</div>
+                                        {% endif %}
                                     </div>
                                     {% empty %}
                                     <div class="col-span-full text-center py-8 text-gray-500">
@@ -353,7 +372,7 @@
                                     </div>
                                     <p class="text-xl font-bold text-gray-700 mb-2">Click to upload new images</p>
                                     <p class="text-sm text-gray-500">or drag and drop files here</p>
-                                    <input type="file" id="new-images" name="new_images" accept="image/*" multiple
+                                    <input type="file" id="new-images" name="images" accept="image/*" multiple
                                         style="position: absolute; left: -9999px; opacity: 0;">
                                 </div>
 
@@ -362,6 +381,87 @@
                                             id="new-image-count">0</span>)</h3>
                                     <div id="new-preview-grid" class="image-preview-grid"></div>
                                 </div>
+                            </div>
+
+                            <!-- Material Variants Section -->
+                            <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-8 fade-in"
+                                style="animation-delay: 0.35s;">
+                                <div class="flex items-center justify-between mb-6">
+                                    <div class="flex items-center">
+                                        <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center mr-4">
+                                            <i class="fas fa-layer-group text-white text-xl"></i>
+                                        </div>
+                                        <div>
+                                            <h2 class="text-2xl font-black text-gray-900">Material Variants</h2>
+                                            <p class="text-sm text-gray-500 mt-1">Manage material variations for this product</p>
+                                        </div>
+                                    </div>
+                                    <button type="button" onclick="addNewVariant()" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl hover:shadow-lg transition-all font-bold text-sm">
+                                        <i class="fas fa-plus mr-2"></i>Add Variant
+                                    </button>
+                                </div>
+                                
+                                <!-- Existing Variants -->
+                                <div id="existing-variants-container" class="space-y-4 mb-4">
+                                    {% for variant in product.variants.all %}
+                                    <div class="variant-item existing bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border-2 border-green-200" id="existing-variant-{{ variant.id }}">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="flex items-center gap-2">
+                                                <span class="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs px-3 py-1 rounded-full font-bold">
+                                                    <i class="fas fa-check mr-1"></i>{{ variant.material }}
+                                                </span>
+                                                {% if not variant.is_active %}
+                                                <span class="bg-gray-400 text-white text-xs px-2 py-1 rounded-full font-bold">Inactive</span>
+                                                {% endif %}
+                                            </div>
+                                            <button type="button" onclick="deleteExistingVariant({{ variant.id }})" class="text-red-500 hover:text-red-700 hover:bg-red-100 p-1.5 rounded-lg transition-all">
+                                                <i class="fas fa-trash text-sm"></i>
+                                            </button>
+                                        </div>
+                                        
+                                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-600 mb-1">Material</label>
+                                                <input type="text" name="existing_variant_material_{{ variant.id }}" value="{{ variant.material }}"
+                                                       class="w-full px-3 py-2 border-2 border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 font-medium text-sm bg-white transition-all">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-600 mb-1">Price +/- (₹)</label>
+                                                <input type="number" step="0.01" name="existing_variant_price_{{ variant.id }}" value="{{ variant.price_adjustment }}"
+                                                       class="w-full px-3 py-2 border-2 border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 font-medium text-sm bg-white transition-all">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-600 mb-1">Stock</label>
+                                                <input type="number" name="existing_variant_stock_{{ variant.id }}" value="{{ variant.stock_quantity }}"
+                                                       class="w-full px-3 py-2 border-2 border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 font-medium text-sm bg-white transition-all" min="0">
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-600 mb-1">SKU Suffix</label>
+                                                <input type="text" name="existing_variant_sku_{{ variant.id }}" value="{{ variant.sku_suffix }}"
+                                                       class="w-full px-3 py-2 border-2 border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 font-medium text-sm bg-white transition-all">
+                                            </div>
+                                        </div>
+                                        <input type="hidden" name="existing_variant_ids[]" value="{{ variant.id }}">
+                                    </div>
+                                    {% empty %}
+                                    <div id="no-existing-variants" class="text-center py-4 text-gray-400">
+                                        <i class="fas fa-info-circle mr-1"></i> No existing variants
+                                    </div>
+                                    {% endfor %}
+                                </div>
+
+                                <!-- New Variants Container -->
+                                <div id="new-variants-container" class="space-y-4">
+                                    <!-- New variants will be added here dynamically -->
+                                </div>
+                                
+                                <div id="no-variants-message" class="text-center py-4 text-gray-400 {% if product.variants.exists %}hidden{% endif %}">
+                                    <i class="fas fa-cubes text-2xl mb-2"></i>
+                                    <p class="text-sm">No variants. Click "Add Variant" to create material variations.</p>
+                                </div>
+
+                                <!-- Hidden input for deleted variant IDs -->
+                                <input type="hidden" name="deleted_variant_ids" id="deleted-variant-ids" value="">
                             </div>
                         </div>
 
@@ -418,20 +518,32 @@
                                 </div>
 
                                 <div class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-bold text-gray-700 mb-2">Stock Quantity
-                                            *</label>
-                                        <input type="number" name="stock_quantity" value="{{ product.stock_quantity }}"
-                                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all"
-                                            required>
+                                    <!-- Total Stock Display (calculated from variants) -->
+                                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-4">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center text-green-700">
+                                                <i class="fas fa-boxes mr-2"></i>
+                                                <span class="text-sm font-bold">Total Stock (All Variants)</span>
+                                            </div>
+                                            <span class="text-2xl font-black text-green-600" id="total-variant-stock">
+                                                {% with total=product.variants.all %}
+                                                    {% if total %}
+                                                        {{ product.get_total_variant_stock|default:0 }}
+                                                    {% else %}
+                                                        0
+                                                    {% endif %}
+                                                {% endwith %}
+                                            </span>
+                                        </div>
+                                        <p class="text-xs text-green-600 mt-1">Stock is managed per material variant below</p>
                                     </div>
 
                                     <div>
-                                        <label class="block text-sm font-bold text-gray-700 mb-2">Low Stock
-                                            Threshold</label>
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Low Stock Threshold</label>
                                         <input type="number" name="low_stock_threshold"
                                             value="{{ product.low_stock_threshold }}"
                                             class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium transition-all">
+                                        <p class="text-xs text-gray-500 mt-1">Alert when any variant stock falls below this number</p>
                                     </div>
                                 </div>
                             </div>
@@ -460,7 +572,8 @@
                                     </select>
                                 </div>
                             </div>
-                                                        <!-- Action Buttons -->
+
+                            <!-- Action Buttons -->
                             <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 fade-in"
                                 style="animation-delay: 0.4s;">
                                 <div class="flex flex-col space-y-3">
@@ -476,13 +589,14 @@
                             </div>
                         </div>
                     </div>
-        </div>
-        </form>
-        </main>
+    </div>
+    </form>
+    </main>
     </div>
     </div>
 
     <script>
+        // ========== CSRF TOKEN ==========
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
@@ -498,6 +612,7 @@
             return cookieValue;
         }
 
+        // ========== IMAGE MANAGEMENT ==========
         function deleteImage(imageId) {
             if (!confirm('Are you sure you want to delete this image?')) return;
 
@@ -508,18 +623,35 @@
                     'Content-Type': 'application/json'
                 }
             })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    } else {
-                        showToast('Error deleting image: ' + data.error, 'error');
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const imageCard = document.getElementById(`image-card-${imageId}`);
+                    if (imageCard) {
+                        imageCard.style.transition = 'opacity 0.4s, transform 0.4s';
+                        imageCard.style.opacity = '0';
+                        imageCard.style.transform = 'scale(0.8)';
+                        setTimeout(() => {
+                            imageCard.remove();
+                            const imageGrid = document.querySelector('.image-preview-grid');
+                            if (imageGrid && imageGrid.children.length === 0) {
+                                imageGrid.innerHTML = `
+                                    <div class="col-span-full text-center py-8 text-gray-500">
+                                        No images uploaded yet
+                                    </div>
+                                `;
+                            }
+                        }, 400);
                     }
-                })
-                .catch(error => {
-                    showToast('Error deleting image', 'error');
-                    console.error('Error:', error);
-                });
+                    alert('✅ Image deleted successfully!');
+                } else {
+                    alert('Error deleting image: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Error deleting image');
+                console.error('Error:', error);
+            });
         }
 
         // New images preview
@@ -554,6 +686,182 @@
                 };
                 reader.readAsDataURL(file);
             });
+        });
+
+        // ========== VARIANT MANAGEMENT ==========
+        let newVariantCount = 0;
+        let deletedVariantIds = [];
+
+        function addNewVariant() {
+            newVariantCount++;
+            const container = document.getElementById('new-variants-container');
+            const noMessage = document.getElementById('no-variants-message');
+            
+            // Hide "no variants" message
+            if (noMessage) noMessage.style.display = 'none';
+            
+            const variantHtml = `
+                <div class="variant-item new bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-4 border-2 border-blue-200" id="new-variant-${newVariantCount}">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="bg-gradient-to-r from-blue-500 to-cyan-600 text-white text-xs px-3 py-1 rounded-full font-bold">
+                            <i class="fas fa-plus mr-1"></i>New Variant #${newVariantCount}
+                        </span>
+                        <button type="button" onclick="removeNewVariant(${newVariantCount})" class="text-red-500 hover:text-red-700 hover:bg-red-100 p-1.5 rounded-lg transition-all">
+                            <i class="fas fa-times text-sm"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Material Name *</label>
+                            <input type="text" name="new_variant_material_${newVariantCount}" 
+                                   class="w-full px-3 py-2 border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium text-sm bg-white transition-all" 
+                                   placeholder="e.g., Oak, Leather" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Price +/- (₹)</label>
+                            <input type="number" step="0.01" name="new_variant_price_${newVariantCount}" 
+                                   class="w-full px-3 py-2 border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium text-sm bg-white transition-all" 
+                                   placeholder="0" value="0">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Stock *</label>
+                            <input type="number" name="new_variant_stock_${newVariantCount}" 
+                                   class="w-full px-3 py-2 border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium text-sm bg-white transition-all" 
+                                   placeholder="0" value="0" required min="0">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">SKU Suffix</label>
+                            <input type="text" name="new_variant_sku_${newVariantCount}" 
+                                   class="w-full px-3 py-2 border-2 border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-medium text-sm bg-white transition-all" 
+                                   placeholder="e.g., -OAK">
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" name="new_variant_ids[]" value="${newVariantCount}">
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', variantHtml);
+        }
+
+        function removeNewVariant(id) {
+            const variant = document.getElementById(`new-variant-${id}`);
+            if (variant) {
+                variant.style.transition = 'opacity 0.3s, transform 0.3s';
+                variant.style.opacity = '0';
+                variant.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    variant.remove();
+                    updateVariantVisibility();
+                }, 300);
+            }
+        }
+
+        function deleteExistingVariant(id) {
+            if (!confirm('Are you sure you want to delete this variant? This will take effect when you save the product.')) return;
+            
+            const variant = document.getElementById(`existing-variant-${id}`);
+            if (variant) {
+                // Add to deleted list
+                deletedVariantIds.push(id);
+                document.getElementById('deleted-variant-ids').value = deletedVariantIds.join(',');
+                
+                // Visual removal
+                variant.style.transition = 'opacity 0.3s, transform 0.3s';
+                variant.style.opacity = '0';
+                variant.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    variant.remove();
+                    updateVariantVisibility();
+                }, 300);
+            }
+        }
+
+        function updateVariantVisibility() {
+            const existingContainer = document.getElementById('existing-variants-container');
+            const newContainer = document.getElementById('new-variants-container');
+            const noMessage = document.getElementById('no-variants-message');
+            
+            const existingVariants = existingContainer ? existingContainer.querySelectorAll('.variant-item').length : 0;
+            const newVariants = newContainer ? newContainer.querySelectorAll('.variant-item').length : 0;
+            
+            if (noMessage) {
+                if (existingVariants === 0 && newVariants === 0) {
+                    noMessage.style.display = 'block';
+                } else {
+                    noMessage.style.display = 'none';
+                }
+            }
+        }
+
+        // Collect variant data on form submit
+        document.getElementById('product-form').addEventListener('submit', function(e) {
+            // Collect new variants
+            const newContainer = document.getElementById('new-variants-container');
+            const newVariantItems = newContainer.querySelectorAll('.variant-item');
+            const newVariants = [];
+            
+            newVariantItems.forEach((item) => {
+                const id = item.id.split('-')[2];
+                const material = item.querySelector(`[name="new_variant_material_${id}"]`).value.trim();
+                const priceAdjustment = item.querySelector(`[name="new_variant_price_${id}"]`).value || '0';
+                const stock = item.querySelector(`[name="new_variant_stock_${id}"]`).value || '0';
+                const skuSuffix = item.querySelector(`[name="new_variant_sku_${id}"]`).value.trim();
+                
+                if (material) {
+                    newVariants.push({
+                        material: material,
+                        price_adjustment: parseFloat(priceAdjustment),
+                        stock_quantity: parseInt(stock),
+                        sku_suffix: skuSuffix
+                    });
+                }
+            });
+            
+            // Collect existing variants updates
+            const existingContainer = document.getElementById('existing-variants-container');
+            const existingVariantItems = existingContainer.querySelectorAll('.variant-item');
+            const existingVariants = [];
+            
+            existingVariantItems.forEach((item) => {
+                const id = item.id.split('-')[2];
+                const material = item.querySelector(`[name="existing_variant_material_${id}"]`).value.trim();
+                const priceAdjustment = item.querySelector(`[name="existing_variant_price_${id}"]`).value || '0';
+                const stock = item.querySelector(`[name="existing_variant_stock_${id}"]`).value || '0';
+                const skuSuffix = item.querySelector(`[name="existing_variant_sku_${id}"]`).value.trim();
+                
+                existingVariants.push({
+                    id: parseInt(id),
+                    material: material,
+                    price_adjustment: parseFloat(priceAdjustment),
+                    stock_quantity: parseInt(stock),
+                    sku_suffix: skuSuffix
+                });
+            });
+            
+            // Remove any existing hidden inputs
+            const existingNewInput = this.querySelector('input[name="new_variants_json"]');
+            if (existingNewInput) existingNewInput.remove();
+            const existingUpdateInput = this.querySelector('input[name="existing_variants_json"]');
+            if (existingUpdateInput) existingUpdateInput.remove();
+            
+            // Add hidden inputs with JSON data
+            const newVariantsInput = document.createElement('input');
+            newVariantsInput.type = 'hidden';
+            newVariantsInput.name = 'new_variants_json';
+            newVariantsInput.value = JSON.stringify(newVariants);
+            this.appendChild(newVariantsInput);
+            
+            const existingVariantsInput = document.createElement('input');
+            existingVariantsInput.type = 'hidden';
+            existingVariantsInput.name = 'existing_variants_json';
+            existingVariantsInput.value = JSON.stringify(existingVariants);
+            this.appendChild(existingVariantsInput);
+            
+            console.log('New variants:', newVariants);
+            console.log('Existing variants:', existingVariants);
+            console.log('Deleted variant IDs:', deletedVariantIds);
         });
     </script>
 </body>
