@@ -462,6 +462,11 @@
             </div>
             <div class="wishlist-card-body">
                 <h6 class="product-title">{{ item.product.name }}</h6>
+                {% if item.variant %}
+                <div class="product-variant" style="font-size: 13px; color: #667eea; margin-bottom: 8px;">
+                    <i class="fas fa-layer-group"></i> {{ item.variant.material }}
+                </div>
+                {% endif %}
                 <div class="product-meta">
                     <i class="fas fa-tag"></i>
                     {{ item.product.brand|default:"No brand" }} | {{ item.product.get_category_display }}
@@ -471,7 +476,7 @@
                     <a href="{% url 'product_detail' item.product.pk %}" class="wishlist-btn btn-view">
                         <i class="fas fa-eye"></i> View
                     </a>
-                    <button class="wishlist-btn btn-cart" onclick="moveToCart(this,{{ item.product.pk }})">
+                    <button class="wishlist-btn btn-cart" onclick="moveToCart(this, {{ item.product.pk }}, {{ item.variant.id|default:'null' }})">
                         <i class="fas fa-shopping-cart"></i> Cart
                     </button>
                     <button class="wishlist-btn btn-remove" onclick="removeCard(this,{{ item.product.pk }})">
@@ -541,12 +546,15 @@
     const csrf = getCookie('csrftoken');
 
     /* ======  move to cart  ====== */
-    function moveToCart(btn, productId) {
+    function moveToCart(btn, productId, variantId) {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
 
         const body = new FormData();
         body.append('quantity', 1);
+        if (variantId) {
+            body.append('variant_id', variantId);
+        }
 
         fetch(`/cart/add/${productId}/`, { method: 'POST', headers: { 'X-CSRFToken': csrf }, body })
             .then(r => r.json())

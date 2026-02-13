@@ -63,6 +63,7 @@ urlpatterns = [
     path('orders/<str:order_id>/cancel/', views.cancel_order_view, name='cancel_order'),
     path('orders/<str:order_id>/cancel-item/<int:item_id>/', views.cancel_order_view, name='cancel_order_item'),
     path('orders/<str:order_id>/return/', views.return_order_view, name='return_order'),
+    path('orders/<str:order_id>/return-item/<int:item_id>/', views.return_order_view, name='return_order_item'),
     path('orders/<str:order_id>/invoice/', views.download_invoice_view, name='download_invoice'),
 
     # razourpay urls

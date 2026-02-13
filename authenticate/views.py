@@ -59,23 +59,32 @@ def signup_view(request):
                 user.is_active = False
                 user.otp = generate_otp()
                 user.otp_created_at = timezone.now()
-                user.save()                       
+                user.save()
 
+                # --- Auto-create a Referral code for this new user ---
+                from customeradmin.models import Referral
+                Referral.objects.create(referrer=user)
+
+                # --- Handle referral code if provided ---
                 referral_code = form.cleaned_data.get('referral_code')
-                if referral_code:                 
-                    from customeradmin.models import Referral, ReferralOffer
+                if referral_code:
+                    from customeradmin.models import ReferralOffer, ReferralUsage
                     try:
                         ref = Referral.objects.select_related('referrer').get(code=referral_code.upper())
-                      
-                        from customeradmin.models import ReferralUsage
+
                         ReferralUsage.objects.create(referral=ref, referee=user)
 
-                        wallet, _ = Wallet.objects.get_or_create(user=ref.referrer)
                         ref_offer = ReferralOffer.objects.filter(offer__is_active=True).first()
                         if ref_offer:
-                            reward = ref_offer.referrer_reward
-                            wallet.credit(reward, note=f"Referral reward for {user.email}")
-                            messages.success(request, f"Referral accepted! ₹{reward} credited to referrer.")
+                            # Credit REFERRER wallet
+                            referrer_wallet, _ = Wallet.objects.get_or_create(user=ref.referrer)
+                            referrer_wallet.credit(ref_offer.referrer_reward, note=f"Referral reward for {user.email}")
+
+                            # Credit REFEREE wallet
+                            referee_wallet, _ = Wallet.objects.get_or_create(user=user)
+                            referee_wallet.credit(ref_offer.referee_reward, note=f"Welcome bonus via referral from {ref.referrer.email}")
+
+                            messages.success(request, f"Referral accepted! ₹{ref_offer.referee_reward} bonus will be added to your wallet.")
                     except Exception:
                         pass
 
@@ -805,17 +814,26 @@ def user_profile_view(request):
         addresses = user.addresses.all()
         
         print(f"Profile view - User: {user.email}, Profile image: {user.profile_image}")
+
+        # --- Referral data ---
+        from customeradmin.models import Referral
+        referral = Referral.objects.filter(referrer=user).first()
+        referral_usages = []
+        if referral:
+            referral_usages = referral.usages.select_related('referee').order_by('-used_at')
         
         context = {
             'user': user,
             'addresses': addresses,
+            'referral': referral,
+            'referral_usages': referral_usages,
         }
         return render(request, 'profile/user_profile.html', context)
         
     except Exception as e:
         print(f"Error in user_profile_view: {str(e)}")
         messages.error(request, 'Error loading profile.')
-        return redirect('dummy_home')  
+        return redirect('dummy_home')
 
 
 
@@ -1739,6 +1757,7 @@ def download_invoice_view(request, order_id):
     from reportlab.pdfbase.ttfonts import TTFont
     from django.conf import settings
     from io import BytesIO
+    from decimal import Decimal
     import os
 
     font_path = os.path.join(
@@ -1781,7 +1800,9 @@ def download_invoice_view(request, order_id):
 
     y -= 20
     
-    active_items = order.items.filter(is_cancelled=False)
+    # Active items: NOT cancelled AND NOT returned
+    active_items = order.items.filter(is_cancelled=False).exclude(status='returned')
+    active_subtotal = Decimal('0')
     for item in active_items:
         item_name = item.product_name
         if item.variant_material:
@@ -1790,13 +1811,15 @@ def download_invoice_view(request, order_id):
         p.drawString(300, y, str(item.quantity))
         p.drawRightString(410, y, f"₹{item.product_price:.2f}")
         p.drawRightString(520, y, f"₹{item.total_price:.2f}")
+        active_subtotal += item.total_price
         y -= 15
 
+    # Cancelled items section
     cancelled_items = order.items.filter(is_cancelled=True)
     if cancelled_items.exists():
         y -= 10
         p.setFont("DejaVu", 9)
-        p.setFillColorRGB(0.5, 0.5, 0.5)  
+        p.setFillColorRGB(0.5, 0.5, 0.5) 
         p.drawString(50, y, "--- Cancelled Items (Not Included in Total) ---")
         y -= 15
         for item in cancelled_items:
@@ -1811,6 +1834,26 @@ def download_invoice_view(request, order_id):
         p.setFillColorRGB(0, 0, 0) 
         p.setFont("DejaVu", 10)
 
+    # Returned items section
+    returned_items = order.items.filter(status='returned')
+    if returned_items.exists():
+        y -= 10
+        p.setFont("DejaVu", 9)
+        p.setFillColorRGB(0.6, 0.4, 0.0)
+        p.drawString(50, y, "--- Returned Items (Not Included in Total) ---")
+        y -= 15
+        for item in returned_items:
+            returned_name = item.product_name
+            if item.variant_material:
+                returned_name = f"{item.product_name} ({item.variant_material})"
+            p.drawString(50, y, f"[RETURNED] {returned_name[:35]}")
+            p.drawString(300, y, str(item.quantity))
+            p.drawRightString(410, y, f"₹{item.product_price:.2f}")
+            p.drawRightString(520, y, f"₹{item.total_price:.2f}")
+            y -= 15
+        p.setFillColorRGB(0, 0, 0)
+        p.setFont("DejaVu", 10)
+
     y -= 20
     p.line(50, y, 520, y)
     y -= 15
@@ -1818,17 +1861,34 @@ def download_invoice_view(request, order_id):
     LABEL_X = 350
     VALUE_X = 520
 
-    p.drawString(LABEL_X, y, "Sub-total:")
-    p.drawRightString(VALUE_X, y, f"₹{order.subtotal:.2f}")
+    # Calculate proportional amounts for active items only
+    if order.subtotal and order.subtotal > 0:
+        active_ratio = active_subtotal / order.subtotal
+    else:
+        active_ratio = Decimal('1')
+    
+    active_discount = (order.discount_amount or Decimal('0')) * active_ratio
+    active_coupon_discount = (order.coupon_discount or Decimal('0')) * active_ratio
+    active_after_discount = active_subtotal - active_discount - active_coupon_discount
+    active_tax = active_after_discount * Decimal('0.18')
+    active_total = active_after_discount + active_tax + (order.shipping_charge or Decimal('0'))
 
-    if order.coupon_discount:
+    p.drawString(LABEL_X, y, "Sub-total:")
+    p.drawRightString(VALUE_X, y, f"₹{active_subtotal:.2f}")
+
+    if active_discount > 0:
+        y -= 15
+        p.drawString(LABEL_X, y, "Product Discount:")
+        p.drawRightString(VALUE_X, y, f"-₹{active_discount:.2f}")
+
+    if active_coupon_discount > 0:
         y -= 15
         p.drawString(LABEL_X, y, "Coupon Discount:")
-        p.drawRightString(VALUE_X, y, f"-₹{order.coupon_discount:.2f}")
+        p.drawRightString(VALUE_X, y, f"-₹{active_coupon_discount:.2f}")
 
     y -= 15
     p.drawString(LABEL_X, y, "Tax (18 %):")
-    p.drawRightString(VALUE_X, y, f"₹{order.tax_amount:.2f}")
+    p.drawRightString(VALUE_X, y, f"₹{active_tax:.2f}")
 
     y -= 15
     p.drawString(LABEL_X, y, "Shipping:")
@@ -1838,19 +1898,21 @@ def download_invoice_view(request, order_id):
         "Free" if not order.shipping_charge else f"₹{order.shipping_charge:.2f}"
     )
 
-    if cancelled_items.exists():
+    # Show refunded amounts
+    inactive_items = list(cancelled_items) + list(returned_items)
+    if inactive_items:
         y -= 15
-        p.setFillColorRGB(0.8, 0.2, 0.2) 
-        cancelled_total = sum(item.total_price for item in cancelled_items)
-        cancelled_tax = cancelled_total * Decimal('0.18')
+        p.setFillColorRGB(0.8, 0.2, 0.2)
+        refunded_total = sum(item.total_price for item in inactive_items)
+        refunded_tax = refunded_total * Decimal('0.18')
         p.drawString(LABEL_X, y, "Items Refunded:")
-        p.drawRightString(VALUE_X, y, f"₹{(cancelled_total + cancelled_tax):.2f}")
-        p.setFillColorRGB(0, 0, 0)  
+        p.drawRightString(VALUE_X, y, f"₹{(refunded_total + refunded_tax):.2f}")
+        p.setFillColorRGB(0, 0, 0)
 
     y -= 20
     p.setFont("DejaVu", 11)
     p.drawString(LABEL_X, y, "Grand Total:")
-    p.drawRightString(VALUE_X, y, f"₹{order.total_amount:.2f}")
+    p.drawRightString(VALUE_X, y, f"₹{active_total:.2f}")
 
     p.showPage()
     p.save()
@@ -1866,32 +1928,65 @@ def download_invoice_view(request, order_id):
 @login_required
 @transaction.atomic
 @cache_control(no_cache=True, must_revalidate=True, no_store=True) 
-def return_order_view(request, order_id):
+def return_order_view(request, order_id, item_id=None):
     order = get_object_or_404(Order, order_number=order_id, user=request.user)
-    if not order.can_be_returned:
-        messages.error(request, "This order cannot be returned.")
-        return redirect('order_detail', order_id=order.order_number)
+    
+    # Get specific item if item_id provided
+    item = None
+    if item_id:
+        item = get_object_or_404(OrderItem, id=item_id, order=order)
+        if not item.can_be_returned:
+            messages.error(request, "This item cannot be returned.")
+            return redirect('order_detail', order_id=order.order_number)
+    else:
+        if not order.can_be_returned:
+            messages.error(request, "This order cannot be returned.")
+            return redirect('order_detail', order_id=order.order_number)
     
     if request.method == 'POST':
         form = OrderReturnForm(request.POST)
         if form.is_valid():
             reason = form.cleaned_data['reason']
-            if order.return_order(reason=reason, returned_by=request.user.email):
-                OrderStatusHistory.objects.create(
-                    order=order, 
-                    old_status='delivered', 
-                    new_status='refunded', 
-                    changed_by=request.user.email,
-                    notes=reason
-                )
-                messages.success(request, "Order returned successfully. Stock updated.")
-                return redirect('order_detail', order_id=order.order_number)
+            
+            if item_id:
+                # Individual item return
+                item_name = item.product_name
+                item_refund_amount = item.total_price
+                
+                if item.return_item(reason=reason):
+                    OrderStatusHistory.objects.create(
+                        order=order, 
+                        old_status='delivered',
+                        new_status='returned', 
+                        changed_by=request.user.email,
+                        notes=f"Item returned: {item_name}. Reason: {reason}"
+                    )
+                    
+                    if order.payment_status == 'paid':
+                        messages.success(request, f"Item '{item_name}' returned successfully. Refund of ₹{item_refund_amount:.2f} + tax credited to your wallet.")
+                    else:
+                        messages.success(request, f"Item '{item_name}' returned successfully.")
+                else:
+                    messages.error(request, "Unable to return this item.")
             else:
-                messages.error(request, "Unable to return this order.")
+                # Full order return
+                if order.return_order(reason=reason, returned_by=request.user.email):
+                    OrderStatusHistory.objects.create(
+                        order=order, 
+                        old_status='delivered', 
+                        new_status='refunded', 
+                        changed_by=request.user.email,
+                        notes=reason
+                    )
+                    messages.success(request, "Order returned successfully. Refund credited to your wallet.")
+                else:
+                    messages.error(request, "Unable to return this order.")
+            
+            return redirect('order_detail', order_id=order.order_number)
     else:
         form = OrderReturnForm()
     
-    context = {'form': form, 'order': order}
+    context = {'form': form, 'order': order, 'item': item, 'item_id': item_id}
     return render(request, 'profile/return_order.html', context)
 
 
@@ -2367,13 +2462,25 @@ def wishlist_view(request):
     })
 
 
-@login_required
 def add_to_wishlist_view(request, product_id):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Invalid method'})
     product = get_object_or_404(Product, id=product_id, status='published')
     wishlist, _ = Wishlist.objects.get_or_create(user=request.user)
-    obj, created = WishlistItem.objects.get_or_create(wishlist=wishlist, product=product)
+    
+    # Handle variant
+    variant = None
+    variant_id = request.POST.get('variant_id')
+    if variant_id:
+        from customeradmin.models import ProductVariant
+        try:
+            variant = ProductVariant.objects.get(id=variant_id, product=product, is_active=True)
+        except ProductVariant.DoesNotExist:
+            pass
+    
+    obj, created = WishlistItem.objects.get_or_create(
+        wishlist=wishlist, product=product, variant=variant
+    )
     return JsonResponse({
         'success': True,
         'created': created,         

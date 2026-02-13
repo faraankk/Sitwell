@@ -35,7 +35,7 @@
 <main class="flex-1 overflow-auto p-8">
   <div class="max-w-7xl mx-auto">
 
-    <!-- Filter Form - Enhanced Design -->
+    <!-- Filter Form -->
     <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 mb-8 fade-in">
       <form method="get" class="flex flex-wrap items-center gap-4">
         <div class="flex items-center space-x-2">
@@ -45,6 +45,7 @@
             <option value="day" {% if filter_type == 'day' %}selected{% endif %}>Today</option>
             <option value="week" {% if filter_type == 'week' %}selected{% endif %}>This Week</option>
             <option value="month" {% if filter_type == 'month' %}selected{% endif %}>This Month</option>
+            <option value="year" {% if filter_type == 'year' %}selected{% endif %}>This Year</option>
             <option value="custom" {% if filter_type == 'custom' %}selected{% endif %}>Custom Range</option>
           </select>
         </div>
@@ -79,7 +80,7 @@
       </form>
     </div>
 
-    <!-- Summary Cards - Enhanced Design -->
+    <!-- Summary Cards -->
     <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
       <div
         class="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-100 fade-in aspect-square flex flex-col items-center justify-center text-center">
@@ -99,7 +100,7 @@
           <i class="fas fa-arrow-up text-white text-2xl"></i>
         </div>
         <p class="text-sm font-bold text-gray-500 uppercase mb-2">Gross Sales</p>
-        <p class="text-3xl font-black text-green-600">₹{{ summary.gross }}</p>
+        <p class="text-3xl font-black text-green-600">₹{{ summary.gross|floatformat:2 }}</p>
       </div>
 
       <div
@@ -110,7 +111,7 @@
           <i class="fas fa-tag text-white text-2xl"></i>
         </div>
         <p class="text-sm font-bold text-gray-500 uppercase mb-2">Discounts</p>
-        <p class="text-3xl font-black text-orange-600">₹{{ summary.discount }}</p>
+        <p class="text-3xl font-black text-orange-600">₹{{ summary.discount|floatformat:2 }}</p>
       </div>
 
       <div
@@ -121,7 +122,7 @@
           <i class="fas fa-ticket-alt text-white text-2xl"></i>
         </div>
         <p class="text-sm font-bold text-gray-500 uppercase mb-2">Coupons</p>
-        <p class="text-3xl font-black text-purple-600">₹{{ summary.coupon }}</p>
+        <p class="text-3xl font-black text-purple-600">₹{{ summary.coupon|floatformat:2 }}</p>
       </div>
 
       <div
@@ -132,18 +133,21 @@
           <i class="fas fa-wallet text-white text-2xl"></i>
         </div>
         <p class="text-sm font-bold text-gray-500 uppercase mb-2">Net Sales</p>
-        <p class="text-3xl font-black text-gray-900">₹{{ summary.net }}</p>
+        <p class="text-3xl font-black text-gray-900">₹{{ summary.net|floatformat:2 }}</p>
       </div>
     </div>
 
-    <!-- Sales Table - Enhanced Design -->
+    <!-- Orders Table - Professional Order-Level View -->
     <div class="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden fade-in"
       style="animation-delay: 0.5s;">
       <div class="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
         <div class="flex items-center justify-between">
           <div>
-            <h2 class="text-2xl font-black text-gray-900">Daily Sales Breakdown</h2>
-            <p class="text-sm text-gray-500 mt-1">Detailed sales data by date</p>
+            <h2 class="text-2xl font-black text-gray-900">Order Details</h2>
+            <p class="text-sm text-gray-500 mt-1">Individual order breakdown for the selected period</p>
+          </div>
+          <div class="text-sm text-gray-600">
+            <span class="font-bold">{{ page_obj.paginator.count }}</span> order{{ page_obj.paginator.count|pluralize }}
           </div>
         </div>
       </div>
@@ -152,39 +156,182 @@
         <table class="w-full">
           <thead class="bg-gray-50 border-b-2 border-gray-200">
             <tr>
+              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Order ID</th>
               <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Date</th>
-              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Orders</th>
-              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Gross Sales</th>
-              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Discounts</th>
-              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Coupons</th>
-              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Net Sales</th>
+              <th class="px-6 py-4 text-left text-xs font-black text-gray-700 uppercase tracking-wider">Customer</th>
+              <th class="px-6 py-4 text-center text-xs font-black text-gray-700 uppercase tracking-wider">Discount</th>
+              <th class="px-6 py-4 text-right text-xs font-black text-gray-700 uppercase tracking-wider">Total Amount</th>
+              <th class="px-6 py-4 text-center text-xs font-black text-gray-700 uppercase tracking-wider">Payment</th>
+              <th class="px-6 py-4 text-center text-xs font-black text-gray-700 uppercase tracking-wider">Status</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
-            {% for d in daily %}
+            {% for order in orders %}
             <tr class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all">
-              <td class="px-6 py-4 text-sm font-bold text-gray-900">{{ d.period|date:"d M Y" }}</td>
-              <td class="px-6 py-4 text-sm font-bold text-blue-600">{{ d.count }}</td>
-              <td class="px-6 py-4 text-sm font-bold text-green-600">₹{{ d.gross }}</td>
-              <td class="px-6 py-4 text-sm font-bold text-orange-600">₹{{ d.discount }}</td>
-              <td class="px-6 py-4 text-sm font-bold text-purple-600">₹{{ d.coupon }}</td>
-              <td class="px-6 py-4 text-sm font-bold text-gray-900">₹{{ d.net }}</td>
+              <!-- Order ID -->
+              <td class="px-6 py-4">
+                <a href="{% url 'customeradmin:order-detail' order.id %}" class="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors">
+                  #{{ order.order_number }}
+                </a>
+              </td>
+
+              <!-- Date -->
+              <td class="px-6 py-4 text-sm font-medium text-gray-700">
+                {{ order.created_at|date:"M d, Y" }}
+              </td>
+
+              <!-- Customer -->
+              <td class="px-6 py-4">
+                <div class="flex items-center">
+                  <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold mr-3">
+                    {% if order.user.first_name %}
+                      {{ order.user.first_name|make_list|first }}
+                    {% else %}
+                      {{ order.user.email|make_list|first|upper }}
+                    {% endif %}
+                  </div>
+                  <span class="text-sm font-medium text-gray-900">
+                    {% if order.user.first_name %}
+                      {{ order.user.first_name }} {{ order.user.last_name }}
+                    {% else %}
+                      {{ order.user.email }}
+                    {% endif %}
+                  </span>
+                </div>
+              </td>
+
+              <!-- Discount -->
+              <td class="px-6 py-4 text-center">
+                {% if order.discount_amount > 0 %}
+                  <span class="text-sm font-bold text-red-500">-₹{{ order.discount_amount|floatformat:0 }}</span>
+                {% elif order.coupon_discount > 0 %}
+                  <span class="text-sm font-bold text-red-500">-₹{{ order.coupon_discount|floatformat:0 }}</span>
+                {% else %}
+                  <span class="text-sm text-gray-400">—</span>
+                {% endif %}
+              </td>
+
+              <!-- Total Amount -->
+              <td class="px-6 py-4 text-right">
+                <span class="text-sm font-black text-gray-900">₹{{ order.total_amount|floatformat:2 }}</span>
+              </td>
+
+              <!-- Payment Method -->
+              <td class="px-6 py-4 text-center">
+                <span class="text-sm font-medium text-gray-700">{{ order.get_payment_method_display }}</span>
+              </td>
+
+              <!-- Status Badge -->
+              <td class="px-6 py-4 text-center">
+                {% if order.status == 'delivered' %}
+                  <span class="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full uppercase">
+                    Delivered
+                  </span>
+                {% elif order.status == 'pending' %}
+                  <span class="inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full uppercase">
+                    Pending
+                  </span>
+                {% elif order.status == 'confirmed' %}
+                  <span class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full uppercase">
+                    Confirmed
+                  </span>
+                {% elif order.status == 'processing' %}
+                  <span class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full uppercase">
+                    Processing
+                  </span>
+                {% elif order.status == 'shipped' %}
+                  <span class="inline-flex items-center px-3 py-1 bg-indigo-100 text-indigo-800 text-xs font-bold rounded-full uppercase">
+                    Shipped
+                  </span>
+                {% elif order.status == 'cancelled' %}
+                  <span class="inline-flex items-center px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full uppercase">
+                    Cancelled
+                  </span>
+                {% elif order.status == 'refunded' %}
+                  <span class="inline-flex items-center px-3 py-1 bg-purple-100 text-purple-800 text-xs font-bold rounded-full uppercase">
+                    Refunded
+                  </span>
+                {% elif order.status == 'refund_pending' %}
+                  <span class="inline-flex items-center px-3 py-1 bg-orange-100 text-orange-800 text-xs font-bold rounded-full uppercase">
+                    Refund Pending
+                  </span>
+                {% elif order.payment_status == 'failed' %}
+                  <span class="inline-flex items-center px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full uppercase">
+                    Payment_Failed
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-800 text-xs font-bold rounded-full uppercase">
+                    {{ order.status|title }}
+                  </span>
+                {% endif %}
+              </td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="6" class="px-6 py-20 text-center">
+              <td colspan="7" class="px-6 py-20 text-center">
                 <div class="inline-flex items-center justify-center w-24 h-24 bg-gray-100 rounded-full mb-6">
                   <i class="fas fa-chart-line text-4xl text-gray-400"></i>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">No Sales Data</h3>
-                <p class="text-gray-500 mb-4">No sales data available for the selected period</p>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">No Orders Found</h3>
+                <p class="text-gray-500 mb-4">No orders available for the selected period</p>
               </td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination -->
+      {% if page_obj.has_other_pages %}
+      <div class="px-8 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
+        <div class="text-sm text-gray-600">
+          Showing {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ page_obj.paginator.count }} orders
+        </div>
+        <div class="flex items-center space-x-2">
+          {% if page_obj.has_previous %}
+          <a href="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}"
+            class="w-10 h-10 flex items-center justify-center border-2 border-gray-200 rounded-xl hover:bg-purple-50 hover:border-purple-300 transition-all">
+            <i class="fas fa-chevron-left text-gray-600"></i>
+          </a>
+          {% endif %}
+
+          {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <span class="w-10 h-10 flex items-center justify-center bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold text-sm">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <a href="?{{ request.GET.urlencode }}&page={{ num }}"
+              class="w-10 h-10 flex items-center justify-center border-2 border-gray-200 rounded-xl hover:bg-purple-50 hover:border-purple-300 transition-all text-sm font-medium text-gray-700">{{ num }}</a>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+          <a href="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}"
+            class="w-10 h-10 flex items-center justify-center border-2 border-gray-200 rounded-xl hover:bg-purple-50 hover:border-purple-300 transition-all">
+            <i class="fas fa-chevron-right text-gray-600"></i>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
     </div>
+
   </div>
 </main>
+
+<style>
+  .fade-in {
+    animation: fadeIn .6s ease-out;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+  }
+  .pulse {
+    animation: pulse 2s ease-in-out infinite;
+  }
+</style>
 {% endblock %}

@@ -44,6 +44,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from django.conf import settings
 from datetime import datetime
+from reportlab.lib.pagesizes import A4, landscape
 import os
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -1082,7 +1083,8 @@ def order_list(request):
         messages.error(request, "You do not have permission to view this page.")
         return redirect("admindashboard")
 
-    orders = Order.objects.all().order_by("-created_at")
+    all_orders = Order.objects.all()
+    orders = all_orders.order_by("-created_at")
 
     search = (request.GET.get("search") or "").strip()
     if search:
@@ -1121,19 +1123,23 @@ def order_list(request):
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    if hasattr(Order, "Status") and getattr(Order.Status, "choices", None):
-        status_tuple = Order.Status.choices
-    elif hasattr(Order, "ORDERSTATUSCHOICES") and Order.ORDERSTATUSCHOICES:
-        status_tuple = Order.ORDERSTATUSCHOICES
-    else:
-        status_tuple = (
-            ("pending", "Pending"),
-            ("paid", "Paid"),
-            ("shipped", "Shipped"),
-            ("out-for-delivery", "Out for Delivery"),
-            ("delivered", "Delivered"),
-            ("cancelled", "Cancelled"),
-        )
+    # Status counts for stat cards
+    pending_count = all_orders.filter(status='pending').count()
+    delivered_count = all_orders.filter(status='delivered').count()
+    cancelled_count = all_orders.filter(status='cancelled').count()
+
+    status_tuple = (
+        ("pending", "Pending"),
+        ("confirmed", "Confirmed"),
+        ("paid", "Paid"),
+        ("processing", "Processing"),
+        ("shipped", "Shipped"),
+        ("out-for-delivery", "Out for Delivery"),
+        ("delivered", "Delivered"),
+        ("cancelled", "Cancelled"),
+        ("refunded", "Refunded"),
+        ("refund_pending", "Refund Pending"),
+    )
 
     context = {
         "orders": page_obj.object_list,
@@ -1145,6 +1151,9 @@ def order_list(request):
         "datefrom": date_from,
         "dateto": date_to,
         "totalorders": orders.count(),
+        "pending_count": pending_count,
+        "delivered_count": delivered_count,
+        "cancelled_count": cancelled_count,
     }
     return render(request, "orders/order_list.html", context)
 
@@ -1159,9 +1168,41 @@ def order_detail(request, order_id: int):
     order = get_object_or_404(Order, id=order_id)
     items = order.items.select_related("product").all().order_by("id")
     status_form = OrderStatusForm(order=order, initial={"status": order.status})
-    context = {"order": order, "items": items, "statusform": status_form}
+    
+    # Calculate active items totals (exclude cancelled and returned)
+    from decimal import Decimal
+    active_subtotal = Decimal('0')
+    for item in items:
+        if not item.is_cancelled and item.status != 'returned':
+            active_subtotal += item.total_price
+    
+    # Calculate proportional discount for active items
+    if order.subtotal and order.subtotal > 0:
+        active_ratio = active_subtotal / order.subtotal
+    else:
+        active_ratio = Decimal('1')
+    
+    active_discount = (order.discount_amount or Decimal('0')) * active_ratio
+    active_coupon_discount = (order.coupon_discount or Decimal('0')) * active_ratio
+    
+    # Calculate tax on active items after discount
+    active_after_discount = active_subtotal - active_discount - active_coupon_discount
+    active_tax = active_after_discount * Decimal('0.18')  # 18% GST
+    
+    # Grand total for active items
+    active_total = active_after_discount + active_tax + (order.shipping_charge or Decimal('0'))
+    
+    context = {
+        "order": order,
+        "items": items,
+        "statusform": status_form,
+        "active_subtotal": active_subtotal,
+        "active_discount": active_discount,
+        "active_coupon_discount": active_coupon_discount,
+        "active_tax": active_tax,
+        "active_total": active_total,
+    }
     return render(request, "orders/order_detail.html", context)
-
 
 @login_required
 @require_POST
@@ -1169,19 +1210,28 @@ def order_detail(request, order_id: int):
 @cache_control(no_cache=True, must_revalidate=True, no_store=True) 
 def order_update_status(request, order_id: int):
     if not request.user.is_superuser:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({"success": False, "error": "Permission denied."}, status=403)
         messages.error(request, "Permission denied.")
         return redirect("customeradmin:order-list")
 
     order = get_object_or_404(Order, id=order_id)
     form = OrderStatusForm(request.POST, order=order)
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     if not form.is_valid():
-        messages.error(request, "; ".join([str(v[0]) for v in form.errors.values()]))
-        return redirect("order-detail", order_id=order.id)
+        error_msg = "; ".join([str(v[0]) for v in form.errors.values()])
+        if is_ajax:
+            return JsonResponse({"success": False, "error": error_msg}, status=400)
+        messages.error(request, error_msg)
+        return redirect("customeradmin:order-detail", order_id=order.id)
 
     new_status = form.cleaned_data.get("status")
     if not new_status:
+        if is_ajax:
+            return JsonResponse({"success": False, "error": "Status is required."}, status=400)
         messages.error(request, "Status is required.")
-        return redirect("order-detail", order_id=order.id)
+        return redirect("customeradmin:order-detail", order_id=order.id)
 
     old_status = order.status
 
@@ -1192,7 +1242,6 @@ def order_update_status(request, order_id: int):
             if not getattr(product, "manage_stock", True):
                 continue
             
-            # Check if item has variant
             if hasattr(item, 'variant_id') and item.variant_id:
                 try:
                     variant = ProductVariant.objects.get(id=item.variant_id)
@@ -1200,12 +1249,10 @@ def order_update_status(request, order_id: int):
                         raise ValueError(f"Insufficient stock for {product.name} - {variant.material}.")
                     variant.stock_quantity -= item.quantity
                     variant.save()
-                    # Update product status
                     product.update_status_from_variants()
                 except ProductVariant.DoesNotExist:
                     pass
             else:
-                # Fallback for products without variants
                 if product.stock_quantity < item.quantity:
                     raise ValueError(f"Insufficient stock for {product.name} (SKU {product.sku}).")
                 product.stock_quantity -= item.quantity
@@ -1219,7 +1266,6 @@ def order_update_status(request, order_id: int):
                 continue
             remaining = item.remaining_qty 
             if remaining > 0:
-                # Check if item has variant
                 if hasattr(item, 'variant_id') and item.variant_id:
                     try:
                         variant = ProductVariant.objects.get(id=item.variant_id)
@@ -1234,16 +1280,6 @@ def order_update_status(request, order_id: int):
                 item.cancelled_qty += remaining
                 item.save(update_fields=["cancelled_qty", "updated_at"])
 
-    def mark_shipped_full():
-        for item in order.items.all():
-            if item.remaining_qty > 0:
-                item.mark_shipped_full()
-
-    def mark_delivered_full():
-        for item in order.items.all():
-            if item.remaining_qty > 0:
-                item.mark_delivered_full()
-
     try:
         if old_status == "pending" and new_status == "paid":
             deduct_for_paid()
@@ -1251,16 +1287,50 @@ def order_update_status(request, order_id: int):
         if new_status == "cancelled":
             restock_for_cancel()
 
-        print(order.status)
-        order.status =new_status
+        order.status = new_status
         order.updated_at = timezone.now() 
         order.save()
+
+        if is_ajax:
+            # Build the status badge HTML
+            status_badges = {
+                'pending': ('bg-yellow-100 text-yellow-800', 'bg-yellow-500', 'Pending'),
+                'confirmed': ('bg-blue-100 text-blue-800', 'bg-blue-500', 'Confirmed'),
+                'paid': ('bg-blue-100 text-blue-800', 'bg-blue-500', 'Paid'),
+                'processing': ('bg-cyan-100 text-cyan-800', 'bg-cyan-500', 'Processing'),
+                'shipped': ('bg-indigo-100 text-indigo-800', 'bg-indigo-500', 'Shipped'),
+                'out-for-delivery': ('bg-orange-100 text-orange-800', 'bg-orange-500', 'Out for Delivery'),
+                'delivered': ('bg-green-100 text-green-800', 'bg-green-500', 'Delivered'),
+                'cancelled': ('bg-red-100 text-red-800', 'bg-red-500', 'Cancelled'),
+                'refunded': ('bg-gray-100 text-gray-800', 'bg-gray-500', 'Refunded'),
+                'refund_pending': ('bg-orange-100 text-orange-800', 'bg-orange-500', 'Refund Pending'),
+            }
+            badge = status_badges.get(new_status, ('bg-gray-100 text-gray-800', 'bg-gray-500', new_status.title()))
+            badge_html = f'<span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold {badge[0]}"><span class="w-2 h-2 rounded-full {badge[1]}"></span>{badge[2]}</span>'
+
+            # Build new allowed statuses for dropdown
+            allowed = order.get_allowed_next_statuses()
+            options_html = ""
+            for val, label in allowed:
+                selected = "selected" if val == new_status else ""
+                options_html += f'<option value="{val}" {selected}>{label}</option>'
+
+            return JsonResponse({
+                "success": True,
+                "new_status": new_status,
+                "badge_html": badge_html,
+                "options_html": options_html,
+                "message": f"Order updated to {badge[2]}",
+            })
+
     except Exception as e:
         print(e)
         transaction.set_rollback(True)
+        if is_ajax:
+            return JsonResponse({"success": False, "error": str(e)}, status=400)
         messages.error(request, f"Error updating order: {e}")
-    return redirect("customeradmin:order-list")
 
+    return redirect("customeradmin:order-list")
 
 
 @login_required
@@ -1543,26 +1613,66 @@ def coupon_delete(request, coupon_id):
     return JsonResponse({"success": True})
 
 def _sales_qs(start, end):
-    """Paid orders between two aware datetimes."""
+    """Paid orders between two aware datetimes, excluding fully cancelled/refunded."""
     return Order.objects.filter(
         created_at__gte=start,
         created_at__lt=end,
         payment_status="paid"
+    ).exclude(
+        status__in=['cancelled', 'refunded']
     )
 
 
 def _aggregate(qs):
-    gross = qs.aggregate(total=Sum("total_amount"))["total"] or Decimal("0")
-    discount = qs.aggregate(total=Sum("discount_amount"))["total"] or Decimal("0")
-    coupon = qs.aggregate(total=Sum("coupon_discount"))["total"] or Decimal("0")
+    from authenticate.models import OrderItem
+    from decimal import Decimal
+    
+    order_ids = qs.values_list('id', flat=True)
+    
+    # Sum only active items (not cancelled, not returned)
+    active_items = OrderItem.objects.filter(
+        order_id__in=order_ids,
+        is_cancelled=False
+    ).exclude(status='returned')
+    
+    active_subtotal = active_items.aggregate(
+        total=Sum('total_price')
+    )['total'] or Decimal('0')
+    
+    # Get original totals to compute ratio
+    original_totals = qs.aggregate(
+        gross=Sum("total_amount"),
+        subtotal=Sum("subtotal"),
+        discount=Sum("discount_amount"),
+        coupon=Sum("coupon_discount"),
+    )
+    
+    original_subtotal = original_totals['subtotal'] or Decimal('1')
+    original_gross = original_totals['gross'] or Decimal('0')
+    original_discount = original_totals['discount'] or Decimal('0')
+    original_coupon = original_totals['coupon'] or Decimal('0')
+    
+    # Calculate proportional discount for active items
+    if original_subtotal > 0:
+        active_ratio = active_subtotal / original_subtotal
+    else:
+        active_ratio = Decimal('1')
+    
+    adjusted_discount = original_discount * active_ratio
+    adjusted_coupon = original_coupon * active_ratio
+    
+    # Recalculate gross with tax
+    after_discount = active_subtotal - adjusted_discount - adjusted_coupon
+    tax = after_discount * Decimal('0.18')
+    adjusted_gross = after_discount + tax
+    
     return {
-        "gross": gross,
-        "discount": discount,
-        "coupon": coupon,
-        "net": gross - discount - coupon,
+        "gross": adjusted_gross,
+        "discount": adjusted_discount,
+        "coupon": adjusted_coupon,
+        "net": adjusted_gross - adjusted_discount - adjusted_coupon,
         "count": qs.count(),
     }
-
 
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
@@ -1612,6 +1722,15 @@ def sales_report(request):
         .order_by("period")
     )
 
+    # Get individual orders for the order-level table
+    orders = qs.select_related('user', 'coupon').order_by('-created_at')
+
+    # Pagination
+    from django.core.paginator import Paginator
+    paginator = Paginator(orders, 15)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     request.session["report_filters"] = {
         "start": start.isoformat(),
         "end": end.isoformat(),
@@ -1620,6 +1739,8 @@ def sales_report(request):
     context = {
         "summary": summary,
         "daily": daily,
+        "orders": page_obj,
+        "page_obj": page_obj,
         "filter_type": filter_type,
         "start": start.date(),
         "end": (end - timedelta(seconds=1)).date(),  
@@ -1633,8 +1754,8 @@ def sales_report(request):
         traceback.print_exc()
         raise
 
-def _pdf_response(data, title="Sales Report"):
-    
+
+def _pdf_response(orders_qs, start, end, title="Sales Report"):
     
     font_path = os.path.join(
         settings.BASE_DIR,
@@ -1647,81 +1768,92 @@ def _pdf_response(data, title="Sales Report"):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer, 
-        pagesize=A4,
-        rightMargin=40,
-        leftMargin=40,
-        topMargin=40,
-        bottomMargin=40
+        pagesize=landscape(A4),
+        rightMargin=30,
+        leftMargin=30,
+        topMargin=30,
+        bottomMargin=30
     )
     elements = []
     styles = getSampleStyleSheet()
     
+    # Company Header
     company_style = ParagraphStyle(
         'CompanyHeader',
         parent=styles['Heading1'],
-        fontSize=24,
-        textColor=colors.HexColor('#4A5568'),
-        spaceAfter=6,
+        fontSize=22,
+        textColor=colors.HexColor('#2D3748'),
+        spaceAfter=4,
         alignment=TA_CENTER,
         fontName='DejaVu'
     )
     elements.append(Paragraph("SITWELL FURNITURE", company_style))
     
+    # Report Title
     title_style = ParagraphStyle(
         'ReportTitle',
         parent=styles['Heading2'],
-        fontSize=16,
+        fontSize=14,
         textColor=colors.HexColor('#667eea'),
-        spaceAfter=20,
+        spaceAfter=6,
         alignment=TA_CENTER,
         fontName='DejaVu'
     )
     elements.append(Paragraph(title.upper(), title_style))
     
+    # Date Range
     date_style = ParagraphStyle(
         'DateStyle',
         parent=styles['Normal'],
         fontSize=9,
         textColor=colors.grey,
-        spaceAfter=20,
+        spaceAfter=8,
         alignment=TA_CENTER,
         fontName='DejaVu'
     )
     generated_date = datetime.now().strftime("%B %d, %Y at %I:%M %p")
-    elements.append(Paragraph(f"Generated on: {generated_date}", date_style))
+    if start and end:
+        elements.append(Paragraph(
+            f"Period: {start.strftime('%d %b %Y')} to {end.strftime('%d %b %Y')} | Generated: {generated_date}", 
+            date_style
+        ))
+    else:
+        elements.append(Paragraph(f"Generated on: {generated_date}", date_style))
     
-    elements.append(Spacer(1, 20))
+    elements.append(Spacer(1, 10))
     
-    total_orders = sum(row["count"] for row in data)
-    total_gross = sum(row["gross"] or 0 for row in data)
-    total_discount = sum(row["discount"] or 0 for row in data)
-    total_coupon = sum(row["coupon"] or 0 for row in data)
+    # Summary Section
+    from decimal import Decimal
+    
+    total_orders = orders_qs.count()
+    total_gross = orders_qs.aggregate(total=Sum("total_amount"))["total"] or Decimal("0")
+    total_discount = orders_qs.aggregate(total=Sum("discount_amount"))["total"] or Decimal("0")
+    total_coupon = orders_qs.aggregate(total=Sum("coupon_discount"))["total"] or Decimal("0")
     total_net = total_gross - total_discount - total_coupon
     
     summary_data = [
-        ["SUMMARY", "", "", ""],
-        ["Total Orders", str(total_orders), "Total Discounts", f"₹{total_discount:,.2f}"],
-        ["Gross Sales", f"₹{total_gross:,.2f}", "Coupon Discounts", f"₹{total_coupon:,.2f}"],
-        ["NET SALES", f"₹{total_net:,.2f}", "", ""],
+        ["SALES SUMMARY", "", "", ""],
+        ["Total Orders", str(total_orders), "Total Discounts", f"Rs.{total_discount:,.2f}"],
+        ["Gross Sales", f"Rs.{total_gross:,.2f}", "Coupon Discounts", f"Rs.{total_coupon:,.2f}"],
+        ["NET SALES", f"Rs.{total_net:,.2f}", "", ""],
     ]
     
-    summary_table = Table(summary_data, colWidths=[120, 120, 120, 120])
+    summary_table = Table(summary_data, colWidths=[120, 130, 120, 130])
     summary_table.setStyle(TableStyle([
-       
         ('SPAN', (0, 0), (3, 0)),
-        ('BACKGROUND', (0, 0), (3, 0), colors.HexColor('#667eea')),
+        ('BACKGROUND', (0, 0), (3, 0), colors.HexColor('#2D3748')),
         ('TEXTCOLOR', (0, 0), (3, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (3, 0), 'CENTER'),
         ('FONTNAME', (0, 0), (3, 0), 'DejaVu'),
-        ('FONTSIZE', (0, 0), (3, 0), 12),
-        ('BOTTOMPADDING', (0, 0), (3, 0), 12),
-        ('TOPPADDING', (0, 0), (3, 0), 12),
+        ('FONTSIZE', (0, 0), (3, 0), 11),
+        ('BOTTOMPADDING', (0, 0), (3, 0), 10),
+        ('TOPPADDING', (0, 0), (3, 0), 10),
         
         ('BACKGROUND', (0, 1), (3, 2), colors.HexColor('#F7FAFC')),
         ('FONTNAME', (0, 1), (3, 2), 'DejaVu'),
         ('ALIGN', (1, 1), (1, 2), 'RIGHT'),
         ('ALIGN', (3, 1), (3, 2), 'RIGHT'),
-        ('FONTSIZE', (0, 1), (3, 2), 10),
+        ('FONTSIZE', (0, 1), (3, 2), 9),
         ('TOPPADDING', (0, 1), (3, 2), 8),
         ('BOTTOMPADDING', (0, 1), (3, 2), 8),
         
@@ -1730,7 +1862,7 @@ def _pdf_response(data, title="Sales Report"):
         ('BACKGROUND', (0, 3), (1, 3), colors.HexColor('#48BB78')),
         ('TEXTCOLOR', (0, 3), (1, 3), colors.whitesmoke),
         ('FONTNAME', (0, 3), (1, 3), 'DejaVu'),
-        ('FONTSIZE', (0, 3), (1, 3), 12),
+        ('FONTSIZE', (0, 3), (1, 3), 11),
         ('ALIGN', (0, 3), (1, 3), 'CENTER'),
         ('TOPPADDING', (0, 3), (1, 3), 10),
         ('BOTTOMPADDING', (0, 3), (1, 3), 10),
@@ -1740,62 +1872,149 @@ def _pdf_response(data, title="Sales Report"):
     ]))
     
     elements.append(summary_table)
-    elements.append(Spacer(1, 30))
+    elements.append(Spacer(1, 10))
     
-    breakdown_style = ParagraphStyle(
-        'BreakdownHeader',
-        parent=styles['Heading3'],
-        fontSize=12,
-        textColor=colors.HexColor('#4A5568'),
-        spaceAfter=10,
-        fontName='DejaVu'
+    # Total Orders count row
+    total_row_data = [["Total Orders", str(total_orders)]]
+    total_row_table = Table(total_row_data, colWidths=[120, 50])
+    total_row_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#EDF2F7')),
+        ('FONTNAME', (0, 0), (-1, 0), 'DejaVu'),
+        ('FONTSIZE', (0, 0), (-1, 0), 9),
+        ('ALIGN', (1, 0), (1, 0), 'CENTER'),
+        ('TOPPADDING', (0, 0), (-1, 0), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
+        ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#CBD5E0')),
+    ]))
+    elements.append(total_row_table)
+    elements.append(Spacer(1, 15))
+    
+    # Cell style for wrapping text
+    cell_style = ParagraphStyle(
+        'CellStyle',
+        parent=styles['Normal'],
+        fontSize=7,
+        fontName='DejaVu',
+        leading=9,
     )
-    elements.append(Paragraph("DAILY BREAKDOWN", breakdown_style))
     
-    table_data = [["Date", "Orders", "Gross Sales", "Discounts", "Coupons", "Net Sales"]]
+    green_cell_style = ParagraphStyle(
+        'GreenCellStyle',
+        parent=styles['Normal'],
+        fontSize=7,
+        fontName='DejaVu',
+        leading=9,
+        textColor=colors.HexColor('#38A169'),
+    )
     
-    for row in data:
-        net = (row["gross"] or 0) - (row["discount"] or 0) - (row["coupon"] or 0)
-        table_data.append([
-            row["period"].strftime("%d %b %Y") if hasattr(row["period"], 'strftime') else str(row["period"]),
-            str(row["count"]),
-            f"₹{row['gross']:,.2f}" if row['gross'] else "₹0.00",
-            f"₹{row['discount']:,.2f}" if row['discount'] else "₹0.00",
-            f"₹{row['coupon']:,.2f}" if row['coupon'] else "₹0.00",
-            f"₹{net:,.2f}",
-        ])
+    # Table headers matching screenshot
+    table_data = [["Date", "Order #", "Customer", "Product", "MRP", "Sold At", "Qty", "Disc.", "Total", "Status"]]
     
-    t = Table(table_data, colWidths=[80, 50, 85, 85, 85, 95])
-    t.setStyle(TableStyle([
-        
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A5568')),
+    # Build rows - one per order item
+    orders = orders_qs.select_related('user').prefetch_related('items__product').order_by('-created_at')
+    
+    for order in orders:
+        for item in order.items.all():
+            # Get customer name
+            if order.user.first_name:
+                customer_name = f"{order.user.first_name} {order.user.last_name}"
+            else:
+                customer_name = order.user.email[:20]
+            
+            # Product name (truncate)
+            product_name = item.product_name
+            if item.variant_material:
+                product_name = f"{item.product_name} ({item.variant_material})"
+            if len(product_name) > 35:
+                product_name = product_name[:32] + "..."
+            
+            # MRP = original price from Product model
+            if item.product:
+                mrp = item.product.price
+            else:
+                mrp = item.product_price  # fallback if product deleted
+            
+            # Sold at = the actual selling price per unit (after product discount)
+            sold_at = item.product_price
+            
+            # Discount per item = MRP - selling price
+            disc = mrp - sold_at if mrp > sold_at else Decimal('0')
+            
+            # Item status
+            if item.is_cancelled:
+                status = "Cancelled"
+            elif item.status == 'returned':
+                status = "Returned"
+            elif order.status == 'delivered':
+                status = "Delivered"
+            elif order.payment_status == 'failed':
+                status = "Payment_Failed"
+            elif order.status == 'shipped':
+                status = "Shipped"
+            elif order.status == 'confirmed':
+                status = "Confirmed"
+            else:
+                status = order.status.replace('_', ' ').title()
+            
+            # Format discount with green color
+            if disc > 0:
+                disc_display = Paragraph(f"Rs.{disc:,.0f}", green_cell_style)
+            else:
+                disc_display = ""
+            
+            table_data.append([
+                order.created_at.strftime("%Y-%m-%d"),
+                str(order.order_number)[:16],
+                Paragraph(customer_name, cell_style),
+                Paragraph(product_name, cell_style),
+                f"Rs.{mrp:,.0f}",
+                f"Rs.{sold_at:,.0f}",
+                str(item.quantity),
+                disc_display,
+                f"Rs.{item.total_price:,.0f}",
+                status,
+            ])
+    
+    col_widths = [62, 85, 80, 135, 55, 52, 28, 50, 58, 75]
+    
+    t = Table(table_data, colWidths=col_widths, repeatRows=1)
+    
+    style_commands = [
+        # Header row
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2D3748')),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('FONTNAME', (0, 0), (-1, 0), 'DejaVu'),
-        ('FONTSIZE', (0, 0), (-1, 0), 9),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
-        ('TOPPADDING', (0, 0), (-1, 0), 10),
+        ('FONTSIZE', (0, 0), (-1, 0), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+        ('TOPPADDING', (0, 0), (-1, 0), 8),
         
-        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-        ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#2D3748')),
-        ('ALIGN', (0, 1), (0, -1), 'LEFT'),
-        ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
+        # Data rows
         ('FONTNAME', (0, 1), (-1, -1), 'DejaVu'),
-        ('FONTSIZE', (0, 1), (-1, -1), 8),
-        ('TOPPADDING', (0, 1), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
-        ('LEFTPADDING', (0, 1), (-1, -1), 8),
-        ('RIGHTPADDING', (0, 1), (-1, -1), 8),
+        ('FONTSIZE', (0, 1), (-1, -1), 7),
+        ('TOPPADDING', (0, 1), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 5),
+        ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
         
+        # Alignment
+        ('ALIGN', (4, 1), (6, -1), 'RIGHT'),   # MRP, Sold At, Qty
+        ('ALIGN', (7, 1), (8, -1), 'RIGHT'),   # Disc, Total
+        ('ALIGN', (9, 1), (9, -1), 'CENTER'),  # Status
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        
+        # Alternating row colors
         ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F7FAFC')]),
         
+        # Grid
         ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E2E8F0')),
         ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#CBD5E0')),
-    ]))
+    ]
     
+    t.setStyle(TableStyle(style_commands))
     elements.append(t)
     
-    elements.append(Spacer(1, 20))
+    elements.append(Spacer(1, 15))
     footer_style = ParagraphStyle(
         'Footer',
         parent=styles['Normal'],
@@ -1812,7 +2031,6 @@ def _pdf_response(data, title="Sales Report"):
     response = HttpResponse(buffer, content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="{title.replace(" ", "_")}.pdf"'
     return response
-
 
 def _excel_response(data, title="Sales Report"):
     from openpyxl.utils import get_column_letter
@@ -1841,14 +2059,10 @@ def sales_report_download(request, format):
     if not request.user.is_superuser:
         return HttpResponse("Forbidden", status=403)
     
-    print("=== SALES REPORT DOWNLOAD DEBUG ===")
-    print(f"Format: {format}")
-    
     filter_type = request.GET.get("filter", "day")
     
     try:
         if request.GET.get("from") and request.GET.get("to"):
-           
             start_str = request.GET.get("from")
             end_str = request.GET.get("to")
             start = make_aware(datetime.strptime(start_str, "%Y-%m-%d"))
@@ -1860,27 +2074,25 @@ def sales_report_download(request, format):
             start = datetime.fromisoformat(filters["start"])
             end = datetime.fromisoformat(filters["end"])
     except Exception as e:
-        print(f"Error parsing dates: {e}")
-        import traceback
-        traceback.print_exc()
         return HttpResponse("Invalid date parameters", status=400)
     
     qs = _sales_qs(start, end)
-    daily = (
-        qs.annotate(period=TruncDate("created_at"))
-        .values("period")
-        .annotate(
-            gross=Sum("total_amount"),
-            discount=Sum("discount_amount"),
-            coupon=Sum("coupon_discount"),
-            count=Sum(Value(1)),
-        )
-        .order_by("period")
-    )
     
     if format == "pdf":
-        return _pdf_response(daily)
+        return _pdf_response(qs, start, end)
     if format == "excel":
+        # Build daily data for excel (keeping existing format)
+        daily = (
+            qs.annotate(period=TruncDate("created_at"))
+            .values("period")
+            .annotate(
+                gross=Sum("total_amount"),
+                discount=Sum("discount_amount"),
+                coupon=Sum("coupon_discount"),
+                count=Sum(Value(1)),
+            )
+            .order_by("period")
+        )
         return _excel_response(daily)
     return HttpResponse("Bad format", status=400)
 

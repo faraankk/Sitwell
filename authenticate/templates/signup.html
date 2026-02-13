@@ -446,6 +446,24 @@
                     {% endif %}
                 </div>
 
+                <!-- Referral Code Field -->
+                <div class="form-field">
+                    <label for="id_referral_code">
+                        <i class="fas fa-user-plus"></i>Referral Code <span style="color: #999; font-weight: 400;">(Optional)</span>
+                    </label>
+                    <input type="text" name="referral_code" id="id_referral_code"
+                           placeholder="Enter referral code" maxlength="8"
+                           value="{{ form.referral_code.value|default:'' }}"
+                           style="text-transform: uppercase;">
+                    {% if form.referral_code.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.referral_code.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
                 <button type="submit" class="create-account">
                     <i class="fas fa-user-plus" style="margin-right: 8px;"></i>Create Account
                 </button>

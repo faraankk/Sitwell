@@ -75,6 +75,7 @@
         margin-bottom: 15px;
         transition: all 0.3s ease;
         background: white;
+        align-items: center;
     }
     .item:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.1); transform: translateY(-3px); border-color: #667eea; }
     .item:last-child { margin-bottom: 0; }
@@ -93,6 +94,7 @@
     .status-delivered { background: #d4edda; color: #155724; }
     .status-cancelled { background: #f8d7da; color: #721c24; }
     .status-returned { background: #f8d7da; color: #721c24; }
+
     /* Item Status Badges */
     .item-status-badge {
         display: inline-flex;
@@ -125,7 +127,8 @@
         display: flex;
         align-items: center;
         justify-content: flex-end;
-        min-width: 120px;
+        min-width: 180px;
+        gap: 8px;
     }
 
     .btn-cancel-item {
@@ -150,33 +153,45 @@
         box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
     }
 
-    .btn-cancel-item i {
+    .btn-return-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        background: transparent;
+        border: 2px solid #ffc107;
+        color: #856404;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-return-item:hover {
+        background: #ffc107;
+        color: #333;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+    }
+
+    .btn-cancel-item i, .btn-return-item i {
         font-size: 12px;
     }
 
-    /* Update item layout to accommodate actions */
-    .item {
-        display: flex;
-        gap: 20px;
-        padding: 20px;
-        border: 2px solid #e9ecef;
-        border-radius: 12px;
-        margin-bottom: 15px;
-        transition: all 0.3s ease;
-        background: white;
-        align-items: center;  /* Add this */
-    }
-
-    /* Cancelled item styling */
-    .item.cancelled-item {
+    /* Cancelled/Returned item styling */
+    .item.cancelled-item,
+    .item.returned-item {
         opacity: 0.6;
         background: #f8f9fa;
     }
 
-    .item.cancelled-item .item-name {
+    .item.cancelled-item .item-name,
+    .item.returned-item .item-name {
         text-decoration: line-through;
         color: #6c757d;
     }
+
     .btn-primary {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: none;
@@ -278,6 +293,7 @@
         .order-info { grid-template-columns: 1fr; padding: 20px; }
         .item { flex-direction: column; gap: 15px; }
         .thumb { width: 100%; height: auto; flex: none; }
+        .item-actions { width: 100%; justify-content: flex-start; min-width: auto; }
         .action-buttons { flex-direction: column; }
         .btn-secondary { margin-right: 0; margin-bottom: 10px; width: 100%; justify-content: center; }
         .btn-primary, .btn-outline-danger { width: 100%; justify-content: center; }
@@ -356,7 +372,7 @@
 
     {% if items %}
         {% for item in items %}
-        <div class="item">
+        <div class="item {% if item.is_cancelled %}cancelled-item{% elif item.is_returned %}returned-item{% endif %}">
             {% if item.product and item.product.images.exists %}
                 <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product_name }}" class="thumb">
             {% else %}
@@ -374,7 +390,7 @@
                     <span class="item-status-badge cancelled">
                         <i class="fas fa-times-circle"></i> Cancelled
                     </span>
-                {% elif item.status == 'returned' %}
+                {% elif item.is_returned %}
                     <span class="item-status-badge returned">
                         <i class="fas fa-undo"></i> Returned
                     </span>
@@ -385,13 +401,21 @@
                 {% endif %}
             </div>
             
-            <!-- Individual Item Cancel Button -->
+            <!-- Individual Item Actions -->
             <div class="item-actions">
-                {% if order.can_be_cancelled and not item.is_cancelled %}
+                {% if order.can_be_cancelled and not item.is_cancelled and not item.is_returned %}
                     <a href="{% url 'cancel_order_item' order.order_number item.id %}" 
-                    class="btn-cancel-item" 
-                    title="Cancel this item">
-                        <i class="fas fa-times"></i> Cancel Item
+                       class="btn-cancel-item" 
+                       title="Cancel this item">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                {% endif %}
+                
+                {% if order.status == 'delivered' and not item.is_cancelled and not item.is_returned and item.can_be_returned %}
+                    <a href="{% url 'return_order_item' order.order_number item.id %}" 
+                       class="btn-return-item" 
+                       title="Return this item">
+                        <i class="fas fa-undo"></i> Return
                     </a>
                 {% endif %}
             </div>
@@ -411,7 +435,6 @@
         </a>
 
         {% if order.can_be_cancelled %}
-            <!-- ✅ Directly go to cancel_order page (GET) -->
             <a href="{% url 'cancel_order' order.order_number %}" class="btn-outline-danger">
                 <i class="fas fa-times"></i>Cancel Order
             </a>

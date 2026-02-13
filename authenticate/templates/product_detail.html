@@ -53,6 +53,23 @@
     border-left: 4px solid #ef4444;
   }
 
+  .zoom-wrapper {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: zoom-in;
+}
+
+.zoom-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform-origin: center;
+  transition: transform 0.15s ease-out;
+  will-change: transform;
+}
+
+
   .close-btn {
     position: absolute;
     right: 15px;
@@ -139,39 +156,41 @@
     transform: scale(1.1);
   }
 
-  .product-image-container {
-    background: white;
-    border-radius: 15px;
-    padding: 40px;
-    text-align: center;
-    transition: all .3s ease;
-    min-height: 550px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, .08);
-    border: 2px solid #f0f0f0;
-  }
+.product-image-container {
+  background: white;
+  border-radius: 15px;
+  padding: 20px;
+  text-align: center;
+  transition: all .3s ease;
+  height: 480px;                 /* FIXED HEIGHT */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,.08);
+  border: 2px solid #f0f0f0;
+  overflow: hidden;             /* IMPORTANT */
+}
+
+.product-image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;          /* PERFECT FIT */
+  transition: transform .3s ease;
+}
+
 
   .product-image-container:hover {
     box-shadow: 0 8px 30px rgba(0, 0, 0, .12);
   }
 
-  .product-image-container img {
-    max-width: 100%;
-    max-height: 450px;
-    object-fit: contain;
-    transition: transform .3s ease;
-    cursor: zoom-in;
-  }
 
   .product-image-container img.zoomed {
     cursor: zoom-out;
-    transform: scale(1.5);
+    transform: scale(2.5);
   }
 
   .product-image-container:hover img:not(.zoomed) {
-    transform: scale(1.05);
+    transform: scale(2.05);
   }
 
   .no-image {
@@ -613,15 +632,101 @@
     color: white;
   }
 
-  /* Responsive */
+    /* --- RESPONSIVE IMAGE ALIGNMENT FIX --- */
+
+  /* Tablet breakpoint */
+  @media (max-width: 1100px) {
+    .main-container {
+      grid-template-columns: 100px 1fr 380px;
+      gap: 25px;
+    }
+    
+ 
+    
+    .thumbnail {
+      width: 85px;
+      height: 85px;
+    }
+  }
+
+  /* Mobile/Tablet breakpoint */
   @media (max-width: 992px) {
     .main-container {
       grid-template-columns: 1fr;
+      gap: 20px;
     }
     
     .product-thumbnails {
       flex-direction: row;
       overflow-x: auto;
+      padding: 10px 0;
+      gap: 10px;
+      order: 2;
+      justify-content: center;
+    }
+    
+    .product-image-container {
+      order: 1;
+      min-height: 400px;
+    }
+    
+    .product-details {
+      order: 3;
+    }
+    
+    .thumbnail {
+      flex-shrink: 0;
+      width: 80px;
+      height: 80px;
+    }
+  }
+
+  /* Small mobile breakpoint */
+  @media (max-width: 576px) {
+    .main-container {
+      padding: 0 15px 40px;
+      gap: 15px;
+    }
+    
+    .product-image-container {
+      min-height: 300px;
+      padding: 20px;
+      border-radius: 12px;
+    }
+    
+    .product-image-container img {
+      max-height: 280px;
+    }
+    
+    .thumbnail {
+      width: 65px;
+      height: 65px;
+      border-radius: 8px;
+    }
+    
+    .product-thumbnails {
+      gap: 8px;
+      justify-content: flex-start;
+      padding-left: 10px;
+    }
+    
+    .product-details {
+      padding: 20px;
+      border-radius: 12px;
+    }
+    
+    .product-details h1 {
+      font-size: 22px;
+    }
+    
+    .price-current {
+      font-size: 26px;
+    }
+    
+    .breadcrumb {
+      padding: 0 15px;
+      font-size: 13px;
+      flex-wrap: wrap;
     }
   }
 </style>
@@ -675,13 +780,16 @@
     {% endif %}
   </div>
 
-  <div class="product-image-container">
-    {% if main_image %}
+<div class="product-image-container">
+  {% if main_image %}
+  <div class="zoom-wrapper">
     <img id="mainImage" src="{{ main_image.image.url }}" alt="{{ product.name }}">
-    {% else %}
-    <div class="no-image">📷</div>
-    {% endif %}
   </div>
+  {% else %}
+  <div class="no-image">📷</div>
+  {% endif %}
+</div>
+
 
   <div class="product-details">
     <h1>{{ product.name }}</h1>
@@ -979,15 +1087,23 @@
   // Wishlist toggle
   function toggleWishlist(btn, pid) {
     const added = btn.classList.contains('added');
+    const variantInput = document.getElementById('selected-variant');
+    
+    const body = new FormData();
+    if (variantInput && variantInput.value) {
+        body.append('variant_id', variantInput.value);
+    }
+    
     fetch((added ? `/wishlist/remove/` : `/wishlist/add/`) + pid + '/', { 
       method: 'POST', 
-      headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value } 
+      headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value },
+      body: body
     })
-      .then(r => r.json()).then(d => {
-        if (!d.success) return Swal.fire({ icon: 'error', title: 'Error', text: d.message, confirmButtonColor: '#667eea' });
+      .then(r => r.json())
+      .then(d => {
+        if (!d.success) return alert(d.message || 'Error');
         btn.classList.toggle('added');
         btn.querySelector('.wl-text').textContent = added ? 'Add to Wishlist' : 'Remove from Wishlist';
-        if (typeof updateWishlistCount === 'function') updateWishlistCount(d.wishlist_count);
       });
   }
 
@@ -1041,4 +1157,29 @@
     setTimeout(() => a.remove(), 300); 
   }), 5000);
 </script>
+
+<script>
+const zoomWrapper = document.querySelector(".zoom-wrapper");
+const zoomImage = document.getElementById("mainImage");
+
+if (zoomWrapper && zoomImage) {
+
+  zoomWrapper.addEventListener("mousemove", function (e) {
+    const rect = zoomWrapper.getBoundingClientRect();
+
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    zoomImage.style.transformOrigin = `${x}% ${y}%`;
+    zoomImage.style.transform = "scale(2)";
+  });
+
+  zoomWrapper.addEventListener("mouseleave", function () {
+    zoomImage.style.transformOrigin = "center";
+    zoomImage.style.transform = "scale(1)";
+  });
+
+}
+</script>
+
 {% endblock %}

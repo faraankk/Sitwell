@@ -7,6 +7,9 @@ from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.utils import timezone
 from decimal import Decimal
+from cloudinary.models import CloudinaryField
+import random
+import string
 CustomUser = settings.AUTH_USER_MODEL
 
 class SoftDeleteManager(models.Manager):
@@ -79,7 +82,7 @@ class Product(models.Model):
     
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     
-    image = models.ImageField(upload_to='products/', blank=True, null=True)
+    image = CloudinaryField('image', folder='products/', blank=True, null=True)
     
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
@@ -327,7 +330,7 @@ class Product(models.Model):
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='products/')
+    image = CloudinaryField('image', folder='products/')
     is_primary = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -390,7 +393,7 @@ class ProductVariant(models.Model):
     stock_quantity = models.PositiveIntegerField(default=0)
     
     # Variant image (optional - falls back to product image if not set)
-    image = models.ImageField(upload_to='products/variants/', blank=True, null=True)
+    image = CloudinaryField('image', folder='products/variants/', blank=True, null=True)
     
     # Status
     is_active = models.BooleanField(default=True)
@@ -417,19 +420,18 @@ class ProductVariant(models.Model):
     
     @property
     def price(self):
-        """Get the final price for this variant (base price + adjustment)"""
-        return self.product.price + self.price_adjustment
+        return self.product.price + self.price_adjustment  
+        # product.price = 2500, price_adjustment = +2500 → variant.price = 5000
     
     @property
     def discounted_price(self):
-        """Get the discounted price for this variant"""
         if self.product.discount_type == 'percentage' and self.product.discount_value > 0:
             discount_amount = self.price * (self.product.discount_value / 100)
             return self.price - discount_amount
         elif self.product.discount_type == 'fixed' and self.product.discount_value > 0:
             return max(0, self.price - self.product.discount_value)
-        return self.price
-    
+        return self.price   # ← If no discount on variant, returns variant FULL price
+        
     def is_in_stock(self):
         """Check if variant is in stock"""
         return self.stock_quantity > 0 and self.is_active
@@ -443,7 +445,7 @@ class ProductVariant(models.Model):
 class Category(models.Model):
     name = models.CharField(max_length=200, unique=True)
     description = models.TextField(blank=True)
-    thumbnail = models.ImageField(upload_to='categories/', blank=True, null=True)
+    thumbnail = CloudinaryField('thumbnail', folder='categories/', blank=True, null=True)
     is_listed = models.BooleanField(default=True)
     
     is_deleted = models.BooleanField(default=False)
@@ -649,9 +651,8 @@ class Banner(models.Model):
     ]
     
     title = models.CharField(max_length=200, help_text="Banner title for admin reference")
-    image = models.ImageField(upload_to='banners/', help_text="Recommended size: 1920x600px for hero banners")
-    mobile_image = models.ImageField(upload_to='banners/mobile/', blank=True, null=True, 
-                                   help_text="Optional mobile-optimized image")
+    image = CloudinaryField('image', folder='banners/', help_text="Recommended size: 1920x600px for hero banners")
+    mobile_image = CloudinaryField('mobile_image', folder='banners/mobile/', blank=True, null=True)
     
     # Display settings
     position = models.CharField(max_length=20, choices=POSITION_CHOICES, default='hero')

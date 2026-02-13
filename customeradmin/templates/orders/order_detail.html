@@ -189,7 +189,7 @@
           {% endfor %}
         </tbody>
 
-        <!-- Pricing Breakdown Footer -->
+                <!-- Pricing Breakdown Footer -->
         <tfoot class="bg-gradient-to-r from-gray-50 to-white border-t-2 border-gray-200">
           <!-- Cancelled Items Summary (if any) -->
           {% for item in items %}
@@ -205,28 +205,42 @@
             {% endif %}
           {% endfor %}
           
+          <!-- Returned Items Summary (if any) -->
+          {% for item in items %}
+            {% if item.status == 'returned' %}
+          <tr class="border-b border-gray-100 bg-yellow-50">
+            <td colspan="4" class="px-6 py-2 text-right text-sm font-bold text-yellow-700">
+              <i class="fas fa-undo mr-2"></i>Returned: {{ item.product_name }} (Qty: {{ item.quantity }})
+            </td>
+            <td class="px-6 py-2 text-right text-sm font-bold text-yellow-700 line-through">
+              ₹{{ item.total_price|floatformat:2 }}
+            </td>
+          </tr>
+            {% endif %}
+          {% endfor %}
+          
           <tr class="border-b border-gray-100">
             <td colspan="4" class="px-6 py-3 text-right text-sm font-bold text-gray-700">Subtotal (Active Items):</td>
-            <td class="px-6 py-3 text-right text-sm font-bold text-gray-900">₹{{ order.subtotal|floatformat:2 }}</td>
+            <td class="px-6 py-3 text-right text-sm font-bold text-gray-900">₹{{ active_subtotal|floatformat:2 }}</td>
           </tr>
-          {% if order.discount_amount > 0 %}
+          {% if active_discount > 0 %}
           <tr class="border-b border-gray-100">
             <td colspan="4" class="px-6 py-3 text-right text-sm font-bold text-green-600">Product Discount:</td>
-            <td class="px-6 py-3 text-right text-sm font-bold text-green-600">- ₹{{ order.discount_amount|floatformat:2 }}</td>
+            <td class="px-6 py-3 text-right text-sm font-bold text-green-600">- ₹{{ active_discount|floatformat:2 }}</td>
           </tr>
           {% endif %}
-          {% if order.coupon_discount > 0 %}
+          {% if active_coupon_discount > 0 %}
           <tr class="border-b border-gray-100">
             <td colspan="4" class="px-6 py-3 text-right text-sm font-bold text-green-600">
               <i class="fas fa-ticket-alt mr-1"></i>Coupon Discount{% if order.coupon %} ({{ order.coupon.code }}){% endif %}:
             </td>
-            <td class="px-6 py-3 text-right text-sm font-bold text-green-600">- ₹{{ order.coupon_discount|floatformat:2 }}</td>
+            <td class="px-6 py-3 text-right text-sm font-bold text-green-600">- ₹{{ active_coupon_discount|floatformat:2 }}</td>
           </tr>
           {% endif %}
-          {% if order.tax_amount > 0 %}
+          {% if active_tax > 0 %}
           <tr class="border-b border-gray-100">
             <td colspan="4" class="px-6 py-3 text-right text-sm font-bold text-gray-700">Tax (18% GST):</td>
-            <td class="px-6 py-3 text-right text-sm font-bold text-gray-900">₹{{ order.tax_amount|floatformat:2 }}</td>
+            <td class="px-6 py-3 text-right text-sm font-bold text-gray-900">₹{{ active_tax|floatformat:2 }}</td>
           </tr>
           {% endif %}
           <tr class="border-b border-gray-100">
@@ -238,7 +252,7 @@
           </tr>
           <tr class="bg-gradient-to-r from-purple-50 to-pink-50">
             <td colspan="4" class="px-6 py-4 text-right text-xl font-black text-gray-900">Grand Total:</td>
-            <td class="px-6 py-4 text-right text-2xl font-black text-purple-600">₹{{ order.total_amount|floatformat:2 }}
+            <td class="px-6 py-4 text-right text-2xl font-black text-purple-600">₹{{ active_total|floatformat:2 }}
             </td>
           </tr>
         </tfoot>
@@ -283,10 +297,10 @@
     {% if not order.is_terminal_status and order.status != 'delivered' %}
     <div class="ml-auto text-sm text-gray-500"><i class="fas fa-info-circle mr-2"></i>You can cancel this order before
       it's delivered</div>
-    <button type="button" onclick="showCancelDialog()"
+    {% comment %} <button type="button" onclick="showCancelDialog()"
       class="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-bold hover:shadow-2xl transition-all">
       <i class="fas fa-times-circle mr-2"></i>Cancel Order
-    </button>
+    </button> {% endcomment %}
     {% endif %}
   </div>
 </main>
