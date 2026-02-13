@@ -6,7 +6,7 @@ from customeradmin.models import Product
 import random
 import string 
 from decimal import Decimal
-
+from cloudinary.models import CloudinaryField
 import logging
 
 logger = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     blocked_at = models.DateTimeField(blank=True, null=True)
     blocked_by = models.CharField(max_length=100, blank=True, null=True)
 
-    profile_image = models.ImageField(upload_to="profile_images/", blank=True, null=True)
+    profile_image = CloudinaryField('profile_image', folder='profile_images/', blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
     bio = models.TextField(blank=True, max_length=500)
 
@@ -243,7 +243,10 @@ class Order(models.Model):
     
     @property
     def can_be_returned(self):
-        return self.status == 'delivered'
+        if self.status != 'delivered':
+            return False
+        has_returnable_items = self.items.filter(is_returned=False, is_cancelled=False).exists()
+        return has_returnable_items
     
     # Valid status transitions - defines the allowed workflow
     STATUS_TRANSITIONS = {
@@ -301,7 +304,7 @@ class Order(models.Model):
             return False
     
     def cancel_order(self, reason=None, cancelled_by='user'):
-        """Cancel order + instant wallet refund for paid orders."""
+        """Cancel order + restore stock to variants + wallet refund for paid orders."""
         if self.can_be_cancelled:
             self.status = 'cancelled'
             self.can_cancel = False
@@ -310,11 +313,36 @@ class Order(models.Model):
             self.cancelled_by = cancelled_by
             self.save()
             
+            # Restore stock to variants
+            from customeradmin.models import ProductVariant
+            
             for item in self.items.all():
-                if item.product:
+                if item.is_cancelled:
+                    continue
+                
+                # Check if item has variant
+                if hasattr(item, 'variant_id') and item.variant_id:
+                    try:
+                        variant = ProductVariant.objects.get(id=item.variant_id)
+                        variant.stock_quantity += item.quantity
+                        variant.save()
+                        
+                        # Update product status
+                        if item.product:
+                            total_stock = item.product.get_total_variant_stock
+                            if total_stock > item.product.low_stock_threshold:
+                                item.product.status = 'published'
+                            elif total_stock > 0:
+                                item.product.status = 'low-stock'
+                            item.product.save()
+                    except ProductVariant.DoesNotExist:
+                        pass
+                elif item.product:
+                    # Fallback for products without variants
                     item.product.stock_quantity += item.quantity
                     item.product.save()
-           
+            
+            # Refund to wallet if paid
             if self.payment_status == 'paid':
                 self.process_wallet_refund(processed_by=cancelled_by)
             return True
@@ -330,8 +358,18 @@ class Order(models.Model):
             self.refund_requested_at = timezone.now()
             self.save()
             
+            from customeradmin.models import ProductVariant
             for item in self.items.all():
-                if item.product:
+                if hasattr(item, 'variant_id') and item.variant_id:
+                    try:
+                        variant = ProductVariant.objects.get(id=item.variant_id)
+                        variant.stock_quantity += item.quantity
+                        variant.save()
+                        if item.product:
+                            item.product.update_status_from_variants()
+                    except ProductVariant.DoesNotExist:
+                        pass
+                elif item.product:
                     item.product.stock_quantity += item.quantity
                     item.product.save()
             return True
@@ -349,30 +387,135 @@ class OrderItem(models.Model):
     product_name = models.CharField(max_length=200)
     product_price = models.DecimalField(max_digits=10, decimal_places=2)
     quantity = models.PositiveIntegerField()
-    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     product = models.ForeignKey('customeradmin.Product', on_delete=models.SET_NULL, null=True, blank=True)
+    
+    # Variant fields for stock management
+    variant_id = models.IntegerField(null=True, blank=True, help_text="ID of the product variant")
+    variant_material = models.CharField(max_length=100, blank=True, null=True, help_text="Material name of the variant")
+    
     status = models.CharField(max_length=20, choices=ITEM_STATUS_CHOICES, default='pending')
     is_cancelled = models.BooleanField(default=False)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    cancellation_reason = models.TextField(blank=True, null=True)
+    
+    is_returned = models.BooleanField(default=False)
+    returned_at = models.DateTimeField(null=True, blank=True)
+    return_reason = models.TextField(blank=True, null=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     
+    class Meta:
+        ordering = ['-created_at']
+    
     def __str__(self):
-        return f"{self.quantity} x {self.product_name}"
+        variant_str = f" ({self.variant_material})" if self.variant_material else ""
+        return f"{self.quantity} x {self.product_name}{variant_str}"
     
     def save(self, *args, **kwargs):
-        self.total_price = self.product_price * self.quantity
+        if not self.total_price:
+            self.total_price = self.product_price * self.quantity
         super().save(*args, **kwargs)
     
-    def cancel_item(self):
-        if not self.is_cancelled and self.order.can_be_cancelled:
-            self.is_cancelled = True
-            self.status = 'cancelled'
-            self.save()
-            if self.product:
-                self.product.stock_quantity += self.quantity
-                self.product.save()
-            return True
-        return False
+    def cancel_item(self, reason=None):
+        """Cancel this item and restore stock to variant, credit wallet if paid"""
+        if self.is_cancelled:
+            return False
+        
+        from customeradmin.models import ProductVariant
+        
+        self.is_cancelled = True
+        self.status = 'cancelled'
+        self.cancelled_at = timezone.now()
+        self.cancellation_reason = reason
+        self.save()
+        
+        if self.variant_id:
+            try:
+                variant = ProductVariant.objects.get(id=self.variant_id)
+                variant.stock_quantity += self.quantity
+                variant.save()
+                
+                # Update product status
+                if self.product:
+                    total_stock = self.product.get_total_variant_stock
+                    if total_stock > self.product.low_stock_threshold:
+                        self.product.status = 'published'
+                    elif total_stock > 0:
+                        self.product.status = 'low-stock'
+                    self.product.save(update_fields=['status'])
+            except ProductVariant.DoesNotExist:
+                pass
+        elif self.product:
+            # Fallback for products without variants
+            self.product.stock_quantity += self.quantity
+            self.product.save()
+        
+        return True
 
+    def return_item(self, reason=None):
+        """Return this item and restore stock, credit wallet"""
+        if self.is_returned or self.is_cancelled:
+            return False
+        
+        # Check if order is delivered
+        if self.order.status != 'delivered':
+            return False
+        
+        from customeradmin.models import ProductVariant
+        from decimal import Decimal
+        
+        self.is_returned = True
+        self.status = 'returned'
+        self.returned_at = timezone.now()
+        self.return_reason = reason
+        self.save()
+        
+        # Restore stock to variant
+        if self.variant_id:
+            try:
+                variant = ProductVariant.objects.get(id=self.variant_id)
+                variant.stock_quantity += self.quantity
+                variant.save()
+                
+                # Update product status
+                if self.product:
+                    total_stock = self.product.get_total_variant_stock
+                    if total_stock > self.product.low_stock_threshold:
+                        self.product.status = 'published'
+                    elif total_stock > 0:
+                        self.product.status = 'low-stock'
+                    self.product.save(update_fields=['status'])
+            except ProductVariant.DoesNotExist:
+                pass
+        elif self.product:
+            self.product.stock_quantity += self.quantity
+            self.product.save()
+        
+        
+        
+        # ✅ NEW: Check if ALL items are now returned/cancelled → update order status
+        active_items = self.order.items.filter(is_returned=False, is_cancelled=False)
+        if not active_items.exists():
+            self.order.status = 'refund_pending'
+            self.order.return_reason = reason
+            self.order.returned_at = timezone.now()
+            self.order.save(update_fields=['status', 'return_reason', 'returned_at'])
+        
+        return True
+
+    @property
+    def can_be_returned(self):
+        """Check if this item can be returned"""
+        if self.is_cancelled or self.is_returned:
+            return False
+        if self.order.status != 'delivered':
+            return False
+        # Allow returns within 7 days of delivery
+        if self.order.delivered_at:
+            days_since_delivery = (timezone.now() - self.order.delivered_at).days
+            return days_since_delivery <= 7
+        return True  # If no delivered_at, allow return
 
 class OrderStatusHistory(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='status_history')
@@ -416,33 +559,64 @@ class Cart(models.Model):
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey('customeradmin.Product', on_delete=models.CASCADE)
+    # NEW: Variant field for material variants
+    variant = models.ForeignKey(
+        'customeradmin.ProductVariant', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        help_text="Selected material variant"
+    )
     quantity = models.PositiveIntegerField(default=1)
     added_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        unique_together = ('cart', 'product')
+        # Updated to include variant for uniqueness
+        unique_together = ('cart', 'product', 'variant')
         ordering = ['-updated_at']
     
     def __str__(self):
-        return f"{self.quantity} x {self.product.name} in {self.cart.user.email}'s cart"
+        variant_str = f" ({self.variant.material})" if self.variant else ""
+        return f"{self.quantity} x {self.product.name}{variant_str} in {self.cart.user.email}'s cart"
+    
+    @property
+    def unit_price(self):
+        """Get unit price considering variant price adjustment"""
+        if self.variant:
+            return self.variant.discounted_price
+        return self.product.get_discounted_price()
     
     @property
     def subtotal(self):
-        return self.quantity * self.product.get_discounted_price()
+        return self.quantity * self.unit_price
+    
+    @property
+    def stock_quantity(self):
+        """Get stock from variant if exists, else from product"""
+        if self.variant:
+            return self.variant.stock_quantity
+        return self.product.get_total_variant_stock or self.product.stock_quantity
     
     @property
     def is_available(self):
+        if self.variant:
+            return (
+                self.product.status == 'published' and
+                self.variant.is_active and
+                self.variant.stock_quantity >= self.quantity and
+                not getattr(self.product.category, 'is_blocked', False)
+            )
         return (
             self.product.status == 'published' and
-            self.product.stock_quantity >= self.quantity and
+            self.stock_quantity >= self.quantity and
             not getattr(self.product.category, 'is_blocked', False)
         )
     
     @property
     def max_quantity_allowed(self):
         MAX_CART_QUANTITY = 10
-        return min(self.product.stock_quantity, MAX_CART_QUANTITY)
+        return min(self.stock_quantity, MAX_CART_QUANTITY)
 
 
 class Wishlist(models.Model):
@@ -457,20 +631,28 @@ class Wishlist(models.Model):
 class WishlistItem(models.Model):
     wishlist = models.ForeignKey(Wishlist, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey('customeradmin.Product', on_delete=models.CASCADE)
+    variant = models.ForeignKey(
+        'customeradmin.ProductVariant',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text="Selected material variant"
+    )
     added_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        unique_together = ('wishlist', 'product')
+        unique_together = ('wishlist', 'product', 'variant')
         ordering = ['-added_at']
     
     def __str__(self):
-        return f"{self.product.name} in {self.wishlist.user.email}'s wishlist"
+        variant_str = f" ({self.variant.material})" if self.variant else ""
+        return f"{self.product.name}{variant_str} in {self.wishlist.user.email}'s wishlist"
 
 
 class Coupon(models.Model):
     code = models.CharField(max_length=50, unique=True, db_index=True)
-    description = models.CharField(max_length=255, blank=True, null=True)  # Added description field
-    discount_percent = models.PositiveIntegerField(default=10)  # 1-100
+    description = models.CharField(max_length=255, blank=True, null=True)  
+    discount_percent = models.PositiveIntegerField(default=10)  
     min_order_amount = models.DecimalField(max_digits=10, decimal_places=2, default=500)
     max_usage = models.PositiveIntegerField(default=100)
     used_count = models.PositiveIntegerField(default=0)

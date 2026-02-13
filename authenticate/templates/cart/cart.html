@@ -458,10 +458,10 @@
                     alt="{{ item.product.name }}" class="cart-item-image">
 
                 <div class="cart-item-details">
-                    <h4>{{ item.product.name }}</h4>
+                    <h4>{{ item.product.name }}{% if item.variant %} <span style="color: #667eea; font-weight: 500;">({{ item.variant.material }})</span>{% endif %}</h4>
                     {% if not item.is_available %}
                     <span class="unavailable-badge">
-                        {% if item.product.stock_quantity <= 0 %} <i class="fas fa-times-circle"></i> Out of Stock
+                       {% if item.product.get_total_variant_stock <= 0 %} <i class="fas fa-times-circle"></i> Out of Stock
                             {% else %}
                             <i class="fas fa-ban"></i> Unavailable
                             {% endif %}
@@ -469,12 +469,13 @@
                     {% endif %}
                 </div>
 
+                <!-- Replace lines 472-478 in cart.html with: -->
                 <div class="price-box">
                     {% if item.product.discount_type != 'none' and item.product.discount_value > 0 %}
-                    <span class="original-price">₹{{ item.product.price|floatformat:2 }}</span>
-                    <span class="discounted-price">₹{{ item.product.get_discounted_price|floatformat:2 }}</span>
+                    <span class="original-price">₹{% if item.variant %}{{ item.variant.price|floatformat:2 }}{% else %}{{ item.product.price|floatformat:2 }}{% endif %}</span>
+                    <span class="discounted-price">₹{{ item.unit_price|floatformat:2 }}</span>
                     {% else %}
-                    <span class="discounted-price">₹{{ item.product.price|floatformat:2 }}</span>
+                    <span class="discounted-price">₹{% if item.variant %}{{ item.variant.price|floatformat:2 }}{% else %}{{ item.product.price|floatformat:2 }}{% endif %}</span>
                     {% endif %}
                 </div>
 

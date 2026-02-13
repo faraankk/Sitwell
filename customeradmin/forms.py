@@ -105,6 +105,7 @@ class ProductForm(forms.ModelForm):
         self.fields['brand'].required = False
         self.fields['short_description'].required = False
         self.fields['detailed_description'].required = False
+        self.fields['stock_quantity'].required = False 
 
     def clean_sku(self):
         sku = self.cleaned_data.get('sku')
@@ -124,9 +125,9 @@ class ProductForm(forms.ModelForm):
 
     def clean_stock_quantity(self):
         stock = self.cleaned_data.get('stock_quantity')
-        if stock and stock < 0:
+        if stock is not None and stock < 0:
             raise forms.ValidationError("Stock quantity cannot be negative.")
-        return stock
+        return stock if stock is not None else 0 
 
     def clean_discount_value(self):
         discount_type = self.cleaned_data.get('discount_type')
@@ -225,14 +226,25 @@ class CategoryForm(forms.ModelForm):
         }
     
     def clean_name(self):
-        name = self.cleaned_data.get('name')
-        if name:
-            existing = Category.objects.filter(name__iexact=name)
-            if self.instance.pk:
-                existing = existing.exclude(pk=self.instance.pk)
-            if existing.exists():
-                raise forms.ValidationError("Category with this name already exists.")
-        return name
+        name = self.cleaned_data.get('name', '').strip()
+        if not name:
+            raise forms.ValidationError("Category name is required.")
+        
+        # Normalize: remove extra spaces and make lowercase for comparison
+        normalized_name = ' '.join(name.split()).lower()
+        
+        # Check for duplicates (case-insensitive and space-insensitive)
+        existing_categories = Category.objects.filter(is_deleted=False)
+        if self.instance.pk:
+            existing_categories = existing_categories.exclude(pk=self.instance.pk)
+        
+        for cat in existing_categories:
+            existing_normalized = ' '.join(cat.name.split()).lower()
+            if existing_normalized == normalized_name:
+                raise forms.ValidationError(f'Category "{cat.name}" already exists with similar name.')
+        
+        # Return formatted name (capitalize first letter of each word)
+        return ' '.join(name.split()).title()
     
     def clean_thumbnail(self):
         thumbnail = self.cleaned_data.get('thumbnail')

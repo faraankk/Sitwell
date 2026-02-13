@@ -19,7 +19,7 @@
       </nav>
     </div>
     <a href="{% url 'customeradmin:category-list' %}"
-       class="px-6 py-3 border-2 border-gray-300 rounded-xl font-bold hover:bg-gray-50">
+      class="px-6 py-3 border-2 border-gray-300 rounded-xl font-bold hover:bg-gray-50">
       ← Back
     </a>
   </div>
@@ -30,11 +30,11 @@
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
     <div class="bg-white rounded-xl p-6 shadow border">
       <p class="text-sm text-gray-500 font-bold uppercase">Total Deleted</p>
-      <p class="text-3xl font-black text-red-600">{{ total_deleted }}</p>
+      <p class="text-3xl font-black text-red-600" id="deleted-count">{{ categories.paginator.count }}</p>
     </div>
     <div class="bg-white rounded-xl p-6 shadow border">
       <p class="text-sm text-gray-500 font-bold uppercase">Restorable</p>
-      <p class="text-3xl font-black text-green-600">{{ total_deleted }}</p>
+      <p class="text-3xl font-black text-green-600" id="restorable-count">{{ categories.paginator.count }}</p>
     </div>
   </div>
 
@@ -51,9 +51,9 @@
         </tr>
       </thead>
 
-      <tbody class="divide-y">
+      <tbody class="divide-y" id="categories-tbody">
         {% for category in categories %}
-        <tr class="hover:bg-gray-50">
+        <tr class="hover:bg-gray-50" data-category-id="{{ category.id }}">
           <td class="px-6 py-4 font-bold">{{ forloop.counter }}</td>
           <td class="px-6 py-4 font-bold text-red-700">{{ category.name }}</td>
           <td class="px-6 py-4 text-sm">
@@ -63,22 +63,14 @@
             {{ category.deleted_by|default:"-" }}
           </td>
           <td class="px-6 py-4 text-center">
-
-            <!-- ✅ POST RESTORE FORM -->
-            <form method="post"
-                  action="{% url 'customeradmin:restore-category' category.id %}"
-                  onsubmit="return confirm('Restore this category?')">
-              {% csrf_token %}
-              <button type="submit"
-                      class="px-4 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700">
-                Restore
-              </button>
-            </form>
-
+            <button onclick="restoreCategory({{ category.id }}, '{{ category.name|escapejs }}')"
+              class="px-4 py-2 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-all">
+              <i class="fas fa-undo mr-1"></i> Restore
+            </button>
           </td>
         </tr>
         {% empty %}
-        <tr>
+        <tr id="empty-row">
           <td colspan="5" class="px-6 py-20 text-center text-gray-500 font-bold">
             No deleted categories 🎉
           </td>
@@ -95,14 +87,182 @@
       </span>
       <div class="space-x-2">
         {% if page_obj.has_previous %}
-          <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 border rounded">‹</a>
+        <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 border rounded">‹</a>
         {% endif %}
         {% if page_obj.has_next %}
-          <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 border rounded">›</a>
+        <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 border rounded">›</a>
         {% endif %}
       </div>
     </div>
     {% endif %}
   </div>
 </main>
+
+<!-- Custom Confirmation Modal -->
+<div id="confirmModal" class="fixed inset-0 z-50 items-center justify-center" style="display: none;">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeConfirmModal()"></div>
+  <div class="relative bg-white rounded-2xl shadow-2xl p-8 w-full mx-4 transform scale-95 opacity-0 transition-all duration-300" style="max-width: 450px;" id="confirmModalContent">
+    <div class="text-center">
+      <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <i class="fas fa-undo text-green-600 text-2xl"></i>
+      </div>
+      <h3 class="text-xl font-black text-gray-900 mb-2">Restore Category?</h3>
+      <p class="text-gray-600 mb-6" id="confirmMessage">Are you sure you want to restore this category?</p>
+      <div class="flex gap-4 justify-center">
+        <button onclick="closeConfirmModal()" style="padding: 12px 24px; border: 2px solid #d1d5db; color: #374151; border-radius: 12px; font-weight: bold; background: white; cursor: pointer;">
+          Cancel
+        </button>
+        <button onclick="executeRestore()" style="padding: 12px 24px; background: #22c55e; color: white; border-radius: 12px; font-weight: bold; border: none; cursor: pointer;">
+           Restore
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container" class="fixed top-5 right-5 z-50"></div>
+
+<style>
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .toast {
+    animation: fadeIn 0.3s ease;
+    padding: 12px 20px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .toast-success {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+  }
+
+  .toast-error {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+  }
+
+  .toast-info {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+  }
+</style>
+
+<script>
+  let pendingRestoreId = null;
+  let pendingRestoreName = null;
+
+  function showToast(message, type = 'info', duration = 3000) {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(20px)';
+      toast.style.transition = 'all 0.3s';
+      setTimeout(() => toast.remove(), 300);
+    }, duration);
+  }
+
+  function showConfirmModal(id, name) {
+    pendingRestoreId = id;
+    pendingRestoreName = name;
+    document.getElementById('confirmMessage').textContent = `Are you sure you want to restore "${name}"?`;
+    const modal = document.getElementById('confirmModal');
+    const content = document.getElementById('confirmModalContent');
+    modal.style.display = 'flex';
+    setTimeout(() => {
+      content.classList.remove('scale-95', 'opacity-0');
+      content.classList.add('scale-100', 'opacity-100');
+    }, 10);
+  }
+
+  function closeConfirmModal() {
+    const modal = document.getElementById('confirmModal');
+    const content = document.getElementById('confirmModalContent');
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+      modal.style.display = 'none';
+    }, 300);
+    pendingRestoreId = null;
+    pendingRestoreName = null;
+  }
+
+  function restoreCategory(id, name) {
+    showConfirmModal(id, name);
+  }
+
+  async function executeRestore() {
+    if (!pendingRestoreId) return;
+    
+    const id = pendingRestoreId;
+    const name = pendingRestoreName;
+    closeConfirmModal();
+
+    showToast('Restoring...', 'info', 1500);
+
+    try {
+      const response = await fetch(`/staff/categories/restore/${id}/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+      });
+
+      if (response.ok) {
+        showToast(`✅ Category "${name}" restored successfully!`, 'success');
+
+        // Remove row dynamically
+        const row = document.querySelector(`tr[data-category-id="${id}"]`);
+        if (row) {
+          row.style.transition = 'opacity 0.4s, transform 0.4s';
+          row.style.opacity = '0';
+          row.style.transform = 'translateX(20px)';
+
+          setTimeout(() => {
+            row.remove();
+
+            // Update counts
+            const deletedCount = document.getElementById('deleted-count');
+            const restorableCount = document.getElementById('restorable-count');
+            if (deletedCount) {
+              const newCount = Math.max(0, parseInt(deletedCount.textContent) - 1);
+              deletedCount.textContent = newCount;
+              if (restorableCount) restorableCount.textContent = newCount;
+            }
+
+            // Check if table is empty
+            const tbody = document.getElementById('categories-tbody');
+            if (tbody && tbody.querySelectorAll('tr[data-category-id]').length === 0) {
+              tbody.innerHTML = `
+                <tr id="empty-row">
+                  <td colspan="5" class="px-6 py-20 text-center text-gray-500 font-bold">
+                    No deleted categories 🎉
+                  </td>
+                </tr>
+              `;
+            }
+          }, 400);
+        }
+      } else {
+        showToast('❌ Error restoring category', 'error');
+      }
+    } catch (error) {
+      showToast('❌ Network error', 'error');
+      console.error('Restore error:', error);
+    }
+  }
+
+  // Close modal on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeConfirmModal();
+  });
+</script>
 {% endblock %}

@@ -329,7 +329,7 @@
                 <div style="font-size: 12px; color: #6c757d; margin-top: 10px;">Items Ordered:</div>
                 {% for item in order.items.all %}
                 <div class="preview-item-row">
-                    <span class="preview-item-name">{{ item.product_name }} (x{{ item.quantity }})</span>
+                    <span class="preview-item-name">{{ item.product_name }}{% if item.variant_material %} ({{ item.variant_material }}){% endif %} (x{{ item.quantity }})</span>
                     <span class="preview-item-price">₹{{ item.product_price|floatformat:2 }}</span>
                 </div>
                 {% endfor %}

@@ -353,14 +353,37 @@
   async function confirmDelete(code, id) {
     const ok = await confirmDialog(`🗑️  Delete coupon "${code}" ?\n\nThis action cannot be undone.`);
     if (!ok) return;
+    
     showToast('Deleting…', 'info', 1500);
+    
     fetch(`/staff/coupons/delete/${id}/`, {
-      method: 'POST',
-      headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' }
-    }).then(r => r.json()).then(d => {
-      if (d.success) { showToast('✅ Coupon deleted', 'success'); setTimeout(() => location.reload(), 700); }
-      else showToast('❌ ' + d.error, 'error');
-    }).catch(() => showToast('Network error', 'error'));
-  }
+        method: 'POST',
+        headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.success) {
+            showToast('✅ Coupon deleted', 'success');
+            // Remove the row dynamically instead of page reload
+            const row = document.querySelector(`button[onclick*="${id}"]`)?.closest('tr');
+            if (row) {
+                row.style.transition = 'opacity 0.4s, transform 0.4s';
+                row.style.opacity = '0';
+                row.style.transform = 'translateX(20px)';
+                setTimeout(() => {
+                    row.remove();
+                    // Check if table is empty
+                    const tbody = document.querySelector('tbody');
+                    if (tbody && tbody.children.length === 0) {
+                        location.reload(); // Only reload if no items left
+                    }
+                }, 400);
+            }
+        } else {
+            showToast('❌ ' + d.error, 'error');
+        }
+    })
+    .catch(() => showToast('Network error', 'error'));
+}
 </script>
 {% endblock %}

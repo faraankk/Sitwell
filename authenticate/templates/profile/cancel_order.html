@@ -323,7 +323,7 @@
         border-top: 2px solid #f0f0f0;
     }
 
-    /* Inline “no popup” message area */
+    /* Inline "no popup" message area */
     #inlineMsg {
         display: none;
         margin-bottom: 18px;
@@ -379,8 +379,13 @@
             <div class="warning-icon">
                 <i class="fas fa-exclamation-triangle"></i>
             </div>
-            <h4>Cancel Order Confirmation</h4>
-            <p>Please review your order details and select a cancellation reason</p>
+            {% if item_id %}
+                <h4>Cancel Item Confirmation</h4>
+                <p>You are about to cancel a single item from your order</p>
+            {% else %}
+                <h4>Cancel Order Confirmation</h4>
+                <p>Please review your order details and select a cancellation reason</p>
+            {% endif %}
         </div>
 
         <div class="warning-notice">
@@ -424,6 +429,35 @@
             </div>
         </div>
 
+        {% if item %}
+        <!-- Specific Item Being Cancelled -->
+        <div class="item-info" style="background: linear-gradient(135deg, #fff5f5 0%, #ffe6e6 100%); padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 4px solid #dc3545;">
+            <h6 style="color: #dc3545; margin-bottom: 15px; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-box"></i>Item to Cancel
+            </h6>
+            <div style="display: flex; align-items: center; gap: 15px; background: white; padding: 15px; border-radius: 8px;">
+                {% if item.product and item.product.images.exists %}
+                    <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product_name }}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                {% else %}
+                    <div style="width: 60px; height: 60px; background: #f0f0f0; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-image" style="color: #999;"></i>
+                    </div>
+                {% endif %}
+                <div>
+                    <p style="margin: 0; font-weight: 600; color: #333;">{{ item.product_name }}</p>
+                    <p style="margin: 5px 0 0; font-size: 14px; color: #666;">Qty: {{ item.quantity }} × ₹{{ item.product_price|floatformat:2 }}</p>
+                    <p style="margin: 5px 0 0; font-size: 16px; font-weight: 700; color: #dc3545;">₹{{ item.total_price|floatformat:2 }}</p>
+                </div>
+            </div>
+            {% if order.payment_status == 'paid' %}
+            <div style="margin-top: 15px; padding: 12px; background: #d4edda; border-radius: 8px; color: #155724; font-size: 14px;">
+                <i class="fas fa-wallet" style="margin-right: 8px;"></i>
+                <strong>Refund:</strong> ₹{{ item.total_price|floatformat:2 }} + tax will be credited to your wallet upon cancellation.
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
         <form method="post" id="cancelForm">
             {% csrf_token %}
 
@@ -460,7 +494,11 @@
                     <i class="fas fa-arrow-left" style="margin-right: 8px;"></i>Go Back
                 </a>
                 <button type="submit" class="btn-danger" id="submitBtn">
-                    <i class="fas fa-times-circle" style="margin-right: 8px;"></i>Cancel Order
+                    {% if item_id %}
+                        <i class="fas fa-times-circle" style="margin-right: 8px;"></i>Cancel Item
+                    {% else %}
+                        <i class="fas fa-times-circle" style="margin-right: 8px;"></i>Cancel Order
+                    {% endif %}
                 </button>
             </div>
         </form>

@@ -305,6 +305,7 @@
                 button.addEventListener('click', function() {
                     const productId = this.getAttribute('data-product-id');
                     const productName = this.getAttribute('data-product-name');
+                    const row = this.closest('tr');
 
                     Toastify({
                         text: `🔄 Click to confirm restoring "${productName}"`,
@@ -338,7 +339,33 @@
                                             padding: "16px 20px"
                                         }
                                     }).showToast();
-                                    setTimeout(() => window.location.reload(), 1500);
+                                    
+                                    // Remove row dynamically instead of page reload
+                                    if (row) {
+                                        row.style.transition = 'opacity 0.4s, transform 0.4s';
+                                        row.style.opacity = '0';
+                                        row.style.transform = 'translateX(20px)';
+                                        setTimeout(() => {
+                                            row.remove();
+                                            // Update the stats count
+                                            const countEl = document.querySelector('.text-red-600.text-3xl');
+                                            if (countEl) {
+                                                const newCount = parseInt(countEl.textContent) - 1;
+                                                countEl.textContent = newCount;
+                                                // Update all count displays
+                                                document.querySelectorAll('.text-3xl.font-black').forEach(el => {
+                                                    if (el.textContent.match(/^\d+$/)) {
+                                                        el.textContent = newCount;
+                                                    }
+                                                });
+                                            }
+                                            // Check if table is empty
+                                            const tbody = document.querySelector('tbody');
+                                            if (tbody && tbody.children.length === 0) {
+                                                location.reload();
+                                            }
+                                        }, 400);
+                                    }
                                 } else {
                                     Toastify({
                                         text: `❌ Error: ${data.error}`,

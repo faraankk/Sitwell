@@ -657,7 +657,7 @@
                     <div class="product-meta">
                         <div class="stock-info">
                             <i class="fas fa-check-circle"></i>
-                            {{ product.stock_quantity }} in stock
+                            {{ product.get_total_variant_stock }} in stock
                         </div>
                         <div class="category-tag">{{ product.get_category_display }}</div>
                     </div>

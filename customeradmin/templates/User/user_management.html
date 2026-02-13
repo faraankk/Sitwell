@@ -375,45 +375,101 @@
     });
   }
 
-  // Block/Unblock Functions
-  async function confirmBlock(userId, username) {
+  // Block/Unblock Functions - NO PAGE RELOAD
+async function confirmBlock(userId, username) {
     const confirmed = await confirmDialog(
-      `⚠️ BLOCK USER CONFIRMATION\n\nAre you sure you want to BLOCK user "${username}"?\n\nThis action will:\n• Prevent the user from accessing the system\n• Block all user activities\n\nClick Confirm to proceed or Cancel to abort.`
+        `⚠️ BLOCK USER CONFIRMATION\n\nAre you sure you want to BLOCK user "${username}"?\n\nThis action will:\n• Prevent the user from accessing the system\n• Block all user activities\n\nClick Confirm to proceed or Cancel to abort.`
     );
     if (!confirmed) return;
 
     showToast(`Blocking ${username}...`, 'info', 1500);
+    
     fetch(`/staff/block-user/${userId}/`, { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' } })
-      .then(r => r.json())
-      .then(data => {
-        if (data.success) {
-          showToast('✅ ' + (data.message || 'User blocked successfully'), 'success');
-          setTimeout(() => location.reload(), 700);
-        } else {
-          showToast('❌ Error: ' + (data.error || 'Block failed'), 'error');
-        }
-      })
-      .catch(() => showToast('❌ Network error occurred', 'error'));
-  }
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showToast('✅ ' + (data.message || 'User blocked successfully'), 'success');
+                // Update UI dynamically instead of page reload
+                updateUserRowStatus(userId, true, username);
+            } else {
+                showToast('❌ Error: ' + (data.error || 'Block failed'), 'error');
+            }
+        })
+        .catch(() => showToast('❌ Network error occurred', 'error'));
+}
 
-  async function confirmUnblock(userId, username) {
+async function confirmUnblock(userId, username) {
     const confirmed = await confirmDialog(
-      `✅ UNBLOCK USER CONFIRMATION\n\nAre you sure you want to UNBLOCK user "${username}"?\n\nThis action will:\n• Restore user access to the system\n• Allow user to login and use all features\n\nClick Confirm to proceed or Cancel to abort.`
+        `✅ UNBLOCK USER CONFIRMATION\n\nAre you sure you want to UNBLOCK user "${username}"?\n\nThis action will:\n• Restore user access to the system\n• Allow user to login and use all features\n\nClick Confirm to proceed or Cancel to abort.`
     );
     if (!confirmed) return;
 
     showToast(`Unblocking ${username}...`, 'info', 1500);
+    
     fetch(`/staff/unblock-user/${userId}/`, { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' } })
-      .then(r => r.json())
-      .then(data => {
-        if (data.success) {
-          showToast('✅ ' + (data.message || 'User unblocked successfully'), 'success');
-          setTimeout(() => location.reload(), 700);
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showToast('✅ ' + (data.message || 'User unblocked successfully'), 'success');
+                // Update UI dynamically instead of page reload
+                updateUserRowStatus(userId, false, username);
+            } else {
+                showToast('❌ Error: ' + (data.error || 'Unblock failed'), 'error');
+            }
+        })
+        .catch(() => showToast('❌ Network error occurred', 'error'));
+}
+
+// New function to update user row dynamically
+function updateUserRowStatus(userId, isBlocked, username) {
+    // Find the row with this user's action button
+    const buttons = document.querySelectorAll(`button[onclick*="${userId}"]`);
+    buttons.forEach(btn => {
+        const row = btn.closest('tr');
+        if (!row) return;
+        
+        // Update row background
+        if (isBlocked) {
+            row.classList.add('bg-red-50');
         } else {
-          showToast('❌ Error: ' + (data.error || 'Unblock failed'), 'error');
+            row.classList.remove('bg-red-50');
         }
-      })
-      .catch(() => showToast('❌ Network error occurred', 'error'));
-  }
+        
+        // Update status badge (5th column - index 5)
+        const statusCell = row.querySelector('td:nth-child(6)');
+        if (statusCell) {
+            if (isBlocked) {
+                statusCell.innerHTML = `
+                    <span class="px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full">
+                        <i class="fas fa-ban mr-1"></i>Blocked
+                    </span>`;
+            } else {
+                statusCell.innerHTML = `
+                    <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">
+                        <i class="fas fa-check-circle mr-1"></i>Active
+                    </span>`;
+            }
+        }
+        
+        // Update action button (7th column - index 6)
+        const actionCell = row.querySelector('td:nth-child(7)');
+        if (actionCell) {
+            if (isBlocked) {
+                actionCell.innerHTML = `
+                    <button onclick="confirmUnblock(${userId}, '${username}')"
+                        class="px-4 py-2 text-white text-sm font-bold rounded-xl hover:shadow-lg transition-all"
+                        style="background: linear-gradient(to right, #22c55e, #059669);">
+                        <i class="fas fa-unlock mr-1"></i>Unblock
+                    </button>`;
+            } else {
+                actionCell.innerHTML = `
+                    <button onclick="confirmBlock(${userId}, '${username}')"
+                        class="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-bold rounded-xl hover:shadow-lg transition-all">
+                        <i class="fas fa-ban mr-1"></i>Block
+                    </button>`;
+            }
+        }
+    });
+}
 </script>
 {% endblock %}

@@ -192,10 +192,10 @@
                   {{ product.category }}
                 </span>
               </td>
-              <td class="px-6 py-4 text-sm font-bold text-gray-700">{{ product.stock_quantity }}</td>
+              <td class="px-6 py-4 text-sm font-bold text-gray-700">{{ product.get_total_variant_stock }}</td>
               <td class="px-6 py-4 text-sm font-bold text-gray-900">₹{{ product.price }}</td>
               <td class="px-6 py-4">
-                {% if product.stock_quantity == 0 %}
+                {% if product.get_total_variant_stock == 0 %}
                   <span class="px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full">
                     <i class="fas fa-times-circle mr-1"></i>Sold Out
                   </span>
@@ -272,80 +272,95 @@
     const csrftoken = getCookie('csrftoken');
 
     document.addEventListener('DOMContentLoaded', function() {
-      const deleteButtons = document.querySelectorAll('.delete-btn');
+    const deleteButtons = document.querySelectorAll('.delete-btn');
 
-      deleteButtons.forEach(button => {
+    deleteButtons.forEach(button => {
         button.addEventListener('click', function() {
-          const productId = this.getAttribute('data-product-id');
-          const productName = this.getAttribute('data-product-name');
+            const productId = this.getAttribute('data-product-id');
+            const productName = this.getAttribute('data-product-name');
+            const row = this.closest('tr');
 
-          Toastify({
-            text: `🗑️ Click to confirm delete: "${productName}"`,
-            duration: 4000,
-            close: true,
-            gravity: "top",
-            position: "right",
-            style: {
-              background: "linear-gradient(135deg, #f87171 0%, #dc2626 100%)",
-              borderRadius: "12px",
-              fontWeight: "bold",
-              padding: "16px 20px"
-            },
-            stopOnFocus: true,
-            onClick: () => {
-              fetch(`/staff/products/soft-delete/${productId}/`, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' },
-              })
-              .then(response => response.json())
-              .then(data => {
-                if (data.success) {
-                  Toastify({
-                    text: `✅ "${productName}" deleted successfully!`,
-                    duration: 3000,
-                    gravity: "top",
-                    position: "right",
-                    style: {
-                      background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
-                      borderRadius: "12px",
-                      fontWeight: "bold",
-                      padding: "16px 20px"
-                    }
-                  }).showToast();
-                  setTimeout(() => window.location.reload(), 1500);
-                } else {
-                  Toastify({
-                    text: `❌ Error: ${data.error}`,
-                    duration: 3000,
-                    gravity: "top",
-                    position: "right",
-                    style: {
-                      background: "linear-gradient(135deg, #f87171 0%, #dc2626 100%)",
-                      borderRadius: "12px",
-                      fontWeight: "bold",
-                      padding: "16px 20px"
-                    }
-                  }).showToast();
-                }
-              })
-              .catch(() => {
-                Toastify({
-                  text: "⚠️ An error occurred while deleting.",
-                  duration: 3000,
-                  gravity: "top",
-                  position: "right",
-                  style: {
+            Toastify({
+                text: `🗑️ Click to confirm delete: "${productName}"`,
+                duration: 4000,
+                close: true,
+                gravity: "top",
+                position: "right",
+                style: {
                     background: "linear-gradient(135deg, #f87171 0%, #dc2626 100%)",
                     borderRadius: "12px",
                     fontWeight: "bold",
                     padding: "16px 20px"
-                  }
-                }).showToast();
-              });
-            }
-          }).showToast();
+                },
+                stopOnFocus: true,
+                onClick: () => {
+                    fetch(`/staff/products/soft-delete/${productId}/`, {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' },
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Toastify({
+                                text: `✅ "${productName}" deleted successfully!`,
+                                duration: 3000,
+                                gravity: "top",
+                                position: "right",
+                                style: {
+                                    background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+                                    borderRadius: "12px",
+                                    fontWeight: "bold",
+                                    padding: "16px 20px"
+                                }
+                            }).showToast();
+                            
+                            // Remove row dynamically instead of page reload
+                            if (row) {
+                                row.style.transition = 'opacity 0.4s, transform 0.4s';
+                                row.style.opacity = '0';
+                                row.style.transform = 'translateX(20px)';
+                                setTimeout(() => {
+                                    row.remove();
+                                    // Check if table is empty
+                                    const tbody = document.querySelector('tbody');
+                                    if (tbody && tbody.children.length === 0) {
+                                        location.reload();
+                                    }
+                                }, 400);
+                            }
+                        } else {
+                            Toastify({
+                                text: `❌ Error: ${data.error}`,
+                                duration: 3000,
+                                gravity: "top",
+                                position: "right",
+                                style: {
+                                    background: "linear-gradient(135deg, #f87171 0%, #dc2626 100%)",
+                                    borderRadius: "12px",
+                                    fontWeight: "bold",
+                                    padding: "16px 20px"
+                                }
+                            }).showToast();
+                        }
+                    })
+                    .catch(() => {
+                        Toastify({
+                            text: "⚠️ An error occurred while deleting.",
+                            duration: 3000,
+                            gravity: "top",
+                            position: "right",
+                            style: {
+                                background: "linear-gradient(135deg, #f87171 0%, #dc2626 100%)",
+                                borderRadius: "12px",
+                                fontWeight: "bold",
+                                padding: "16px 20px"
+                            }
+                        }).showToast();
+                    });
+                }
+            }).showToast();
         });
-      });
     });
+});
   </script>
 {% endblock %}
